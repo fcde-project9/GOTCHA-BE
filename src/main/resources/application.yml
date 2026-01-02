@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: gotcha-server
+
+# Springdoc OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api/v3/api-docs
+  swagger-ui:
+    path: /api/swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
