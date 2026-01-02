@@ -1,4 +1,4 @@
-package com.gotcha.config;
+package com.gotcha._global.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
