@@ -21,7 +21,7 @@ public class OpenApiConfig {
                         .version("v0.0.1")
                         .contact(new Contact()
                                 .name("GOTCHA Team")
-                                .email("contact@gotcha.com")))
+                                .email("fcdegotcha@gmail.com")))
                 .servers(List.of(
                         new Server()
                                 .url("http://localhost:8080/api")
