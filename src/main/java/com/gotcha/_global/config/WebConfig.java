@@ -1,4 +1,4 @@
-package com.gotcha.config;
+package com.gotcha._global.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
