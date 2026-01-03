@@ -1,6 +1,18 @@
 spring:
   application:
     name: gotcha-server
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  datasource:
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+server:
+  port: ${PORT:8080}
+
 
 # Springdoc OpenAPI Configuration
 springdoc:
