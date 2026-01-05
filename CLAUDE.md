@@ -44,12 +44,19 @@ com.gotcha
 
 | 작업 | 참조 문서 |
 |------|----------|
-| API 구현 | `docs/api-spec.md`, `docs/error-codes.md`, `docs/coding-patterns.md` |
-| Entity 추가/수정 | `docs/entity-design.md` |
+| API 구현 | `docs/api-spec.md`, `docs/error-codes.md`, `docs/skills/gotcha-api.md` |
+| Entity 추가/수정 | `docs/entity-design.md`, `docs/skills/gotcha-entity.md` |
 | 인증/권한 구현 | `docs/auth-policy.md` |
 | 비즈니스 로직 | `docs/business-rules.md` |
 | 설계 확인 | `docs/decisions.md`, `docs/flow.md` |
-| Repository 구현/테스트 | `docs/repository-edge-cases.md` |
+| Repository/테스트 | `docs/repository-edge-cases.md`, `docs/skills/gotcha-test.md` |
+| 설정/yml 변경 | `docs/skills/gotcha-config.md` |
+
+## 설정 규칙
+
+- **환경변수 필수**: yml에 URL, 도메인, 키 등 하드코딩 금지
+- **형식**: `${ENV_VAR}` 또는 `${ENV_VAR:default}` (local만 기본값 허용)
+- **상세**: `docs/skills/gotcha-config.md` 참조
 
 ## 문서 목록
 
@@ -65,3 +72,12 @@ com.gotcha
 | `docs/decisions.md` | 설계 결정 사항 |
 | `docs/coding-patterns.md` | 코딩 패턴 |
 | `docs/repository-edge-cases.md` | Repository 엣지 케이스 |
+
+## 스킬 문서 (자동화용)
+
+| 스킬 | 설명 |
+|------|------|
+| `docs/skills/gotcha-api.md` | API 개발 패턴 (Controller/Service/DTO) |
+| `docs/skills/gotcha-entity.md` | Entity 작성 규칙 (Builder, BaseTimeEntity) |
+| `docs/skills/gotcha-test.md` | 테스트 작성 패턴 (Repository/Service/Controller) |
+| `docs/skills/gotcha-config.md` | 설정/yml 관리 규칙 (환경변수화) |
