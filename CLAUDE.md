@@ -49,6 +49,7 @@ com.gotcha
 | 인증/권한 구현 | `docs/auth-policy.md` |
 | 비즈니스 로직 | `docs/business-rules.md` |
 | 설계 확인 | `docs/decisions.md`, `docs/flow.md` |
+| Repository 구현/테스트 | `docs/repository-edge-cases.md` |
 
 ## 문서 목록
 
@@ -63,3 +64,4 @@ com.gotcha
 | `docs/flow.md` | 화면/검색 플로우 |
 | `docs/decisions.md` | 설계 결정 사항 |
 | `docs/coding-patterns.md` | 코딩 패턴 |
+| `docs/repository-edge-cases.md` | Repository 엣지 케이스 |

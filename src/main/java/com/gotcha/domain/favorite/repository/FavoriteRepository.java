@@ -1,0 +1,22 @@
+package com.gotcha.domain.favorite.repository;
+
+import com.gotcha.domain.favorite.entity.Favorite;
+import java.util.List;
+import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+public interface FavoriteRepository extends JpaRepository<Favorite, Long> {
+
+    Optional<Favorite> findByUserIdAndShopId(Long userId, Long shopId);
+
+    List<Favorite> findAllByUserId(Long userId);
+
+    Long countByShopId(Long shopId);
+
+    @Modifying
+    @Query("DELETE FROM Favorite f WHERE f.user.id = :userId AND f.shop.id = :shopId")
+    void deleteByUserIdAndShopId(@Param("userId") Long userId, @Param("shopId") Long shopId);
+}
