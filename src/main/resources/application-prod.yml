@@ -9,4 +9,4 @@ spring:
     show-sql: false
 
 cors:
-  allowed-origins: https://gotcha.it.com
+  allowed-origins: ${CORS_ALLOWED_ORIGINS}
