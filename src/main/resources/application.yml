@@ -1,6 +1,8 @@
 spring:
   application:
     name: gotcha-server
+  config:
+    import: optional:file:.env[.properties]
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:local}
   datasource:
