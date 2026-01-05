@@ -48,4 +48,4 @@ jobs:
             --allow-unauthenticated \
             --project ${{ secrets.GCP_PROJECT_ID }} \
             --add-cloudsql-instances=${{ secrets.CLOUD_SQL_CONNECTION_NAME_PROD }} \
-            --set-env-vars="SPRING_PROFILES_ACTIVE=prod,SPRING_DATASOURCE_URL=${{ secrets.DB_URL_PROD }},SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USERNAME_PROD }},SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD_PROD }}"
+            --update-env-vars SPRING_PROFILES_ACTIVE=prod,SPRING_DATASOURCE_URL=${{ secrets.DB_URL_PROD }},SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USERNAME_PROD }},SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD_PROD }}
