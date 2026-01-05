@@ -15,7 +15,10 @@ public interface ShopRepository extends JpaRepository<Shop, Long> {
     @Query("SELECT s FROM Shop s WHERE "
             + "(6371 * acos(cos(radians(:lat)) * cos(radians(s.latitude)) * "
             + "cos(radians(s.longitude) - radians(:lng)) + sin(radians(:lat)) * "
-            + "sin(radians(s.latitude)))) < :radius")
+            + "sin(radians(s.latitude)))) < :radius "
+            + "ORDER BY (6371 * acos(cos(radians(:lat)) * cos(radians(s.latitude)) * "
+            + "cos(radians(s.longitude) - radians(:lng)) + sin(radians(:lat)) * "
+            + "sin(radians(s.latitude))))")
     List<Shop> findNearbyShops(@Param("lat") Double lat, @Param("lng") Double lng,
                                @Param("radius") Double radius);
 }
