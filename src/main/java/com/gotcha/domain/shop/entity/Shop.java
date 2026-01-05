@@ -32,7 +32,7 @@ public class Shop extends BaseTimeEntity {
     private String name;
 
     @Column(nullable = false)
-    private String address;
+    private String addressName;
 
     @Column(nullable = false)
     private Double latitude;
@@ -49,47 +49,64 @@ public class Shop extends BaseTimeEntity {
     private String openTime;
 
     @Column(length = 50)
-    private String region;
+    private String region1DepthName;
 
     @Column(length = 50)
-    private String district;
+    private String region2DepthName;
 
-    @Column(length = 50)
-    private String neighborhood;
+    @Column(length = 100)
+    private String region3DepthName;
+
+    @Column(length = 1)
+    private String mountainYn;
+
+    @Column(length = 10)
+    private String mainAddressNo;
+
+    @Column(length = 10)
+    private String subAddressNo;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     private User createdBy;
 
     @Builder
-    public Shop(String name, String address, Double latitude, Double longitude,
+    public Shop(String name, String addressName, Double latitude, Double longitude,
                 String mainImageUrl, String locationHint, String openTime,
-                String region, String district, String neighborhood, User createdBy) {
+                String region1DepthName, String region2DepthName, String region3DepthName,
+                String mountainYn, String mainAddressNo, String subAddressNo, User createdBy) {
         this.name = name;
-        this.address = address;
+        this.addressName = addressName;
         this.latitude = latitude;
         this.longitude = longitude;
         this.mainImageUrl = mainImageUrl;
         this.locationHint = locationHint;
         this.openTime = openTime;
-        this.region = region;
-        this.district = district;
-        this.neighborhood = neighborhood;
+        this.region1DepthName = region1DepthName;
+        this.region2DepthName = region2DepthName;
+        this.region3DepthName = region3DepthName;
+        this.mountainYn = mountainYn;
+        this.mainAddressNo = mainAddressNo;
+        this.subAddressNo = subAddressNo;
         this.createdBy = createdBy;
     }
 
-    public void updateInfo(String name, String address, Double latitude, Double longitude,
+    public void updateInfo(String name, String addressName, Double latitude, Double longitude,
                            String locationHint, String openTime,
-                           String region, String district, String neighborhood) {
+                           String region1DepthName, String region2DepthName, String region3DepthName,
+                           String mountainYn, String mainAddressNo, String subAddressNo) {
         this.name = name;
-        this.address = address;
+        this.addressName = addressName;
         this.latitude = latitude;
         this.longitude = longitude;
         this.locationHint = locationHint;
         this.openTime = openTime;
-        this.region = region;
-        this.district = district;
-        this.neighborhood = neighborhood;
+        this.region1DepthName = region1DepthName;
+        this.region2DepthName = region2DepthName;
+        this.region3DepthName = region3DepthName;
+        this.mountainYn = mountainYn;
+        this.mainAddressNo = mainAddressNo;
+        this.subAddressNo = subAddressNo;
     }
 
     public void updateMainImage(String mainImageUrl) {

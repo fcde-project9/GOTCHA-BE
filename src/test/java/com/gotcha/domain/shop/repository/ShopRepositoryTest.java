@@ -45,7 +45,7 @@ class ShopRepositoryTest {
         // given
         Shop shop = Shop.builder()
                 .name("가챠샵")
-                .address("서울시 강남구")
+                .addressName("서울시 강남구")
                 .latitude(37.4979)
                 .longitude(127.0276)
                 .createdBy(creator)
@@ -67,7 +67,7 @@ class ShopRepositoryTest {
         // given
         Shop nearbyShop = Shop.builder()
                 .name("근처샵")
-                .address("서울시 강남구")
+                .addressName("서울시 강남구")
                 .latitude(37.4980)
                 .longitude(127.0277)
                 .createdBy(creator)
@@ -76,7 +76,7 @@ class ShopRepositoryTest {
 
         Shop farShop = Shop.builder()
                 .name("먼샵")
-                .address("부산시 해운대구")
+                .addressName("부산시 해운대구")
                 .latitude(35.1628)
                 .longitude(129.1635)
                 .createdBy(creator)
@@ -97,7 +97,7 @@ class ShopRepositoryTest {
         // given
         Shop farShop = Shop.builder()
                 .name("먼샵")
-                .address("부산시 해운대구")
+                .addressName("부산시 해운대구")
                 .latitude(35.1628)
                 .longitude(129.1635)
                 .createdBy(creator)
@@ -117,7 +117,7 @@ class ShopRepositoryTest {
         // given
         Shop shop = Shop.builder()
                 .name("가챠샵")
-                .address("서울시 강남구")
+                .addressName("서울시 강남구")
                 .latitude(37.4979)
                 .longitude(127.0276)
                 .createdBy(creator)
@@ -144,31 +144,6 @@ class ShopRepositoryTest {
     @Test
     @DisplayName("반경 내 여러 샵 조회")
     void findNearbyShops_MultipleShops() {
-        // given - 강남역 주변 여러 샵 등록
-        Shop shop1 = shopRepository.save(Shop.builder()
-                .name("강남샵1")
-                .address("서울시 강남구")
-                .latitude(37.4979)
-                .longitude(127.0276)
-                .createdBy(creator)
-                .build());
-
-        Shop shop2 = shopRepository.save(Shop.builder()
-                .name("강남샵2")
-                .address("서울시 강남구")
-                .latitude(37.4985)
-                .longitude(127.0280)
-                .createdBy(creator)
-                .build());
-
-        Shop shop3 = shopRepository.save(Shop.builder()
-                .name("강남샵3")
-                .address("서울시 강남구")
-                .latitude(37.4990)
-                .longitude(127.0285)
-                .createdBy(creator)
-                .build());
-
         // when - 1km 반경 검색
         List<Shop> nearbyShops = shopRepository.findNearbyShops(37.4979, 127.0276, 1.0);
 

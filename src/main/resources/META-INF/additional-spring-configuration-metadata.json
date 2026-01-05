@@ -1,0 +1,5 @@
+{"properties": [{
+  "name": "kakao.api.rest-api-key",
+  "type": "java.lang.String",
+  "description": "A description for 'kakao.api.rest-api-key'"
+}]}
