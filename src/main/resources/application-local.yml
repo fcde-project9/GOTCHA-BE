@@ -15,4 +15,4 @@ server:
   address: localhost
 
 cors:
-  allowed-origins: http://localhost:5173
+  allowed-origins: http://localhost:3000
