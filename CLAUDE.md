@@ -81,3 +81,7 @@ com.gotcha
 | `docs/skills/gotcha-entity.md` | Entity 작성 규칙 (Builder, BaseTimeEntity) |
 | `docs/skills/gotcha-test.md` | 테스트 작성 패턴 (Repository/Service/Controller) |
 | `docs/skills/gotcha-config.md` | 설정/yml 관리 규칙 (환경변수화) |
+
+## 문서 변경 로그
+
+문서 추가/수정/삭제 시 `docs/log/changelog.md`에 기록
