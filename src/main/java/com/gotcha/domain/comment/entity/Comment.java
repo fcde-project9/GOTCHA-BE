@@ -39,14 +39,14 @@ public class Comment extends BaseTimeEntity {
     private String content;
 
     @Column(nullable = false)
-    private Boolean isAnonymous;
+    private boolean isAnonymous;
 
     @Builder
     public Comment(Shop shop, User user, String content, Boolean isAnonymous) {
         this.shop = shop;
         this.user = user;
         this.content = content;
-        this.isAnonymous = isAnonymous != null ? isAnonymous : false;
+        this.isAnonymous = isAnonymous != null && isAnonymous;
     }
 
     public void updateContent(String content) {
