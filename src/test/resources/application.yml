@@ -12,3 +12,7 @@ jwt:
   secret: test-secret-key-for-unit-testing-must-be-at-least-32-characters-long
   access-token-validity: 3600000
   refresh-token-validity: 1209600000
+
+# CORS Configuration for tests
+cors:
+  allowed-origins: http://localhost:3000

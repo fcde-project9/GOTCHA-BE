@@ -2,8 +2,10 @@ package com.gotcha._global.config;
 
 import com.gotcha.domain.auth.jwt.JwtAuthenticationEntryPoint;
 import com.gotcha.domain.auth.jwt.JwtAuthenticationFilter;
+import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -25,6 +27,9 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
+    @Value("${cors.allowed-origins}")
+    private String allowedOrigins;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
@@ -42,8 +47,9 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/api/v3/api-docs/**").permitAll()
                         // Authenticated - 사용자
                         .requestMatchers("/api/users/**").authenticated()
+                        // Public - 가게 제보 (비회원도 가능)
+                        .requestMatchers(HttpMethod.POST, "/api/shops/report").permitAll()
                         // Authenticated - 가게 관련 인증 필요 액션
-                        .requestMatchers(HttpMethod.POST, "/api/shops/report").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/shops/*/favorite").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/shops/*/favorite").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/shops/*/comments").authenticated()
@@ -65,9 +71,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("*"));
+        configuration.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
         configuration.setExposedHeaders(List.of("Authorization"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

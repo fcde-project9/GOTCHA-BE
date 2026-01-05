@@ -18,8 +18,8 @@ server:
 # JWT Configuration
 jwt:
   secret: ${JWT_SECRET:default-secret-key-for-local-development-only-replace-in-production}
-  access-token-validity: 3600000  # 1시간 (ms)
-  refresh-token-validity: 1209600000  # 14일 (ms)
+  access-token-validity: ${JWT_ACCESS_TOKEN_VALIDITY:3600000}  # 1시간 (ms)
+  refresh-token-validity: ${JWT_REFRESH_TOKEN_VALIDITY:1209600000}  # 14일 (ms)
 
 
 # Springdoc OpenAPI Configuration
