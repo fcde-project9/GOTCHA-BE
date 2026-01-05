@@ -139,4 +139,55 @@ class FavoriteRepositoryTest {
         Optional<Favorite> found = favoriteRepository.findByUserIdAndShopId(user.getId(), shop.getId());
         assertThat(found).isEmpty();
     }
+
+    @Test
+    @DisplayName("존재하지 않는 즐겨찾기 조회 시 빈 Optional 반환")
+    void findByUserIdAndShopId_NotFound() {
+        // when
+        Optional<Favorite> found = favoriteRepository.findByUserIdAndShopId(user.getId(), shop.getId());
+
+        // then
+        assertThat(found).isEmpty();
+    }
+
+    @Test
+    @DisplayName("즐겨찾기 없는 사용자의 목록 조회 시 빈 리스트 반환")
+    void findAllByUserId_Empty() {
+        // when
+        List<Favorite> favorites = favoriteRepository.findAllByUserId(user.getId());
+
+        // then
+        assertThat(favorites).isEmpty();
+    }
+
+    @Test
+    @DisplayName("즐겨찾기 없는 샵의 카운트 조회 시 0 반환")
+    void countByShopId_Zero() {
+        // when
+        Long count = favoriteRepository.countByShopId(shop.getId());
+
+        // then
+        assertThat(count).isZero();
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 즐겨찾기 삭제 시 에러 없이 진행")
+    void deleteByUserIdAndShopId_NotExists() {
+        // when & then - 존재하지 않는 데이터 삭제 시 에러 없음
+        favoriteRepository.deleteByUserIdAndShopId(user.getId(), shop.getId());
+        favoriteRepository.flush();
+
+        // 검증 - 에러 없이 정상 완료
+        assertThat(favoriteRepository.findByUserIdAndShopId(user.getId(), shop.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 사용자 ID로 조회 시 빈 리스트 반환")
+    void findAllByUserId_NonExistentUser() {
+        // when
+        List<Favorite> favorites = favoriteRepository.findAllByUserId(999999L);
+
+        // then
+        assertThat(favorites).isEmpty();
+    }
 }

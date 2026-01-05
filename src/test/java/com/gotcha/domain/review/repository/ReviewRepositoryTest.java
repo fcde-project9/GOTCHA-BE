@@ -130,4 +130,86 @@ class ReviewRepositoryTest {
         assertThat(reviewPage.getContent()).isEmpty();
         assertThat(reviewPage.getTotalElements()).isZero();
     }
+
+    @Test
+    @DisplayName("존재하지 않는 샵 ID로 리뷰 조회 시 빈 페이지 반환")
+    void findAllByShopIdOrderByCreatedAtDesc_NonExistentShop() {
+        // when
+        Page<Review> reviewPage = reviewRepository.findAllByShopIdOrderByCreatedAtDesc(
+                999999L, PageRequest.of(0, 10));
+
+        // then
+        assertThat(reviewPage.getContent()).isEmpty();
+        assertThat(reviewPage.getTotalElements()).isZero();
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 사용자/샵으로 리뷰 존재 여부 확인 시 false 반환")
+    void existsByUserIdAndShopId_NonExistentUserOrShop() {
+        // when
+        boolean exists1 = reviewRepository.existsByUserIdAndShopId(999999L, shop.getId());
+        boolean exists2 = reviewRepository.existsByUserIdAndShopId(user.getId(), 999999L);
+
+        // then
+        assertThat(exists1).isFalse();
+        assertThat(exists2).isFalse();
+    }
+
+    @Test
+    @DisplayName("같은 사용자가 다른 샵에 리뷰 작성 가능")
+    void existsByUserIdAndShopId_SameUserDifferentShops() {
+        // given
+        User shopCreator = userRepository.save(User.builder()
+                .socialType(SocialType.KAKAO)
+                .socialId("creator456")
+                .nickname("다른제보자")
+                .build());
+
+        Shop anotherShop = shopRepository.save(Shop.builder()
+                .name("다른가챠샵")
+                .address("서울시 서초구")
+                .latitude(37.4837)
+                .longitude(127.0324)
+                .createdBy(shopCreator)
+                .build());
+
+        reviewRepository.save(Review.builder()
+                .shop(shop)
+                .user(user)
+                .content("첫번째 샵 리뷰")
+                .build());
+
+        reviewRepository.save(Review.builder()
+                .shop(anotherShop)
+                .user(user)
+                .content("두번째 샵 리뷰")
+                .build());
+
+        // when
+        boolean existsInShop1 = reviewRepository.existsByUserIdAndShopId(user.getId(), shop.getId());
+        boolean existsInShop2 = reviewRepository.existsByUserIdAndShopId(user.getId(), anotherShop.getId());
+
+        // then
+        assertThat(existsInShop1).isTrue();
+        assertThat(existsInShop2).isTrue();
+    }
+
+    @Test
+    @DisplayName("페이지 범위 초과 시 빈 페이지 반환")
+    void findAllByShopIdOrderByCreatedAtDesc_PageOutOfRange() {
+        // given
+        reviewRepository.save(Review.builder()
+                .shop(shop)
+                .user(user)
+                .content("리뷰")
+                .build());
+
+        // when
+        Page<Review> reviewPage = reviewRepository.findAllByShopIdOrderByCreatedAtDesc(
+                shop.getId(), PageRequest.of(100, 10));
+
+        // then
+        assertThat(reviewPage.getContent()).isEmpty();
+        assertThat(reviewPage.getTotalElements()).isEqualTo(1);
+    }
 }

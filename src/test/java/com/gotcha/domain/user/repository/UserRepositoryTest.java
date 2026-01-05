@@ -96,4 +96,42 @@ class UserRepositoryTest {
         // then
         assertThat(exists).isFalse();
     }
+
+    @Test
+    @DisplayName("동일 소셜ID, 다른 소셜타입으로 조회 시 빈 Optional 반환")
+    void findBySocialTypeAndSocialId_DifferentSocialType() {
+        // given
+        User user = User.builder()
+                .socialType(SocialType.KAKAO)
+                .socialId("same123")
+                .nickname("카카오유저")
+                .build();
+        userRepository.save(user);
+
+        // when - 같은 socialId지만 다른 socialType으로 조회
+        Optional<User> found = userRepository.findBySocialTypeAndSocialId(SocialType.GOOGLE, "same123");
+
+        // then
+        assertThat(found).isEmpty();
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 닉네임으로 조회 시 빈 Optional 반환")
+    void findByNickname_NotFound() {
+        // when
+        Optional<User> found = userRepository.findByNickname("존재하지않는닉네임");
+
+        // then
+        assertThat(found).isEmpty();
+    }
+
+    @Test
+    @DisplayName("빈 문자열 닉네임으로 조회")
+    void findByNickname_EmptyString() {
+        // when
+        Optional<User> found = userRepository.findByNickname("");
+
+        // then
+        assertThat(found).isEmpty();
+    }
 }

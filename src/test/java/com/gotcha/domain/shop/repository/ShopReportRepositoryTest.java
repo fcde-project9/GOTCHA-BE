@@ -119,4 +119,73 @@ class ShopReportRepositoryTest {
         // then
         assertThat(shopReportRepository.findById(reportId)).isEmpty();
     }
+
+    @Test
+    @DisplayName("존재하지 않는 ID로 조회 시 빈 Optional 반환")
+    void findById_NotFound() {
+        // when
+        Optional<ShopReport> found = shopReportRepository.findById(999999L);
+
+        // then
+        assertThat(found).isEmpty();
+    }
+
+    @Test
+    @DisplayName("익명 여부 기본값 확인 - null 전달 시 false")
+    void save_AnonymousDefaultValue() {
+        // given
+        ShopReport report = ShopReport.builder()
+                .shop(shop)
+                .reporter(reporter)
+                .reportTitle("test")
+                .reportContent("테스트")
+                .isAnonymous(null)
+                .build();
+
+        // when
+        ShopReport savedReport = shopReportRepository.save(report);
+
+        // then
+        assertThat(savedReport.getIsAnonymous()).isFalse();
+    }
+
+    @Test
+    @DisplayName("빈 reportContent로 제보 저장")
+    void save_EmptyContent() {
+        // given
+        ShopReport report = ShopReport.builder()
+                .shop(shop)
+                .reporter(reporter)
+                .reportTitle("new")
+                .reportContent("")
+                .isAnonymous(false)
+                .build();
+
+        // when
+        ShopReport savedReport = shopReportRepository.save(report);
+
+        // then
+        assertThat(savedReport.getId()).isNotNull();
+        assertThat(savedReport.getReportContent()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("null reportContent로 제보 저장")
+    void save_NullContent() {
+        // given
+        ShopReport report = ShopReport.builder()
+                .shop(shop)
+                .reporter(reporter)
+                .reportTitle("update")
+                .reportContent(null)
+                .isAnonymous(true)
+                .build();
+
+        // when
+        ShopReport savedReport = shopReportRepository.save(report);
+
+        // then
+        assertThat(savedReport.getId()).isNotNull();
+        assertThat(savedReport.getReportContent()).isNull();
+    }
 }

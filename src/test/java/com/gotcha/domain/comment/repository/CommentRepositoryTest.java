@@ -105,4 +105,54 @@ class CommentRepositoryTest {
         assertThat(commentPage.getContent()).isEmpty();
         assertThat(commentPage.getTotalElements()).isZero();
     }
+
+    @Test
+    @DisplayName("존재하지 않는 샵 ID로 댓글 조회 시 빈 페이지 반환")
+    void findAllByShopIdOrderByCreatedAtDesc_NonExistentShop() {
+        // when
+        Page<Comment> commentPage = commentRepository.findAllByShopIdOrderByCreatedAtDesc(
+                999999L, PageRequest.of(0, 10));
+
+        // then
+        assertThat(commentPage.getContent()).isEmpty();
+        assertThat(commentPage.getTotalElements()).isZero();
+    }
+
+    @Test
+    @DisplayName("페이지 범위 초과 시 빈 페이지 반환")
+    void findAllByShopIdOrderByCreatedAtDesc_PageOutOfRange() {
+        // given
+        commentRepository.save(Comment.builder()
+                .shop(shop)
+                .user(user)
+                .content("댓글")
+                .isAnonymous(false)
+                .build());
+
+        // when - 페이지 100 요청 (데이터 1개뿐)
+        Page<Comment> commentPage = commentRepository.findAllByShopIdOrderByCreatedAtDesc(
+                shop.getId(), PageRequest.of(100, 10));
+
+        // then
+        assertThat(commentPage.getContent()).isEmpty();
+        assertThat(commentPage.getTotalElements()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("페이지 크기가 전체 데이터보다 클 때 모든 데이터 반환")
+    void findAllByShopIdOrderByCreatedAtDesc_LargePageSize() {
+        // given
+        commentRepository.save(Comment.builder()
+                .shop(shop).user(user).content("댓글1").isAnonymous(false).build());
+        commentRepository.save(Comment.builder()
+                .shop(shop).user(user).content("댓글2").isAnonymous(false).build());
+
+        // when - 페이지 크기 100으로 요청
+        Page<Comment> commentPage = commentRepository.findAllByShopIdOrderByCreatedAtDesc(
+                shop.getId(), PageRequest.of(0, 100));
+
+        // then
+        assertThat(commentPage.getContent()).hasSize(2);
+        assertThat(commentPage.getTotalElements()).isEqualTo(2);
+    }
 }

@@ -110,4 +110,79 @@ class ShopRepositoryTest {
         // then
         assertThat(nearbyShops).isEmpty();
     }
+
+    @Test
+    @DisplayName("반경 0으로 조회 시 빈 리스트 반환")
+    void findNearbyShops_ZeroRadius() {
+        // given
+        Shop shop = Shop.builder()
+                .name("가챠샵")
+                .address("서울시 강남구")
+                .latitude(37.4979)
+                .longitude(127.0276)
+                .createdBy(creator)
+                .build();
+        shopRepository.save(shop);
+
+        // when - 반경 0km로 검색
+        List<Shop> nearbyShops = shopRepository.findNearbyShops(37.4979, 127.0276, 0.0);
+
+        // then
+        assertThat(nearbyShops).isEmpty();
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 ID로 조회 시 빈 Optional 반환")
+    void findByIdWithCreator_NotFound() {
+        // when
+        Optional<Shop> found = shopRepository.findByIdWithCreator(999999L);
+
+        // then
+        assertThat(found).isEmpty();
+    }
+
+    @Test
+    @DisplayName("반경 내 여러 샵 조회")
+    void findNearbyShops_MultipleShops() {
+        // given - 강남역 주변 여러 샵 등록
+        Shop shop1 = shopRepository.save(Shop.builder()
+                .name("강남샵1")
+                .address("서울시 강남구")
+                .latitude(37.4979)
+                .longitude(127.0276)
+                .createdBy(creator)
+                .build());
+
+        Shop shop2 = shopRepository.save(Shop.builder()
+                .name("강남샵2")
+                .address("서울시 강남구")
+                .latitude(37.4985)
+                .longitude(127.0280)
+                .createdBy(creator)
+                .build());
+
+        Shop shop3 = shopRepository.save(Shop.builder()
+                .name("강남샵3")
+                .address("서울시 강남구")
+                .latitude(37.4990)
+                .longitude(127.0285)
+                .createdBy(creator)
+                .build());
+
+        // when - 1km 반경 검색
+        List<Shop> nearbyShops = shopRepository.findNearbyShops(37.4979, 127.0276, 1.0);
+
+        // then
+        assertThat(nearbyShops).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("샵 데이터 없을 때 반경 조회")
+    void findNearbyShops_NoShopsExist() {
+        // when
+        List<Shop> nearbyShops = shopRepository.findNearbyShops(37.4979, 127.0276, 10.0);
+
+        // then
+        assertThat(nearbyShops).isEmpty();
+    }
 }
