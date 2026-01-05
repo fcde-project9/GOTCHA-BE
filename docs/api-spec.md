@@ -3,20 +3,23 @@
 ## 공통 사항
 
 ### Base URL
-```
+```text
 /api
 ```
 
 ### 공통 Response 형식
+
+#### 성공
 ```json
-// 성공
 {
   "success": true,
   "data": { ... },
   "error": null
 }
+```
 
-// 실패
+#### 실패
+```json
 {
   "success": false,
   "data": null,
@@ -52,7 +55,7 @@
 **Path Parameters**
 | 파라미터 | 타입 | 필수 | 설명 |
 |---------|------|------|------|
-| provider | String | O | kakao, google, naver, apple |
+| provider | String | O | kakao, google, naver |
 
 **Request Body**
 ```json
@@ -191,6 +194,7 @@
 ```
 
 **Error Responses**
+
 | 코드 | 상황 |
 |------|------|
 | S001 | 가게를 찾을 수 없음 |

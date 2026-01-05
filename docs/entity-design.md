@@ -12,7 +12,7 @@
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | id | Long (PK) | |
-| social_type | Enum | KAKAO, GOOGLE, NAVER, APPLE |
+| social_type | Enum | KAKAO, GOOGLE, NAVER |
 | social_id | String | 소셜 제공자 ID |
 | nickname | String | ex: 빨간캡슐#21 |
 | profile_image_url | String | |

@@ -42,7 +42,7 @@ public class PostComment extends BaseTimeEntity {
     private String content;
 
     @Column(nullable = false)
-    private Boolean isAnonymous;
+    private boolean isAnonymous;
 
     @Builder
     public PostComment(Post post, User user, PostComment parent, String content, Boolean isAnonymous) {
@@ -50,7 +50,7 @@ public class PostComment extends BaseTimeEntity {
         this.user = user;
         this.parent = parent;
         this.content = content;
-        this.isAnonymous = isAnonymous != null ? isAnonymous : false;
+        this.isAnonymous = isAnonymous != null && isAnonymous;
     }
 
     public void updateContent(String content) {

@@ -78,11 +78,18 @@ public class Shop extends BaseTimeEntity {
         this.createdBy = createdBy;
     }
 
-    public void updateInfo(String name, String address, String locationHint, String openTime) {
+    public void updateInfo(String name, String address, Double latitude, Double longitude,
+                           String locationHint, String openTime,
+                           String region, String district, String neighborhood) {
         this.name = name;
         this.address = address;
+        this.latitude = latitude;
+        this.longitude = longitude;
         this.locationHint = locationHint;
         this.openTime = openTime;
+        this.region = region;
+        this.district = district;
+        this.neighborhood = neighborhood;
     }
 
     public void updateMainImage(String mainImageUrl) {

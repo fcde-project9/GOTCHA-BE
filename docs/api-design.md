@@ -12,7 +12,7 @@
 
 | Method | Endpoint | 설명 |
 |--------|----------|------|
-| POST | /auth/login/{provider} | 소셜 로그인 (kakao, google, naver, apple) |
+| POST | /auth/login/{provider} | 소셜 로그인 (kakao, google, naver) |
 | GET | /auth/nickname/random | 랜덤 닉네임 생성 |
 
 ---
