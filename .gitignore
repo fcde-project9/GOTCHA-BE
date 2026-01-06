@@ -52,3 +52,7 @@ docs/chan/
 ### JSON files ###
 *.json
 !**/META-INF/**/*.json
+
+### Logs and system files ###
+*.log
+nul

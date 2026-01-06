@@ -29,6 +29,9 @@ public record ShopResponse(
         @Schema(description = "찾아가는 힌트")
         String locationHint,
 
+        @Schema(description = "운영 시간 (JSON 형식)", example = "{\"mon\": \"10:00-22:00\", \"tue\": \"10:00-22:00\"}")
+        String openTime,
+
         @Schema(description = "시/도", example = "경기")
         String region1DepthName,
 
@@ -57,6 +60,7 @@ public record ShopResponse(
                 shop.getLongitude(),
                 shop.getMainImageUrl(),
                 shop.getLocationHint(),
+                shop.getOpenTime(),
                 shop.getRegion1DepthName(),
                 shop.getRegion2DepthName(),
                 shop.getRegion3DepthName(),
