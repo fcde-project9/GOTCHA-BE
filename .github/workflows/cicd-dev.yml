@@ -46,6 +46,7 @@ jobs:
             --region asia-northeast3 \
             --allow-unauthenticated \
             --port 8080 \
+            --service-account github-actions@gotcha-483107.iam.gserviceaccount.com \
             --project ${{ secrets.GCP_PROJECT_ID }} \
             --add-cloudsql-instances=${{ secrets.CLOUD_SQL_CONNECTION_NAME_DEV }} \
             --update-env-vars SPRING_PROFILES_ACTIVE=dev \
