@@ -45,3 +45,6 @@ application-secret.yml
 
 ### Personal ###
 docs/chan/
+
+### Claude Automation ###
+.claude/logs/

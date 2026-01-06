@@ -38,7 +38,13 @@ jobs:
 
       - name: Deploy to Cloud Run (Dev)
         run: |
-          gcloud run deploy gotcha-be-dev \
+          echo "=== Deploy Configuration ==="
+          echo "Project ID: ${{ secrets.GCP_PROJECT_ID }}"
+          echo "Region: asia-northeast3"
+          echo "Service: gotcha-be-dev"
+          echo "==========================="
+
+          yes | gcloud run deploy gotcha-be-dev \
             --source . \
             --platform managed \
             --region asia-northeast3 \
@@ -46,3 +52,5 @@ jobs:
             --project ${{ secrets.GCP_PROJECT_ID }} \
             --add-cloudsql-instances=${{ secrets.CLOUD_SQL_CONNECTION_NAME_DEV }} \
             --update-env-vars SPRING_PROFILES_ACTIVE=dev,SPRING_DATASOURCE_URL=${{ secrets.DB_URL_DEV }},SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USERNAME_DEV }},SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD_DEV }}
+
+          echo "=== Deploy completed ==="

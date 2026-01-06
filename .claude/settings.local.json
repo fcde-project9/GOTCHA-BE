@@ -8,7 +8,11 @@
       "Bash(findstr:*)",
       "Bash(taskkill:*)",
       "Bash(curl:*)",
-      "Bash(psql:*)"
+      "Bash(psql:*)",
+      "Bash(.gradlew.bat clean build -x test)",
+      "Bash(gradlew.bat clean build:*)",
+      "Bash(./gradlew clean build:*)",
+      "Bash(./gradlew bootRun:*)"
     ]
   }
 }
