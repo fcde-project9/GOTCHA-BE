@@ -48,3 +48,5 @@ docs/chan/
 
 ### Claude Automation ###
 .claude/logs/
+
+.json
