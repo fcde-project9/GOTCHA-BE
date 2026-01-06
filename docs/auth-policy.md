@@ -26,15 +26,57 @@
 
 ## 소셜 로그인 플로우
 
-```
-1. 프론트: 소셜 로그인 → Access Token 획득
-2. 프론트: POST /api/auth/login/{provider} + Access Token
-3. 백엔드: 소셜 API로 사용자 정보 조회
-4. 백엔드:
-   - 기존 회원 → 로그인 처리
+### OAuth2 Login (Spring Security OAuth2 Client)
+
+```text
+1. 프론트: /oauth2/authorize/{provider} 호출
+2. 백엔드: 소셜 로그인 페이지로 리다이렉트
+3. 사용자: 소셜 로그인 진행
+4. 백엔드: /api/auth/callback/{provider}로 콜백 수신
+5. 백엔드: CustomOAuth2UserService에서 사용자 정보 처리
+   - 기존 회원 → 프로필 업데이트 + 마지막 로그인 시간 갱신
    - 신규 회원 → 자동 회원가입 + 랜덤 닉네임 생성
-5. 백엔드: JWT 토큰 발급
-6. 프론트: 토큰 저장 후 API 요청에 사용
+6. 백엔드: OAuth2AuthenticationSuccessHandler에서 JWT 발급
+7. 백엔드: 프론트엔드 콜백 URL로 리다이렉트 (토큰 쿼리 파라미터)
+8. 프론트: 토큰 저장 후 API 요청에 사용
+```
+
+### 지원 소셜 로그인
+
+| Provider | 엔드포인트 | scope |
+|----------|-----------|-------|
+| 카카오 | /oauth2/authorize/kakao | profile_nickname, account_email |
+| 구글 | /oauth2/authorize/google | profile, email |
+| 네이버 | /oauth2/authorize/naver | name, email, profile_image |
+
+### OAuth2 관련 클래스
+
+| 클래스 | 설명 |
+|--------|------|
+| CustomOAuth2UserService | OAuth2 로그인 처리, 사용자 생성/조회 |
+| CustomOAuth2User | OAuth2User 구현체, 인증된 사용자 정보 |
+| OAuth2UserInfo | 소셜별 사용자 정보 추상화 |
+| OAuth2UserInfoFactory | 소셜별 OAuth2UserInfo 생성 |
+| OAuth2AuthenticationSuccessHandler | 로그인 성공 시 JWT 발급 및 리다이렉트 |
+| OAuth2AuthenticationFailureHandler | 로그인 실패 시 에러 리다이렉트 |
+
+### 환경변수
+
+```bash
+# 카카오
+KAKAO_CLIENT_ID=카카오 앱 REST API 키
+KAKAO_CLIENT_SECRET=카카오 앱 시크릿 키
+
+# 구글
+GOOGLE_CLIENT_ID=구글 OAuth 2.0 클라이언트 ID
+GOOGLE_CLIENT_SECRET=구글 OAuth 2.0 클라이언트 시크릿
+
+# 네이버
+NAVER_CLIENT_ID=네이버 앱 Client ID
+NAVER_CLIENT_SECRET=네이버 앱 Client Secret
+
+# 리다이렉트 URI (로그인 성공 후 프론트엔드 콜백)
+OAUTH2_REDIRECT_URI=http://localhost:3000/oauth/callback
 ```
 
 ---
@@ -45,7 +87,9 @@
 
 | Method | Endpoint | 설명 |
 |--------|----------|------|
-| POST | /auth/login/{provider} | 소셜 로그인 |
+| GET | /oauth2/authorize/{provider} | OAuth2 소셜 로그인 시작 |
+| GET | /api/auth/callback/{provider} | OAuth2 콜백 |
+| POST | /auth/login/{provider} | 소셜 로그인 (레거시) |
 | GET | /auth/nickname/random | 랜덤 닉네임 |
 | GET | /shops | 가게 목록 |
 | GET | /shops/{id} | 가게 상세 |
