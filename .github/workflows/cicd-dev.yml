@@ -52,4 +52,5 @@ jobs:
             --update-env-vars SPRING_PROFILES_ACTIVE=dev \
             --update-env-vars SPRING_DATASOURCE_URL="${{ secrets.DB_URL_DEV }}" \
             --update-env-vars SPRING_DATASOURCE_USERNAME="${{ secrets.DB_USERNAME_DEV }}" \
-            --update-env-vars SPRING_DATASOURCE_PASSWORD="${{ secrets.DB_PASSWORD_DEV }}"
+            --update-env-vars SPRING_DATASOURCE_PASSWORD="${{ secrets.DB_PASSWORD_DEV }}" \
+            --update-env-vars CORS_ALLOWED_ORIGINS="${{ secrets.CORS_ALLOWED_ORIGINS_DEV }}"
