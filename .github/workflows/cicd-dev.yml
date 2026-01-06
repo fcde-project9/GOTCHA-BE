@@ -48,4 +48,7 @@ jobs:
             --port 8080 \
             --project ${{ secrets.GCP_PROJECT_ID }} \
             --add-cloudsql-instances=${{ secrets.CLOUD_SQL_CONNECTION_NAME_DEV }} \
-            --set-env-vars SPRING_PROFILES_ACTIVE=dev,SPRING_DATASOURCE_URL=${{ secrets.DB_URL_DEV }},SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USERNAME_DEV }},SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD_DEV }}
+            --update-env-vars SPRING_PROFILES_ACTIVE=dev \
+            --update-env-vars SPRING_DATASOURCE_URL="${{ secrets.DB_URL_DEV }}" \
+            --update-env-vars SPRING_DATASOURCE_USERNAME="${{ secrets.DB_USERNAME_DEV }}" \
+            --update-env-vars SPRING_DATASOURCE_PASSWORD="${{ secrets.DB_PASSWORD_DEV }}"
