@@ -2,6 +2,9 @@ package com.gotcha._global.config;
 
 import com.gotcha.domain.auth.jwt.JwtAuthenticationEntryPoint;
 import com.gotcha.domain.auth.jwt.JwtAuthenticationFilter;
+import com.gotcha.domain.auth.oauth2.CustomOAuth2UserService;
+import com.gotcha.domain.auth.oauth2.OAuth2AuthenticationFailureHandler;
+import com.gotcha.domain.auth.oauth2.OAuth2AuthenticationSuccessHandler;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,6 +30,9 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+    private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
 
     @Value("${cors.allowed-origins}")
     private String allowedOrigins;
@@ -42,6 +48,8 @@ public class SecurityConfig {
                         // Public - 인증
                         .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auth/**").permitAll()
+                        // Public - OAuth2 로그인
+                        .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         // Public - 가게 조회
                         .requestMatchers(HttpMethod.GET, "/api/shops/**").permitAll()
                         // Swagger
@@ -63,6 +71,16 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         // 기타 모든 요청은 인증 필요
                         .anyRequest().permitAll()
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .authorizationEndpoint(authorization ->
+                                authorization.baseUri("/oauth2/authorize"))
+                        .redirectionEndpoint(redirection ->
+                                redirection.baseUri("/api/auth/callback/*"))
+                        .userInfoEndpoint(userInfo ->
+                                userInfo.userService(customOAuth2UserService))
+                        .successHandler(oAuth2AuthenticationSuccessHandler)
+                        .failureHandler(oAuth2AuthenticationFailureHandler)
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
