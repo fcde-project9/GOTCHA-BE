@@ -52,7 +52,7 @@ server:
 
 kakao:
   api:
-    rest-api-key: ${KAKAO_REST_API_KEY}
+    rest-api-key: ${KAKAO_REST_API_KEY:local-dev-kakao-key}
     base-url: https://dapi.kakao.com
 # JWT Configuration
 jwt:

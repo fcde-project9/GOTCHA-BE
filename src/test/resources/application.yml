@@ -55,3 +55,9 @@ oauth2:
 # CORS Configuration for tests
 cors:
   allowed-origins: http://localhost:3000
+
+# Kakao Map API for tests
+kakao:
+  api:
+    rest-api-key: test-kakao-rest-api-key
+    base-url: https://dapi.kakao.com
