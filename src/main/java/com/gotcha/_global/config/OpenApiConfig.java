@@ -24,13 +24,13 @@ public class OpenApiConfig {
                                 .email("fcdegotcha@gmail.com")))
                 .servers(List.of(
                         new Server()
-                                .url("http://localhost:8080/api")
+                                .url("http://localhost:8080")
                                 .description("Local Development Server"),
                         new Server()
-                                .url("https://api.dev.gotcha.it.com/api")
+                                .url("https://api.dev.gotcha.it.com")
                                 .description("Dev Server"),
                         new Server()
-                                .url("https://api.gotcha.it.com/api")
+                                .url("https://api.gotcha.it.com")
                                 .description("Production Server")
                 ));
     }

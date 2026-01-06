@@ -48,3 +48,7 @@ docs/chan/
 
 ### Claude Automation ###
 .claude/logs/
+
+### JSON files ###
+*.json
+!**/META-INF/**/*.json
