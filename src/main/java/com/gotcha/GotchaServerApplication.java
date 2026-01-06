@@ -9,5 +9,4 @@ public class GotchaServerApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(GotchaServerApplication.class, args);
 	}
-
 }
