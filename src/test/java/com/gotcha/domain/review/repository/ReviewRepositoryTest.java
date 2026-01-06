@@ -59,7 +59,7 @@ class ReviewRepositoryTest {
 
         shop = shopRepository.save(Shop.builder()
                 .name("가챠샵")
-                .address("서울시 강남구")
+                .addressName("서울시 강남구")
                 .latitude(37.4979)
                 .longitude(127.0276)
                 .createdBy(creator)
@@ -167,7 +167,7 @@ class ReviewRepositoryTest {
 
         Shop anotherShop = shopRepository.save(Shop.builder()
                 .name("다른가챠샵")
-                .address("서울시 서초구")
+                .addressName("서울시 서초구")
                 .latitude(37.4837)
                 .longitude(127.0324)
                 .createdBy(shopCreator)
