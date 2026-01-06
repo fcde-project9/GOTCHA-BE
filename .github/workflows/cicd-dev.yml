@@ -32,8 +32,8 @@ jobs:
       # 4. Docker 빌드 및 Artifact Registry 푸시
       - name: Build and Push Docker Image
         run: |
-          gcloud auth configure-docker asia-northeast3-docker.pkg.dev
-          IMAGE_NAME="asia-northeast3-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/gotcha-repo/gotcha-be-dev:${{ github.sha }}"
+          gcloud auth configure-docker asia-northeast1-docker.pkg.dev
+          IMAGE_NAME="asia-northeast1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/gotcha-repo/gotcha-be-dev:${{ github.sha }}"
           docker build -t $IMAGE_NAME .
           docker push $IMAGE_NAME
 
@@ -41,9 +41,9 @@ jobs:
       - name: Deploy to Cloud Run (Dev)
         run: |
           gcloud run deploy gotcha-be-dev \
-            --image asia-northeast3-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/gotcha-repo/gotcha-be-dev:${{ github.sha }} \
+            --image asia-northeast1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/gotcha-repo/gotcha-be-dev:${{ github.sha }} \
             --platform managed \
-            --region asia-northeast3 \
+            --region asia-northeast1 \
             --allow-unauthenticated \
             --port 8080 \
             --service-account github-actions@gotcha-483107.iam.gserviceaccount.com \
