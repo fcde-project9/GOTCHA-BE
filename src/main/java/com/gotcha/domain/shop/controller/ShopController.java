@@ -54,7 +54,8 @@ public class ShopController {
                 latitude,
                 longitude,
                 request.mainImageUrl(),
-                request.locationHint()
+                request.locationHint(),
+                request.openTime()
         );
 
         return ApiResponse.success(ShopResponse.from(shop));

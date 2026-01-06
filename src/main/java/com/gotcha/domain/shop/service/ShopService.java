@@ -1,10 +1,13 @@
 package com.gotcha.domain.shop.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gotcha._global.external.kakao.KakaoMapClient;
 import com.gotcha._global.external.kakao.dto.AddressInfo;
 import com.gotcha.domain.shop.entity.Shop;
 import com.gotcha.domain.shop.exception.ShopException;
 import com.gotcha.domain.shop.repository.ShopRepository;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,12 +21,13 @@ public class ShopService {
 
     private final ShopRepository shopRepository;
     private final KakaoMapClient kakaoMapClient;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public Shop createShop(String name, Double latitude, Double longitude,
-                           String mainImageUrl, String locationHint) {
+                           String mainImageUrl, String locationHint, Map<String, String> openTime) {
         log.info("=== createShop START ===");
-        log.info("Input - name: {}, lat: {}, lng: {}", name, latitude, longitude);
+        log.info("Input - name: {}, lat: {}, lng: {}, openTime: {}", name, latitude, longitude, openTime);
 
         try {
             validateCoordinates(latitude, longitude);
@@ -36,6 +40,8 @@ public class ShopService {
             AddressInfo addressInfo = kakaoMapClient.getAddressInfo(latitude, longitude);
             log.info("AddressInfo received: {}", addressInfo);
 
+            String openTimeJson = convertOpenTimeMapToString(openTime);
+
             log.info("Building Shop entity...");
             Shop shop = Shop.builder()
                     .name(name)
@@ -44,6 +50,7 @@ public class ShopService {
                     .longitude(longitude)
                     .mainImageUrl(mainImageUrl)
                     .locationHint(locationHint)
+                    .openTime(openTimeJson)
                     .region1DepthName(addressInfo.region1DepthName())
                     .region2DepthName(addressInfo.region2DepthName())
                     .region3DepthName(addressInfo.region3DepthName())
@@ -60,6 +67,18 @@ public class ShopService {
         } catch (Exception e) {
             log.error("Error in createShop: ", e);
             throw e;
+        }
+    }
+
+    private String convertOpenTimeMapToString(Map<String, String> openTime) {
+        if (openTime == null) {
+            return null;
+        }
+        try {
+            return objectMapper.writeValueAsString(openTime);
+        } catch (JsonProcessingException e) {
+            log.error("Error converting openTime to JSON string", e);
+            throw new RuntimeException("Error converting openTime to JSON string", e);
         }
     }
 
