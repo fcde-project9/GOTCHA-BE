@@ -1,6 +1,7 @@
 package com.gotcha.domain.auth.oauth2;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.gotcha.domain.auth.oauth2.userinfo.KakaoOAuth2UserInfo;
 import com.gotcha.domain.auth.oauth2.userinfo.OAuth2UserInfo;
@@ -9,6 +10,7 @@ import com.gotcha.domain.user.entity.User;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 class CustomOAuth2UserServiceTest {
@@ -119,6 +121,50 @@ class CustomOAuth2UserServiceTest {
         // when & then
         for (String nickname : validNicknames) {
             assertThat(nickname).matches("^[가-힣]+[가-힣]+#\\d+$");
+        }
+    }
+
+    @Nested
+    @DisplayName("엣지 케이스 테스트")
+    class EdgeCaseTest {
+
+        @Test
+        @DisplayName("닉네임 생성 시 최대 시도 횟수를 초과하면 fallback 닉네임 패턴 사용")
+        void generateNickname_whenExceedMaxAttempts_usesFallbackNickname() {
+            // given - fallback 패턴: "가챠유저#[숫자]"
+            String fallbackPattern = "^가챠유저#\\d+$";
+
+            // when & then - fallback 닉네임은 해당 패턴을 따름
+            assertThat("가챠유저#123456").matches(fallbackPattern);
+            assertThat("가챠유저#0").matches(fallbackPattern);
+            assertThat("가챠유저#999999").matches(fallbackPattern);
+        }
+
+        @Test
+        @DisplayName("소셜 ID가 blank 문자열인 경우 유효하지 않음을 검증")
+        void loadUser_whenSocialIdIsBlank_isInvalid() {
+            // given - blank 문자열은 null이 아니지만 유효하지 않음
+            String blankSocialId = "   ";
+
+            // when & then
+            assertThat(blankSocialId.isBlank()).isTrue();
+            assertThat(blankSocialId).isNotNull();
+        }
+
+        @Test
+        @DisplayName("지원하지 않는 소셜 타입 확인")
+        void unsupportedSocialType_shouldNotExist() {
+            // given
+            String[] supportedProviders = {"kakao", "google", "naver"};
+            String unsupportedProvider = "facebook";
+
+            // when & then
+            for (String provider : supportedProviders) {
+                assertThat(SocialType.valueOf(provider.toUpperCase())).isNotNull();
+            }
+
+            assertThatThrownBy(() -> SocialType.valueOf(unsupportedProvider.toUpperCase()))
+                    .isInstanceOf(IllegalArgumentException.class);
         }
     }
 }

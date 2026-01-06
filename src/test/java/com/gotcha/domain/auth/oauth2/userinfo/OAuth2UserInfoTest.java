@@ -77,6 +77,33 @@ class OAuth2UserInfoTest {
             assertThat(userInfo.getEmail()).isEqualTo("test@kakao.com");
             assertThat(userInfo.getProfileImageUrl()).isNull();
         }
+
+        @Test
+        @DisplayName("카카오 사용자 정보 추출 - id가 null인 경우")
+        void extractKakaoUserInfo_withNullId_returnsNull() {
+            // given
+            Map<String, Object> attributes = new HashMap<>();
+            attributes.put("id", null);
+
+            // when
+            KakaoOAuth2UserInfo userInfo = new KakaoOAuth2UserInfo(attributes);
+
+            // then
+            assertThat(userInfo.getId()).isNull();
+        }
+
+        @Test
+        @DisplayName("카카오 사용자 정보 추출 - id 키가 없는 경우")
+        void extractKakaoUserInfo_withoutIdKey_returnsNull() {
+            // given
+            Map<String, Object> attributes = new HashMap<>();
+
+            // when
+            KakaoOAuth2UserInfo userInfo = new KakaoOAuth2UserInfo(attributes);
+
+            // then
+            assertThat(userInfo.getId()).isNull();
+        }
     }
 
     @Nested
