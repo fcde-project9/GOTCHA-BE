@@ -41,7 +41,7 @@ jobs:
           gcloud run deploy gotcha-be-prod \
             --source . \
             --platform managed \
-            --region asia-northeast3 \
+            --region asia-northeast1 \
             --allow-unauthenticated \
             --project ${{ secrets.GCP_PROJECT_ID }} \
             --add-cloudsql-instances=${{ secrets.CLOUD_SQL_CONNECTION_NAME_PROD }} \
