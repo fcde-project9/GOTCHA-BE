@@ -57,9 +57,6 @@ public class Shop extends BaseTimeEntity {
     @Column(length = 100)
     private String region3DepthName;
 
-    @Column(length = 1)
-    private String mountainYn;
-
     @Column(length = 10)
     private String mainAddressNo;
 
@@ -74,7 +71,7 @@ public class Shop extends BaseTimeEntity {
     public Shop(String name, String addressName, Double latitude, Double longitude,
                 String mainImageUrl, String locationHint, String openTime,
                 String region1DepthName, String region2DepthName, String region3DepthName,
-                String mountainYn, String mainAddressNo, String subAddressNo, User createdBy) {
+                String mainAddressNo, String subAddressNo, User createdBy) {
         this.name = name;
         this.addressName = addressName;
         this.latitude = latitude;
@@ -85,7 +82,6 @@ public class Shop extends BaseTimeEntity {
         this.region1DepthName = region1DepthName;
         this.region2DepthName = region2DepthName;
         this.region3DepthName = region3DepthName;
-        this.mountainYn = mountainYn;
         this.mainAddressNo = mainAddressNo;
         this.subAddressNo = subAddressNo;
         this.createdBy = createdBy;
@@ -94,7 +90,7 @@ public class Shop extends BaseTimeEntity {
     public void updateInfo(String name, String addressName, Double latitude, Double longitude,
                            String locationHint, String openTime,
                            String region1DepthName, String region2DepthName, String region3DepthName,
-                           String mountainYn, String mainAddressNo, String subAddressNo) {
+                           String mainAddressNo, String subAddressNo) {
         this.name = name;
         this.addressName = addressName;
         this.latitude = latitude;
@@ -104,7 +100,6 @@ public class Shop extends BaseTimeEntity {
         this.region1DepthName = region1DepthName;
         this.region2DepthName = region2DepthName;
         this.region3DepthName = region3DepthName;
-        this.mountainYn = mountainYn;
         this.mainAddressNo = mainAddressNo;
         this.subAddressNo = subAddressNo;
     }

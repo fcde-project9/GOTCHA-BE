@@ -19,14 +19,9 @@ public class ShopService {
     private final ShopRepository shopRepository;
     private final KakaoMapClient kakaoMapClient;
 
-    public Shop findById(Long id) {
-        return shopRepository.findById(id)
-                .orElseThrow(ShopException::notFound);
-    }
-
     @Transactional
     public Shop createShop(String name, Double latitude, Double longitude,
-                           String mainImageUrl, String locationHint, String openTime) {
+                           String mainImageUrl, String locationHint) {
         log.info("=== createShop START ===");
         log.info("Input - name: {}, lat: {}, lng: {}", name, latitude, longitude);
 
@@ -49,11 +44,9 @@ public class ShopService {
                     .longitude(longitude)
                     .mainImageUrl(mainImageUrl)
                     .locationHint(locationHint)
-                    .openTime(openTime)
                     .region1DepthName(addressInfo.region1DepthName())
                     .region2DepthName(addressInfo.region2DepthName())
                     .region3DepthName(addressInfo.region3DepthName())
-                    .mountainYn(addressInfo.mountainYn())
                     .mainAddressNo(addressInfo.mainAddressNo())
                     .subAddressNo(addressInfo.subAddressNo())
                     .build();

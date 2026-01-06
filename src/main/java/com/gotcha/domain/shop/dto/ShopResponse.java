@@ -29,9 +29,6 @@ public record ShopResponse(
         @Schema(description = "찾아가는 힌트")
         String locationHint,
 
-        @Schema(description = "영업시간 (JSON)")
-        String openTime,
-
         @Schema(description = "시/도", example = "경기")
         String region1DepthName,
 
@@ -40,9 +37,6 @@ public record ShopResponse(
 
         @Schema(description = "읍/면/동 리", example = "죽산면 죽산리")
         String region3DepthName,
-
-        @Schema(description = "산 여부", example = "N")
-        String mountainYn,
 
         @Schema(description = "본번", example = "343")
         String mainAddressNo,
@@ -63,11 +57,9 @@ public record ShopResponse(
                 shop.getLongitude(),
                 shop.getMainImageUrl(),
                 shop.getLocationHint(),
-                shop.getOpenTime(),
                 shop.getRegion1DepthName(),
                 shop.getRegion2DepthName(),
                 shop.getRegion3DepthName(),
-                shop.getMountainYn(),
                 shop.getMainAddressNo(),
                 shop.getSubAddressNo(),
                 shop.getCreatedAt()
