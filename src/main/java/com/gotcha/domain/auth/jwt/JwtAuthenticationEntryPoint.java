@@ -26,8 +26,9 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         Object authExceptionAttr = request.getAttribute("authException");
 
         AuthErrorCode errorCode;
-        if (authExceptionAttr instanceof BusinessException businessException) {
-            errorCode = (AuthErrorCode) businessException.getErrorCode();
+        if (authExceptionAttr instanceof BusinessException businessException
+                && businessException.getErrorCode() instanceof AuthErrorCode authErrorCode) {
+            errorCode = authErrorCode;
         } else {
             errorCode = AuthErrorCode.UNAUTHORIZED;
         }

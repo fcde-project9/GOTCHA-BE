@@ -33,7 +33,7 @@ jwt:
 
 ## 파일 구조
 
-```
+```text
 src/main/resources/
 ├── application.yml          # 공통 설정
 ├── application-local.yml    # 로컬 개발
@@ -113,7 +113,7 @@ CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
 
 ## .gitignore 확인
 
-```
+```text
 .env
 .env.*
 *.env
