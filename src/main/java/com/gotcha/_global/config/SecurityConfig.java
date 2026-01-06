@@ -69,7 +69,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/shops/*/reviews/*").authenticated()
                         // Admin
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        // 기타 모든 요청은 인증 필요
+                        // TODO: 프로덕션 배포 전 .authenticated()로 변경 필수!
+                        // 현재는 개발 편의상 permitAll() 사용 중
+                        // 변경하지 않으면 새로 추가되는 API가 인증 없이 노출됨
                         .anyRequest().permitAll()
                 )
                 .oauth2Login(oauth2 -> oauth2
