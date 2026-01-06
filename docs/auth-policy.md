@@ -28,7 +28,7 @@
 
 ### OAuth2 Login (Spring Security OAuth2 Client)
 
-```
+```text
 1. 프론트: /oauth2/authorize/{provider} 호출
 2. 백엔드: 소셜 로그인 페이지로 리다이렉트
 3. 사용자: 소셜 로그인 진행
@@ -62,7 +62,7 @@
 
 ### 환경변수
 
-```
+```bash
 # 카카오
 KAKAO_CLIENT_ID=카카오 앱 REST API 키
 KAKAO_CLIENT_SECRET=카카오 앱 시크릿 키

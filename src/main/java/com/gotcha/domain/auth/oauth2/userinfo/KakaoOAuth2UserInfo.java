@@ -26,7 +26,8 @@ public class KakaoOAuth2UserInfo extends OAuth2UserInfo {
             return null;
         }
 
-        return (String) profile.get("nickname");
+        Object nickname = profile.get("nickname");
+        return nickname instanceof String ? (String) nickname : null;
     }
 
     @Override
@@ -35,7 +36,8 @@ public class KakaoOAuth2UserInfo extends OAuth2UserInfo {
         if (kakaoAccount == null) {
             return null;
         }
-        return (String) kakaoAccount.get("email");
+        Object email = kakaoAccount.get("email");
+        return email instanceof String ? (String) email : null;
     }
 
     @Override
@@ -50,7 +52,8 @@ public class KakaoOAuth2UserInfo extends OAuth2UserInfo {
             return null;
         }
 
-        return (String) profile.get("profile_image_url");
+        Object profileImageUrl = profile.get("profile_image_url");
+        return profileImageUrl instanceof String ? (String) profileImageUrl : null;
     }
 
     @SuppressWarnings("unchecked")

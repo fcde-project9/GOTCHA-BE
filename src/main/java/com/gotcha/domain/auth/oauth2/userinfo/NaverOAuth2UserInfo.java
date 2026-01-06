@@ -14,7 +14,8 @@ public class NaverOAuth2UserInfo extends OAuth2UserInfo {
         if (response == null) {
             return null;
         }
-        return (String) response.get("id");
+        Object id = response.get("id");
+        return id instanceof String ? (String) id : (id != null ? String.valueOf(id) : null);
     }
 
     @Override
@@ -23,7 +24,8 @@ public class NaverOAuth2UserInfo extends OAuth2UserInfo {
         if (response == null) {
             return null;
         }
-        return (String) response.get("name");
+        Object name = response.get("name");
+        return name instanceof String ? (String) name : null;
     }
 
     @Override
@@ -32,7 +34,8 @@ public class NaverOAuth2UserInfo extends OAuth2UserInfo {
         if (response == null) {
             return null;
         }
-        return (String) response.get("email");
+        Object email = response.get("email");
+        return email instanceof String ? (String) email : null;
     }
 
     @Override
@@ -41,7 +44,8 @@ public class NaverOAuth2UserInfo extends OAuth2UserInfo {
         if (response == null) {
             return null;
         }
-        return (String) response.get("profile_image");
+        Object profileImage = response.get("profile_image");
+        return profileImage instanceof String ? (String) profileImage : null;
     }
 
     @SuppressWarnings("unchecked")
