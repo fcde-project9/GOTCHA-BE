@@ -2,6 +2,7 @@ package com.gotcha.domain.shop.controller;
 
 import com.gotcha._global.common.ApiResponse;
 import com.gotcha.domain.shop.dto.CreateShopRequest;
+import com.gotcha.domain.shop.dto.NearbyShopResponse;
 import com.gotcha.domain.shop.dto.ShopResponse;
 import com.gotcha.domain.shop.entity.Shop;
 import com.gotcha.domain.shop.service.ShopService;
@@ -11,15 +12,11 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Shop", description = "가게 API")
 @RestController
@@ -59,5 +56,26 @@ public class ShopController {
         );
 
         return ApiResponse.success(ShopResponse.from(shop));
+    }
+
+    @Operation(
+            summary = "근처 가게 조회",
+            description = "현재 위도/경도 기준 50m 이내 가게를 거리 가까운 순서로 조회합니다"
+    )
+    @GetMapping("/nearby")
+    public ApiResponse<List<NearbyShopResponse>> getNearbyShops(
+            @RequestParam
+            @NotNull(message = "위도는 필수입니다")
+            @DecimalMin(value = "-90.0", message = "위도는 -90 이상이어야 합니다")
+            @DecimalMax(value = "90.0", message = "위도는 90 이하여야 합니다")
+            Double latitude,
+            @RequestParam
+            @NotNull(message = "경도는 필수입니다")
+            @DecimalMin(value = "-180.0", message = "경도는 -180 이상이어야 합니다")
+            @DecimalMax(value = "180.0", message = "경도는 180 이하여야 합니다")
+            Double longitude
+    ) {
+        List<NearbyShopResponse> shops = shopService.getNearbyShops(latitude, longitude);
+        return ApiResponse.success(shops);
     }
 }
