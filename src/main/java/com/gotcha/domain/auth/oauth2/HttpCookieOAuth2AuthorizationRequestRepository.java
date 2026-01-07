@@ -8,6 +8,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.stereotype.Component;
@@ -58,11 +60,14 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
         String state = authorizationRequest.getState();
         authorizationRequests.put(state, authorizationRequest);
 
-        Cookie cookie = new Cookie(OAUTH2_STATE_COOKIE_NAME, state);
-        cookie.setPath("/");
-        cookie.setHttpOnly(true);
-        cookie.setMaxAge(COOKIE_EXPIRE_SECONDS);
-        response.addCookie(cookie);
+        ResponseCookie cookie = ResponseCookie.from(OAUTH2_STATE_COOKIE_NAME, state)
+                .path("/")
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("Lax")
+                .maxAge(COOKIE_EXPIRE_SECONDS)
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
         log.debug("Saved authorization request with state: {}", state);
     }
@@ -102,9 +107,13 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
     }
 
     private void removeAuthorizationRequestCookie(HttpServletRequest request, HttpServletResponse response) {
-        Cookie cookie = new Cookie(OAUTH2_STATE_COOKIE_NAME, "");
-        cookie.setPath("/");
-        cookie.setMaxAge(0);
-        response.addCookie(cookie);
+        ResponseCookie cookie = ResponseCookie.from(OAUTH2_STATE_COOKIE_NAME, "")
+                .path("/")
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("Lax")
+                .maxAge(0)
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 }
