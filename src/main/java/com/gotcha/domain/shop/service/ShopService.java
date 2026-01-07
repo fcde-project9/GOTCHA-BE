@@ -4,10 +4,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gotcha._global.external.kakao.KakaoMapClient;
 import com.gotcha._global.external.kakao.dto.AddressInfo;
+import com.gotcha.domain.shop.dto.NearbyShopResponse;
 import com.gotcha.domain.shop.entity.Shop;
 import com.gotcha.domain.shop.exception.ShopException;
 import com.gotcha.domain.shop.repository.ShopRepository;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -98,5 +101,23 @@ public class ShopService {
         if (name == null || name.length() < 2 || name.length() > 100) {
             throw ShopException.invalidName();
         }
+    }
+
+    @Transactional(readOnly = true)
+    public List<NearbyShopResponse> checkNearbyShopsBeforeSave(Double latitude, Double longitude) {
+        log.info("checkNearbyShopsBeforeSave - lat: {}, lng: {}", latitude, longitude);
+
+        // 좌표 검증 (기존 validateCoordinates 재사용)
+        validateCoordinates(latitude, longitude);
+
+        // 50m = 0.05km (Repository는 km 단위 사용)
+        List<Shop> shops = shopRepository.findNearbyShops(latitude, longitude, 0.05);
+
+        log.info("Found {} shops within 50m", shops.size());
+
+        // Stream으로 DTO 변환
+        return shops.stream()
+                .map(NearbyShopResponse::from)
+                .collect(Collectors.toList());
     }
 }

@@ -2,7 +2,7 @@
 
 ## 개요
 
-- **MVP (V1)**: users, shops, shop_reports, favorites, comments, reviews
+- **MVP (V1)**: users, shops, shop_reports, favorites, comments, reviews, withdrawal_surveys
 - **V2**: post_types, posts, post_comments, chat_rooms, chats, inquiries
 
 ---
@@ -17,6 +17,7 @@
 | nickname | String | ex: 빨간캡슐#21 |
 | profile_image_url | String | |
 | is_anonymous | Boolean | 게스트 여부 |
+| is_deleted | Boolean | 탈퇴 여부 (soft delete) |
 | last_login_at | LocalDateTime | |
 | created_at, updated_at | LocalDateTime | BaseTimeEntity |
 
@@ -28,15 +29,17 @@
 |------|------|------|
 | id | Long (PK) | |
 | name | String | 가게명 |
-| address | String | 주소 |
+| address_name | String | 전체 주소 (카카오 API 자동 변환) |
 | latitude | Double | 위도 |
 | longitude | Double | 경도 |
-| main_image_url | String | 대표 이미지 |
+| main_image_url | String | 대표 이미지 (필수) |
 | location_hint | String | 찾아가는 힌트 |
-| open_time | JSON (jsonb) | `{"mon": "10:00-22:00", ...}` |
-| region | String | 시/도 |
-| district | String | 구/군 |
-| neighborhood | String | 동 |
+| open_time | String | 영업시간 `"HH:mm-HH:mm"` (예: "10:00-22:00") |
+| region_1depth_name | String | 시/도 (예: 서울) |
+| region_2depth_name | String | 구/군 (예: 강남구) |
+| region_3depth_name | String | 동 (예: 신사동) |
+| main_address_no | String | 지번 본번 |
+| sub_address_no | String | 지번 부번 |
 | created_by | Long (FK → users) | 제보자 |
 | created_at, updated_at | LocalDateTime | |
 
@@ -96,6 +99,20 @@
 | content | String | |
 | image_url | String | 인증 이미지 |
 | created_at, updated_at | LocalDateTime | |
+
+---
+
+## withdrawal_surveys
+
+회원 탈퇴 설문
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | Long (PK) | |
+| user_id | Long (FK) | |
+| reason | Enum | NO_DESIRED_INFO, LOW_USAGE, INCONVENIENT, OTHER |
+| detail | String | 기타 사유 상세 |
+| created_at | LocalDateTime | |
 
 ---
 

@@ -143,6 +143,73 @@ class JwtTokenProviderTest {
     }
 
     @Nested
+    @DisplayName("validateToken 일관성 테스트")
+    class ValidateTokenConsistencyTest {
+
+        @Test
+        @DisplayName("만료된 토큰은 예외를 던지고, 잘못된 토큰은 false를 반환 - 일관성 없는 동작 문서화")
+        void validateToken_inconsistentBehavior_documented() {
+            // given
+            JwtTokenProvider expiredProvider = new JwtTokenProvider(
+                    "test-secret-key-for-unit-testing-must-be-at-least-32-characters-long",
+                    -1000L,
+                    -1000L
+            );
+            String expiredToken = expiredProvider.generateAccessToken(testUser);
+            String malformedToken = "invalid.token.format";
+
+            // when & then
+            // 만료된 토큰 -> 예외 throw
+            assertThatThrownBy(() -> jwtTokenProvider.validateToken(expiredToken))
+                    .isInstanceOf(AuthException.class);
+
+            // 잘못된 토큰 -> false 반환 (예외 아님)
+            boolean result = jwtTokenProvider.validateToken(malformedToken);
+            assertThat(result).isFalse();
+
+            // 이 테스트는 두 경우의 동작이 다름을 문서화
+            // 일관성을 위해서는 둘 다 예외를 던지거나 둘 다 false를 반환해야 함
+        }
+
+        @Test
+        @DisplayName("다양한 유효하지 않은 토큰 유형별 동작 검증")
+        void validateToken_variousInvalidTokenTypes() {
+            // given
+            String nullToken = null;
+            String emptyToken = "";
+            String blankToken = "   ";
+            String malformedToken = "not.a.jwt";
+            String wrongSignatureToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.wrong-signature";
+
+            // when & then - 모두 false 반환 (예외 없음)
+            assertThat(jwtTokenProvider.validateToken(nullToken)).isFalse();
+            assertThat(jwtTokenProvider.validateToken(emptyToken)).isFalse();
+            assertThat(jwtTokenProvider.validateToken(blankToken)).isFalse();
+            assertThat(jwtTokenProvider.validateToken(malformedToken)).isFalse();
+            assertThat(jwtTokenProvider.validateToken(wrongSignatureToken)).isFalse();
+        }
+
+        @Test
+        @DisplayName("만료된 토큰만 예외를 던짐 - 특수 케이스")
+        void validateToken_onlyExpiredTokenThrowsException() {
+            // given
+            JwtTokenProvider expiredProvider = new JwtTokenProvider(
+                    "test-secret-key-for-unit-testing-must-be-at-least-32-characters-long",
+                    -1000L,
+                    -1000L
+            );
+            String expiredToken = expiredProvider.generateAccessToken(testUser);
+
+            // when & then
+            // 만료된 토큰만 예외를 던지고, 나머지는 false 반환
+            // 이는 호출자가 예외 처리와 boolean 체크를 모두 해야 함을 의미
+            assertThatThrownBy(() -> jwtTokenProvider.validateToken(expiredToken))
+                    .isInstanceOf(AuthException.class)
+                    .hasMessageContaining("만료");
+        }
+    }
+
+    @Nested
     @DisplayName("getUserIdFromToken")
     class GetUserIdFromToken {
 
