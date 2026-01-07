@@ -9,9 +9,6 @@ import com.gotcha.domain.user.entity.SocialType;
 import com.gotcha.domain.user.entity.User;
 import com.gotcha.domain.user.repository.UserRepository;
 import java.security.SecureRandom;
-import java.util.Arrays;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class AuthService {
 
     private static final String[] ADJECTIVES = {"빨간", "파란", "노란", "초록", "보라", "분홍", "하얀", "검은", "주황", "금색"};
@@ -27,50 +25,37 @@ public class AuthService {
     private static final int MAX_NICKNAME_NUMBER = 10000;
     private static final int MAX_NICKNAME_GENERATION_ATTEMPTS = 10;
 
-    private static final Set<String> SUPPORTED_PROVIDERS = Arrays.stream(SocialType.values())
-            .map(type -> type.name().toLowerCase())
-            .collect(Collectors.toSet());
-
-    private final OAuth2Client oAuth2Client;
+    private final OAuth2Client oauth2Client;
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final SecureRandom secureRandom = new SecureRandom();
 
     @Transactional
     public TokenResponse login(String provider, String accessToken) {
-        validateProvider(provider);
+        // 1. 소셜 사용자 정보 조회
+        OAuth2UserInfo userInfo = oauth2Client.getUserInfo(provider, accessToken);
 
-        OAuth2UserInfo userInfo = oAuth2Client.getUserInfo(provider, accessToken);
-        validateSocialId(userInfo.getId(), provider);
-
-        SocialType socialType = SocialType.valueOf(provider.toUpperCase());
-
-        boolean isNewUser = !userRepository.findBySocialTypeAndSocialId(socialType, userInfo.getId()).isPresent();
-
-        User user = userRepository.findBySocialTypeAndSocialId(socialType, userInfo.getId())
-                .map(existingUser -> updateExistingUser(existingUser, userInfo))
-                .orElseGet(() -> createNewUser(userInfo, socialType));
-
-        String jwtAccessToken = jwtTokenProvider.generateAccessToken(user);
-        String jwtRefreshToken = jwtTokenProvider.generateRefreshToken(user);
-
-        log.info("User logged in: userId={}, provider={}, isNewUser={}", user.getId(), provider, isNewUser);
-
-        return TokenResponse.of(jwtAccessToken, jwtRefreshToken, user, isNewUser);
-    }
-
-    private void validateProvider(String provider) {
-        if (!SUPPORTED_PROVIDERS.contains(provider.toLowerCase())) {
-            log.warn("Unsupported OAuth2 provider: {}", provider);
-            throw AuthException.unsupportedSocialType();
-        }
-    }
-
-    private void validateSocialId(String socialId, String provider) {
+        // 2. 소셜 ID 검증
+        String socialId = userInfo.getId();
         if (socialId == null || socialId.isBlank()) {
             log.error("OAuth2 provider {} returned null or blank social ID", provider);
             throw AuthException.socialLoginFailed();
         }
+
+        SocialType socialType = SocialType.valueOf(provider.toUpperCase());
+
+        // 3. 사용자 조회 또는 생성
+        boolean isNewUser = !userRepository.findBySocialTypeAndSocialId(socialType, socialId).isPresent();
+
+        User user = userRepository.findBySocialTypeAndSocialId(socialType, socialId)
+                .map(existingUser -> updateExistingUser(existingUser, userInfo))
+                .orElseGet(() -> createNewUser(userInfo, socialType));
+
+        // 4. JWT 토큰 발급
+        String jwtAccessToken = jwtTokenProvider.generateAccessToken(user);
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user);
+
+        return TokenResponse.of(jwtAccessToken, refreshToken, user, isNewUser);
     }
 
     private User updateExistingUser(User user, OAuth2UserInfo userInfo) {
@@ -108,6 +93,7 @@ public class AuthService {
             }
         }
 
+        // 최대 시도 횟수 초과 시 UUID 기반 닉네임 생성
         String fallbackNickname = "가챠유저#" + System.currentTimeMillis() % 1000000;
         log.warn("Failed to generate unique nickname after {} attempts, using fallback: {}",
                 MAX_NICKNAME_GENERATION_ATTEMPTS, fallbackNickname);

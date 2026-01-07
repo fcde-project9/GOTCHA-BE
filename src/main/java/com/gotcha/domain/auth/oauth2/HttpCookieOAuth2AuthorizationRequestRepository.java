@@ -1,0 +1,110 @@
+package com.gotcha.domain.auth.oauth2;
+
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.time.Duration;
+import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
+import org.springframework.stereotype.Component;
+
+/**
+ * OAuth2 인가 요청을 메모리(Caffeine Cache) + 쿠키 기반으로 저장하는 Repository.
+ *
+ * 쿠키에는 state 값만 저장하고, 실제 OAuth2AuthorizationRequest는
+ * Caffeine Cache에 저장하여 직렬화 문제를 회피하고 TTL로 메모리 누수를 방지합니다.
+ */
+@Slf4j
+@Component
+public class HttpCookieOAuth2AuthorizationRequestRepository
+        implements AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
+
+    private static final String OAUTH2_STATE_COOKIE_NAME = "oauth2_auth_state";
+    private static final int COOKIE_EXPIRE_SECONDS = 180;
+
+    // state -> OAuth2AuthorizationRequest 매핑 (TTL 기반 캐시)
+    private final Cache<String, OAuth2AuthorizationRequest> authorizationRequests = Caffeine.newBuilder()
+            .expireAfterWrite(Duration.ofSeconds(COOKIE_EXPIRE_SECONDS))
+            .maximumSize(10000)
+            .build();
+
+    @Override
+    public OAuth2AuthorizationRequest loadAuthorizationRequest(HttpServletRequest request) {
+        String state = getStateFromCookie(request);
+        if (state == null) {
+            log.debug("No state cookie found");
+            return null;
+        }
+
+        OAuth2AuthorizationRequest authRequest = authorizationRequests.getIfPresent(state);
+        if (authRequest == null) {
+            log.debug("No authorization request found for state: {}", state);
+        }
+        return authRequest;
+    }
+
+    @Override
+    public void saveAuthorizationRequest(OAuth2AuthorizationRequest authorizationRequest,
+                                         HttpServletRequest request, HttpServletResponse response) {
+        if (authorizationRequest == null) {
+            removeAuthorizationRequestCookie(request, response);
+            return;
+        }
+
+        String state = authorizationRequest.getState();
+        authorizationRequests.put(state, authorizationRequest);
+
+        Cookie cookie = new Cookie(OAUTH2_STATE_COOKIE_NAME, state);
+        cookie.setPath("/");
+        cookie.setHttpOnly(true);
+        cookie.setMaxAge(COOKIE_EXPIRE_SECONDS);
+        response.addCookie(cookie);
+
+        log.debug("Saved authorization request with state: {}", state);
+    }
+
+    @Override
+    public OAuth2AuthorizationRequest removeAuthorizationRequest(HttpServletRequest request,
+                                                                  HttpServletResponse response) {
+        String state = getStateFromCookie(request);
+        if (state == null) {
+            return null;
+        }
+
+        OAuth2AuthorizationRequest authRequest = authorizationRequests.getIfPresent(state);
+        authorizationRequests.invalidate(state);
+        removeAuthorizationRequestCookie(request, response);
+
+        log.debug("Removed authorization request with state: {}", state);
+        return authRequest;
+    }
+
+    private String getStateFromCookie(HttpServletRequest request) {
+        return getCookie(request, OAUTH2_STATE_COOKIE_NAME)
+                .map(Cookie::getValue)
+                .orElse(null);
+    }
+
+    private Optional<Cookie> getCookie(HttpServletRequest request, String name) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (name.equals(cookie.getName())) {
+                    return Optional.of(cookie);
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    private void removeAuthorizationRequestCookie(HttpServletRequest request, HttpServletResponse response) {
+        Cookie cookie = new Cookie(OAUTH2_STATE_COOKIE_NAME, "");
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
+    }
+}

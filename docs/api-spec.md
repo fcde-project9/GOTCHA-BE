@@ -83,6 +83,25 @@
 
 ---
 
+### POST /auth/logout
+
+로그아웃 (리프레시 토큰 무효화)
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": null
+}
+```
+
+---
+
 ### GET /auth/nickname/random
 
 랜덤 닉네임 생성
@@ -96,6 +115,49 @@
   }
 }
 ```
+
+---
+
+### GET /auth/nickname/check
+
+닉네임 중복 및 유효성 체크
+
+**Query Parameters**
+| 파라미터 | 타입 | 필수 | 설명 |
+|---------|------|------|------|
+| nickname | String | O | 체크할 닉네임 |
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "nickname": "파란캡슐#99",
+    "available": true,
+    "reason": null
+  }
+}
+```
+
+**Response (200) - 사용 불가**
+```json
+{
+  "success": true,
+  "data": {
+    "nickname": "파란캡슐#99",
+    "available": false,
+    "reason": "DUPLICATE"
+  }
+}
+```
+
+**reason 값**
+| 값 | 설명 |
+|---|------|
+| null | 사용 가능 |
+| DUPLICATE | 이미 사용 중인 닉네임 |
+| INVALID_FORMAT | 형식 오류 (2-20자, 허용 문자 위반) |
+| FORBIDDEN_WORD | 금지어 포함 |
 
 ---
 
@@ -143,6 +205,73 @@
 
 ---
 
+### GET /shops/search
+
+가게 이름 검색
+
+**Query Parameters**
+| 파라미터 | 타입 | 필수 | 기본값 | 설명 |
+|---------|------|------|--------|------|
+| keyword | String | O | - | 검색어 (2자 이상) |
+| lat | Double | X | - | 거리 계산용 위도 |
+| lng | Double | X | - | 거리 계산용 경도 |
+| page | Integer | X | 0 | |
+| size | Integer | X | 20 | |
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "content": [
+      {
+        "id": 1,
+        "name": "가챠샵 신사점",
+        "address": "서울시 강남구 신사동 123-45",
+        "mainImageUrl": "https://...",
+        "distance": 300
+      }
+    ],
+    "totalCount": 5,
+    "page": 0,
+    "size": 20,
+    "hasNext": false
+  }
+}
+```
+
+---
+
+### GET /shops/nearby
+
+50m 내 가게 목록 조회 (제보 전 중복 체크용)
+
+**Query Parameters**
+| 파라미터 | 타입 | 필수 | 설명 |
+|---------|------|------|------|
+| lat | Double | O | 위도 |
+| lng | Double | O | 경도 |
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "count": 4,
+    "shops": [
+      {
+        "id": 1,
+        "name": "뽀바뽀빠",
+        "address": "서울시 강남구 강남대로 364",
+        "distance": 30
+      }
+    ]
+  }
+}
+```
+
+---
+
 ### GET /shops/{shopId}
 
 가게 상세 조회
@@ -170,15 +299,7 @@
     "longitude": 127.0473,
     "mainImageUrl": "https://...",
     "locationHint": "신사역 4번 출구에서 도보 3분, 스타벅스 옆 건물 1층",
-    "openTime": {
-      "mon": "10:00-22:00",
-      "tue": "10:00-22:00",
-      "wed": "10:00-22:00",
-      "thu": "10:00-22:00",
-      "fri": "10:00-23:00",
-      "sat": "10:00-23:00",
-      "sun": "12:00-20:00"
-    },
+    "openTime": "10:00-22:00",
     "region": "서울",
     "district": "강남구",
     "neighborhood": "신사동",
@@ -214,15 +335,11 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "name": "가챠샵 홍대점",
-  "address": "서울시 마포구 홍대동 123-45",
   "latitude": 37.5563,
   "longitude": 126.9236,
+  "mainImageUrl": "https://...",
   "locationHint": "홍대입구역 9번 출구 앞",
-  "openTime": {
-    "mon": "10:00-22:00",
-    "tue": "10:00-22:00"
-  },
-  "isAnonymous": false
+  "openTime": "10:00-22:00"
 }
 ```
 
@@ -230,10 +347,11 @@ Authorization: Bearer {accessToken}
 | 필드 | 규칙 |
 |------|------|
 | name | 필수, 2-100자 |
-| address | 필수 |
 | latitude | 필수, -90 ~ 90 |
 | longitude | 필수, -180 ~ 180 |
+| mainImageUrl | 필수 |
 | locationHint | 선택, 최대 500자 |
+| openTime | 선택, HH:mm-HH:mm 형식 |
 
 **Response (201)**
 ```json
@@ -508,6 +626,7 @@ Authorization: Bearer {accessToken}
     "favoriteCount": 5,
     "commentCount": 10,
     "reviewCount": 3,
+    "reportCount": 2,
     "createdAt": "2025-01-01T10:00:00"
   }
 }
@@ -534,7 +653,7 @@ Authorization: Bearer {accessToken}
 **Validation**
 | 필드 | 규칙 |
 |------|------|
-| nickname | 필수, 2-20자, 특수문자 제한 |
+| nickname | 필수, 2-20자, 허용문자: 한글, 영문, 숫자, #, _ |
 
 **Response (200)**
 ```json
@@ -551,3 +670,139 @@ Authorization: Bearer {accessToken}
 |------|------|
 | U001 | 이미 사용 중인 닉네임 |
 | U002 | 닉네임 형식 오류 |
+
+---
+
+### GET /users/me/shops
+
+내가 제보한 가게 목록 조회
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Query Parameters**
+| 파라미터 | 타입 | 필수 | 기본값 |
+|---------|------|------|--------|
+| lat | Double | X | - |
+| lng | Double | X | - |
+| page | Integer | X | 0 |
+| size | Integer | X | 20 |
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "content": [
+      {
+        "id": 1,
+        "name": "가챠샵 신사점",
+        "address": "서울시 강남구...",
+        "mainImageUrl": "https://...",
+        "distance": 300,
+        "createdAt": "2025-01-01T10:00:00"
+      }
+    ],
+    "totalCount": 2,
+    "page": 0,
+    "size": 20,
+    "hasNext": false
+  }
+}
+```
+
+---
+
+### DELETE /users/me
+
+회원 탈퇴
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": null
+}
+```
+
+---
+
+### POST /users/me/withdrawal-survey
+
+회원 탈퇴 설문 저장
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Request Body**
+```json
+{
+  "reason": "NO_DESIRED_INFO",
+  "detail": "사용자가 입력한 기타 사유"
+}
+```
+
+**reason 값**
+| 값 | 설명 |
+|---|------|
+| NO_DESIRED_INFO | 원하는 정보가 없어요 |
+| LOW_USAGE | 사용 빈도가 낮아요 |
+| INCONVENIENT | 이용이 불편해요 |
+| OTHER | 기타 (detail 필수) |
+
+**Response (201)**
+```json
+{
+  "success": true,
+  "data": null
+}
+```
+
+---
+
+## 이미지 API
+
+### POST /images
+
+이미지 업로드
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+Content-Type: multipart/form-data
+```
+
+**Request Body**
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| file | MultipartFile | O | 이미지 파일 |
+| type | String | O | shop, review |
+
+**Validation**
+- 허용 확장자: jpg, jpeg, png, webp
+- 최대 크기: 10MB
+
+**Response (201)**
+```json
+{
+  "success": true,
+  "data": {
+    "imageUrl": "https://..."
+  }
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| I001 | 지원하지 않는 파일 형식 |
+| I002 | 파일 크기 초과 |

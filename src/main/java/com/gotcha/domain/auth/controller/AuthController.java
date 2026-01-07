@@ -5,6 +5,10 @@ import com.gotcha.domain.auth.dto.LoginRequest;
 import com.gotcha.domain.auth.dto.TokenResponse;
 import com.gotcha.domain.auth.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,14 +28,30 @@ public class AuthController {
 
     @Operation(
             summary = "소셜 로그인",
-            description = "소셜 액세스 토큰을 받아 JWT 토큰을 발급합니다"
+            description = "소셜 로그인 accessToken을 받아 JWT 토큰을 발급합니다."
     )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "로그인 성공",
+                    content = @Content(schema = @Schema(implementation = TokenResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "지원하지 않는 소셜 로그인"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description = "소셜 로그인 실패"
+            )
+    })
     @PostMapping("/login/{provider}")
     public ApiResponse<TokenResponse> login(
+            @Parameter(description = "소셜 로그인 제공자 (kakao, google, naver)", example = "kakao")
             @PathVariable String provider,
-            @RequestBody @Valid LoginRequest request
+            @Valid @RequestBody LoginRequest request
     ) {
-        TokenResponse token = authService.login(provider, request.accessToken());
-        return ApiResponse.success(token);
+        TokenResponse tokenResponse = authService.login(provider, request.accessToken());
+        return ApiResponse.success(tokenResponse);
     }
 }

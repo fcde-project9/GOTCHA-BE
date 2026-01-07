@@ -21,19 +21,19 @@ spring:
             redirect-uri: "{baseUrl}/api/auth/callback/kakao"
             authorization-grant-type: authorization_code
             client-authentication-method: client_secret_post
-            scope: profile_nickname, account_email
+            scope: profile_image
             client-name: Kakao
           google:
             client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
             redirect-uri: "{baseUrl}/api/auth/callback/google"
-            scope: profile, email
+            scope: profile
           naver:
             client-id: ${NAVER_CLIENT_ID}
             client-secret: ${NAVER_CLIENT_SECRET}
             redirect-uri: "{baseUrl}/api/auth/callback/naver"
             authorization-grant-type: authorization_code
-            scope: name, email, profile_image
+            scope: profile_image
             client-name: Naver
         provider:
           kakao:
