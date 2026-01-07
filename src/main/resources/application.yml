@@ -57,17 +57,18 @@ server:
 
 kakao:
   api:
-    rest-api-key: ${KAKAO_REST_API_KEY:local-dev-kakao-key}
-    base-url: ${KAKAO_API_BASE_URL:https://dapi.kakao.com}
+    rest-api-key: ${KAKAO_REST_API_KEY}
+    base-url: ${KAKAO_API_BASE_URL}
+
 # JWT Configuration
 jwt:
-  secret: ${JWT_SECRET:default-secret-key-for-local-development-only-replace-in-production}
-  access-token-validity: ${JWT_ACCESS_TOKEN_VALIDITY:3600000}  # 1시간 (ms)
-  refresh-token-validity: ${JWT_REFRESH_TOKEN_VALIDITY:1209600000}  # 14일 (ms)
+  secret: ${JWT_SECRET}
+  access-token-validity: ${JWT_ACCESS_TOKEN_VALIDITY}
+  refresh-token-validity: ${JWT_REFRESH_TOKEN_VALIDITY}
 
 # OAuth2 Configuration
 oauth2:
-  redirect-uri: ${OAUTH2_REDIRECT_URI:http://localhost:3000/oauth/callback}
+  redirect-uri: ${OAUTH2_REDIRECT_URI}
 
 
 # Springdoc OpenAPI Configuration
@@ -78,3 +79,8 @@ springdoc:
     path: /api/swagger-ui.html
     operationsSorter: method
     tagsSorter: alpha
+
+# Google Cloud Storage Configuration
+gcs:
+  bucket-name: ${GCS_BUCKET_NAME}
+  project-id: ${GCS_PROJECT_ID}
