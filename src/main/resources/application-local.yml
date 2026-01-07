@@ -16,3 +16,20 @@ server:
 
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+
+kakao:
+  api:
+    rest-api-key: ${KAKAO_REST_API_KEY:local-dev-kakao-key}
+    base-url: ${KAKAO_API_BASE_URL:https://dapi.kakao.com}
+
+jwt:
+  secret: ${JWT_SECRET:default-secret-key-for-local-development-only-replace-in-production}
+  access-token-validity: ${JWT_ACCESS_TOKEN_VALIDITY:3600000}
+  refresh-token-validity: ${JWT_REFRESH_TOKEN_VALIDITY:1209600000}
+
+oauth2:
+  redirect-uri: ${OAUTH2_REDIRECT_URI:http://localhost:3000/oauth/callback}
+
+gcs:
+  bucket-name: ${GCS_BUCKET_NAME:gotcha-dev-files}
+  project-id: ${GCS_PROJECT_ID:local-project}
