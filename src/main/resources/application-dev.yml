@@ -10,7 +10,3 @@ spring:
 
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS}
-
-gcs:
-  bucket-name: ${GCS_BUCKET_NAME}
-  project-id: ${GCS_PROJECT_ID}
