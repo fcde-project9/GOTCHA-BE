@@ -1,13 +1,15 @@
 package com.gotcha._global.config;
 
+import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.Contact;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
+import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.List;
 
 @Configuration
 public class OpenApiConfig {
@@ -33,6 +35,8 @@ public class OpenApiConfig {
 
     @Bean
     public OpenAPI openAPI() {
+        String securitySchemeName = "bearerAuth";
+
         return new OpenAPI()
                 .info(new Info()
                         .title("GOTCHA API")
@@ -51,6 +55,15 @@ public class OpenApiConfig {
                         new Server()
                                 .url("https://api.gotcha.it.com")
                                 .description("Production Server")
-                ));
+                ))
+                .components(new Components()
+                        .addSecuritySchemes(securitySchemeName,
+                                new SecurityScheme()
+                                        .name(securitySchemeName)
+                                        .type(SecurityScheme.Type.HTTP)
+                                        .scheme("bearer")
+                                        .bearerFormat("JWT")
+                                        .description("JWT Access Token만 입력 (Bearer 접두사 불필요)")))
+                .addSecurityItem(new SecurityRequirement().addList(securitySchemeName));
     }
 }
