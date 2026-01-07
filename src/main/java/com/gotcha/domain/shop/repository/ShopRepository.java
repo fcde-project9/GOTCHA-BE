@@ -21,4 +21,14 @@ public interface ShopRepository extends JpaRepository<Shop, Long> {
             + "sin(radians(s.latitude))))")
     List<Shop> findNearbyShops(@Param("lat") Double lat, @Param("lng") Double lng,
                                @Param("radius") Double radius);
+
+    @Query("SELECT s FROM Shop s WHERE "
+            + "s.latitude BETWEEN :southWestLat AND :northEastLat "
+            + "AND s.longitude BETWEEN :southWestLng AND :northEastLng")
+    List<Shop> findShopsWithinBounds(
+            @Param("northEastLat") Double northEastLat,
+            @Param("northEastLng") Double northEastLng,
+            @Param("southWestLat") Double southWestLat,
+            @Param("southWestLng") Double southWestLng
+    );
 }
