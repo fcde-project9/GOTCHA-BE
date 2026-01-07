@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -51,10 +52,10 @@ public class FileUploadController {
             @NotNull(message = "파일은 필수입니다")
             MultipartFile file,
 
-            @Parameter(description = "저장할 폴더 (예: reviews, shops)", required = true, example = "reviews")
+            @Parameter(description = "저장할 폴더 (예: reviews, shops, profiles)", required = true, example = "reviews")
             @RequestParam("folder")
-            @NotNull(message = "폴더명은 필수입니다")
-            String folder // 프론트에서 제공
+            @NotBlank(message = "폴더명은 필수입니다")
+            String folder
     ) {
         FileUploadResponse response = fileUploadService.uploadImage(file, folder);
         return ApiResponse.success(response);

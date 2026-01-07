@@ -29,6 +29,11 @@ public class FileUploadService {
             "image/heic",  // iOS
             "image/heif"   // iOS
     );
+    private static final Set<String> ALLOWED_FOLDERS = Set.of(
+            "reviews",
+            "shops",
+            "profiles"
+    );
 
     private final Storage storage;
 
@@ -44,6 +49,7 @@ public class FileUploadService {
      */
     public FileUploadResponse uploadImage(MultipartFile file, String folder) {
         validateFile(file);
+        validateFolder(folder);
 
         String filename = generateFilename(file.getOriginalFilename());
         String objectName = folder + "/" + filename;
@@ -97,6 +103,25 @@ public class FileUploadService {
         } catch (Exception e) {
             log.error("File delete failed: {}", e.getMessage(), e);
             throw FileException.deleteFailed(e.getMessage());
+        }
+    }
+
+    /**
+     * 폴더명 화이트리스트 검증 (Path Traversal 공격 방지)
+     */
+    private void validateFolder(String folder) {
+        if (folder == null || folder.isBlank()) {
+            throw FileException.uploadFailed("Folder name is required");
+        }
+
+        // 경로 조작 문자 차단
+        if (folder.contains("..") || folder.contains("/") || folder.contains("\\")) {
+            throw FileException.uploadFailed("Invalid folder name: path traversal attempt detected");
+        }
+
+        // 화이트리스트 검증
+        if (!ALLOWED_FOLDERS.contains(folder.toLowerCase())) {
+            throw FileException.uploadFailed("Invalid folder name. Allowed folders: " + ALLOWED_FOLDERS);
         }
     }
 
