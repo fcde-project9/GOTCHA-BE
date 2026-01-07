@@ -59,11 +59,11 @@ public class ShopController {
     }
 
     @Operation(
-            summary = "근처 가게 조회",
-            description = "현재 위도/경도 기준 50m 이내 가게를 거리 가까운 순서로 조회합니다"
+            summary = "가게 저장 전 근처 가게 조회",
+            description = "가게 등록 전 현재 위도/경도 기준 50m 이내 가게를 거리 가까운 순서로 조회합니다 (중복 체크용)"
     )
     @GetMapping("/nearby")
-    public ApiResponse<List<NearbyShopResponse>> getNearbyShops(
+    public ApiResponse<List<NearbyShopResponse>> checkNearbyShopsBeforeSave(
             @RequestParam
             @NotNull(message = "위도는 필수입니다")
             @DecimalMin(value = "-90.0", message = "위도는 -90 이상이어야 합니다")
@@ -75,7 +75,7 @@ public class ShopController {
             @DecimalMax(value = "180.0", message = "경도는 180 이하여야 합니다")
             Double longitude
     ) {
-        List<NearbyShopResponse> shops = shopService.getNearbyShops(latitude, longitude);
+        List<NearbyShopResponse> shops = shopService.checkNearbyShopsBeforeSave(latitude, longitude);
         return ApiResponse.success(shops);
     }
 }

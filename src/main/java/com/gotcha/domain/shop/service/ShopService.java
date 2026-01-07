@@ -104,8 +104,8 @@ public class ShopService {
     }
 
     @Transactional(readOnly = true)
-    public List<NearbyShopResponse> getNearbyShops(Double latitude, Double longitude) {
-        log.info("getNearbyShops - lat: {}, lng: {}", latitude, longitude);
+    public List<NearbyShopResponse> checkNearbyShopsBeforeSave(Double latitude, Double longitude) {
+        log.info("checkNearbyShopsBeforeSave - lat: {}, lng: {}", latitude, longitude);
 
         // 좌표 검증 (기존 validateCoordinates 재사용)
         validateCoordinates(latitude, longitude);
