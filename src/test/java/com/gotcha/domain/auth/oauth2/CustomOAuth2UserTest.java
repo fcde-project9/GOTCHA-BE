@@ -7,6 +7,7 @@ import com.gotcha.domain.user.entity.User;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -21,6 +22,7 @@ class CustomOAuth2UserTest {
                 .socialType(SocialType.KAKAO)
                 .socialId("12345")
                 .nickname("테스트유저#1")
+                .email("test@kakao.com")
                 .profileImageUrl("https://example.com/img.jpg")
                 .isAnonymous(false)
                 .build();
@@ -30,14 +32,16 @@ class CustomOAuth2UserTest {
         attributes.put("id", 12345L);
 
         // when
-        CustomOAuth2User customOAuth2User = new CustomOAuth2User(user, attributes);
+        CustomOAuth2User customOAuth2User = new CustomOAuth2User(user, attributes, true);
 
         // then
         assertThat(customOAuth2User.getUserId()).isEqualTo(1L);
         assertThat(customOAuth2User.getNickname()).isEqualTo("테스트유저#1");
+        assertThat(customOAuth2User.getEmail()).isEqualTo("test@kakao.com");
         assertThat(customOAuth2User.getSocialType()).isEqualTo(SocialType.KAKAO);
         assertThat(customOAuth2User.getName()).isEqualTo("1");
         assertThat(customOAuth2User.getUser()).isEqualTo(user);
+        assertThat(customOAuth2User.isNewUser()).isTrue();
     }
 
     @Test
@@ -55,7 +59,7 @@ class CustomOAuth2UserTest {
         Map<String, Object> attributes = new HashMap<>();
 
         // when
-        CustomOAuth2User customOAuth2User = new CustomOAuth2User(user, attributes);
+        CustomOAuth2User customOAuth2User = new CustomOAuth2User(user, attributes, false);
 
         // then
         assertThat(customOAuth2User.getAuthorities())
@@ -84,10 +88,88 @@ class CustomOAuth2UserTest {
         attributes.put("response", response);
 
         // when
-        CustomOAuth2User customOAuth2User = new CustomOAuth2User(user, attributes);
+        CustomOAuth2User customOAuth2User = new CustomOAuth2User(user, attributes, false);
 
         // then
         assertThat(customOAuth2User.getAttributes()).isEqualTo(attributes);
         assertThat(customOAuth2User.getAttributes()).containsKey("response");
+    }
+
+    @Nested
+    @DisplayName("isNewUser 테스트")
+    class IsNewUserTest {
+
+        @Test
+        @DisplayName("신규 사용자 로그인 - isNewUser가 true")
+        void newUserLogin_isNewUserTrue() {
+            // given
+            User user = createTestUser(SocialType.KAKAO, "test@kakao.com");
+            Map<String, Object> attributes = new HashMap<>();
+
+            // when
+            CustomOAuth2User customOAuth2User = new CustomOAuth2User(user, attributes, true);
+
+            // then
+            assertThat(customOAuth2User.isNewUser()).isTrue();
+        }
+
+        @Test
+        @DisplayName("기존 사용자 로그인 - isNewUser가 false")
+        void existingUserLogin_isNewUserFalse() {
+            // given
+            User user = createTestUser(SocialType.KAKAO, "test@kakao.com");
+            Map<String, Object> attributes = new HashMap<>();
+
+            // when
+            CustomOAuth2User customOAuth2User = new CustomOAuth2User(user, attributes, false);
+
+            // then
+            assertThat(customOAuth2User.isNewUser()).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("email 테스트")
+    class EmailTest {
+
+        @Test
+        @DisplayName("email이 있는 경우 - 정상 반환")
+        void emailExists_returnsEmail() {
+            // given
+            User user = createTestUser(SocialType.GOOGLE, "user@gmail.com");
+            Map<String, Object> attributes = new HashMap<>();
+
+            // when
+            CustomOAuth2User customOAuth2User = new CustomOAuth2User(user, attributes, false);
+
+            // then
+            assertThat(customOAuth2User.getEmail()).isEqualTo("user@gmail.com");
+        }
+
+        @Test
+        @DisplayName("email이 null인 경우 - null 반환")
+        void emailNull_returnsNull() {
+            // given
+            User user = createTestUser(SocialType.KAKAO, null);
+            Map<String, Object> attributes = new HashMap<>();
+
+            // when
+            CustomOAuth2User customOAuth2User = new CustomOAuth2User(user, attributes, false);
+
+            // then
+            assertThat(customOAuth2User.getEmail()).isNull();
+        }
+    }
+
+    private User createTestUser(SocialType socialType, String email) {
+        User user = User.builder()
+                .socialType(socialType)
+                .socialId("test-social-id")
+                .nickname("테스트유저#1")
+                .email(email)
+                .isAnonymous(false)
+                .build();
+        ReflectionTestUtils.setField(user, "id", 1L);
+        return user;
     }
 }
