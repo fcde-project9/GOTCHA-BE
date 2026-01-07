@@ -1,6 +1,7 @@
 package com.gotcha.domain.shop.controller;
 
 import com.gotcha._global.common.ApiResponse;
+import com.gotcha.domain.shop.dto.CoordinateRequest;
 import com.gotcha.domain.shop.dto.CreateShopRequest;
 import com.gotcha.domain.shop.dto.NearbyShopResponse;
 import com.gotcha.domain.shop.dto.ShopResponse;
@@ -9,9 +10,6 @@ import com.gotcha.domain.shop.service.ShopService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.DecimalMax;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -35,21 +33,12 @@ public class ShopController {
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<ShopResponse> saveShop(
             @Valid @RequestBody CreateShopRequest request,
-            @RequestParam
-            @NotNull(message = "위도는 필수입니다")
-            @DecimalMin(value = "-90.0", message = "위도는 -90 이상이어야 합니다")
-            @DecimalMax(value = "90.0", message = "위도는 90 이하여야 합니다")
-            Double latitude,
-            @RequestParam
-            @NotNull(message = "경도는 필수입니다")
-            @DecimalMin(value = "-180.0", message = "경도는 -180 이상이어야 합니다")
-            @DecimalMax(value = "180.0", message = "경도는 180 이하여야 합니다")
-            Double longitude
+            @Valid @ModelAttribute CoordinateRequest coordinate
     ) {
         Shop shop = shopService.createShop(
                 request.name(),
-                latitude,
-                longitude,
+                coordinate.latitude(),
+                coordinate.longitude(),
                 request.mainImageUrl(),
                 request.locationHint(),
                 request.openTime()
@@ -64,18 +53,12 @@ public class ShopController {
     )
     @GetMapping("/nearby")
     public ApiResponse<List<NearbyShopResponse>> checkNearbyShopsBeforeSave(
-            @RequestParam
-            @NotNull(message = "위도는 필수입니다")
-            @DecimalMin(value = "-90.0", message = "위도는 -90 이상이어야 합니다")
-            @DecimalMax(value = "90.0", message = "위도는 90 이하여야 합니다")
-            Double latitude,
-            @RequestParam
-            @NotNull(message = "경도는 필수입니다")
-            @DecimalMin(value = "-180.0", message = "경도는 -180 이상이어야 합니다")
-            @DecimalMax(value = "180.0", message = "경도는 180 이하여야 합니다")
-            Double longitude
+            @Valid @ModelAttribute CoordinateRequest coordinate
     ) {
-        List<NearbyShopResponse> shops = shopService.checkNearbyShopsBeforeSave(latitude, longitude);
+        List<NearbyShopResponse> shops = shopService.checkNearbyShopsBeforeSave(
+                coordinate.latitude(),
+                coordinate.longitude()
+        );
         return ApiResponse.success(shops);
     }
 }
