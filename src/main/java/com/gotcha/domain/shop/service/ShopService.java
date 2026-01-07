@@ -8,6 +8,7 @@ import com.gotcha.domain.shop.dto.NearbyShopResponse;
 import com.gotcha.domain.shop.entity.Shop;
 import com.gotcha.domain.shop.exception.ShopException;
 import com.gotcha.domain.shop.repository.ShopRepository;
+import com.gotcha.domain.user.entity.User;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -28,9 +29,11 @@ public class ShopService {
 
     @Transactional
     public Shop createShop(String name, Double latitude, Double longitude,
-                           String mainImageUrl, String locationHint, Map<String, String> openTime) {
+                           String mainImageUrl, String locationHint, Map<String, String> openTime,
+                           User createdBy) {
         log.info("=== createShop START ===");
-        log.info("Input - name: {}, lat: {}, lng: {}, openTime: {}", name, latitude, longitude, openTime);
+        log.info("Input - name: {}, lat: {}, lng: {}, openTime: {}, createdBy: {}",
+                name, latitude, longitude, openTime, createdBy != null ? createdBy.getId() : "anonymous");
 
         try {
             validateCoordinates(latitude, longitude);
@@ -59,6 +62,7 @@ public class ShopService {
                     .region3DepthName(addressInfo.region3DepthName())
                     .mainAddressNo(addressInfo.mainAddressNo())
                     .subAddressNo(addressInfo.subAddressNo())
+                    .createdBy(createdBy)
                     .build();
             log.info("Shop entity built successfully");
 
