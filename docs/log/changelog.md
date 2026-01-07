@@ -8,6 +8,19 @@
 
 ### 수정
 - `docs/auth-policy.md` - OAuth2 소셜 로그인 플로우, 지원 provider, 관련 클래스, 환경변수 섹션 추가
+- `docs/api-spec.md` - Figma v1fix 화면 기반 API 명세 전면 수정
+  - 추가: POST /auth/logout, GET /auth/nickname/check, GET /shops/search, GET /shops/nearby, GET /users/me/shops, DELETE /users/me, POST /users/me/withdrawal-survey, POST /images
+  - 변경: POST /shops/report (mainImageUrl 필수, address 제거, openTime 단일 시간대로 변경)
+  - 변경: GET /shops/{shopId} openTime 형식 변경 (JSON → String)
+- `docs/api-design.md` - 신규 API 엔드포인트 목록 추가
+- `docs/business-rules.md` - Figma v1fix 화면 기반 비즈니스 규칙 수정
+  - 변경: 닉네임 숫자 범위 0-9999 (코드와 일치)
+  - 변경: 영업시간 형식 단일 시간대 (HH:mm-HH:mm)
+  - 추가: 회원 탈퇴 규칙, 이미지 업로드 규칙
+- `docs/entity-design.md` - Entity 설계 수정
+  - 변경: shops.open_time 타입 JSON → String
+  - 추가: users.is_deleted (soft delete)
+  - 추가: withdrawal_surveys 테이블
 
 ---
 

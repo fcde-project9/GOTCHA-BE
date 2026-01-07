@@ -3,6 +3,7 @@ package com.gotcha._global.config;
 import com.gotcha.domain.auth.jwt.JwtAuthenticationEntryPoint;
 import com.gotcha.domain.auth.jwt.JwtAuthenticationFilter;
 import com.gotcha.domain.auth.oauth2.CustomOAuth2UserService;
+import com.gotcha.domain.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.gotcha.domain.auth.oauth2.OAuth2AuthenticationFailureHandler;
 import com.gotcha.domain.auth.oauth2.OAuth2AuthenticationSuccessHandler;
 import java.util.Arrays;
@@ -33,6 +34,7 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
     private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
+    private final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
 
     @Value("${cors.allowed-origins}")
     private String allowedOrigins;
@@ -76,7 +78,8 @@ public class SecurityConfig {
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .authorizationEndpoint(authorization ->
-                                authorization.baseUri("/oauth2/authorize"))
+                                authorization.baseUri("/oauth2/authorize")
+                                        .authorizationRequestRepository(httpCookieOAuth2AuthorizationRequestRepository))
                         .redirectionEndpoint(redirection ->
                                 redirection.baseUri("/api/auth/callback/*"))
                         .userInfoEndpoint(userInfo ->
