@@ -61,3 +61,8 @@ kakao:
   api:
     rest-api-key: test-kakao-rest-api-key
     base-url: https://dapi.kakao.com
+
+# GCS Configuration for tests
+gcs:
+  project-id: test-project-id
+  bucket-name: test-bucket-name

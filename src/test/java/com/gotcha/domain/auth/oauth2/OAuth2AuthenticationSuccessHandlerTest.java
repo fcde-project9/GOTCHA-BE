@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 
 import com.gotcha.domain.auth.jwt.JwtTokenProvider;
+import com.gotcha.domain.auth.service.AuthService;
 import com.gotcha.domain.user.entity.SocialType;
 import com.gotcha.domain.user.entity.User;
 import java.util.HashMap;
@@ -30,6 +31,9 @@ class OAuth2AuthenticationSuccessHandlerTest {
 
     @Mock
     private JwtTokenProvider jwtTokenProvider;
+
+    @Mock
+    private AuthService authService;
 
     @Mock
     private Authentication authentication;
