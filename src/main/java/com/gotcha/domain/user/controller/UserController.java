@@ -4,6 +4,7 @@ import com.gotcha._global.common.ApiResponse;
 import com.gotcha._global.common.PageResponse;
 import com.gotcha.domain.favorite.dto.FavoriteShopResponse;
 import com.gotcha.domain.favorite.service.FavoriteService;
+import com.gotcha.domain.user.dto.UpdateNicknameRequest;
 import com.gotcha.domain.user.dto.UserResponse;
 import com.gotcha.domain.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,12 +13,15 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -121,5 +125,17 @@ public class UserController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         return ApiResponse.success(favoriteService.getMyFavorites(lat, lng, pageable));
+    }
+
+    @Operation(
+            summary = "닉네임 변경",
+            description = "현재 로그인한 사용자의 닉네임을 변경합니다. 중복된 닉네임은 사용할 수 없습니다.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PatchMapping("/me/nickname")
+    public ApiResponse<UserResponse> updateNickname(
+            @Valid @RequestBody UpdateNicknameRequest request
+    ) {
+        return ApiResponse.success(userService.updateNickname(request.nickname()));
     }
 }
