@@ -12,6 +12,9 @@ public record UserResponse(
         @Schema(description = "닉네임", example = "빨간캡슐#21")
         String nickname,
 
+        @Schema(description = "이메일", example = "user@example.com")
+        String email,
+
         @Schema(description = "프로필 이미지 URL", example = "https://...")
         String profileImageUrl,
 
@@ -22,6 +25,7 @@ public record UserResponse(
         return new UserResponse(
                 user.getId(),
                 user.getNickname(),
+                user.getEmail(),
                 user.getProfileImageUrl(),
                 user.getSocialType()
         );

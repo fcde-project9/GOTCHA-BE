@@ -35,8 +35,10 @@ public class User extends BaseTimeEntity {
     @Column(name = "social_id")
     private String socialId;
 
-    @Column(nullable = false, length = 50)
+    @Column(nullable = false, length = 50, unique = true)
     private String nickname;
+
+    private String email;
 
     private String profileImageUrl;
 
@@ -47,10 +49,11 @@ public class User extends BaseTimeEntity {
 
     @Builder
     public User(SocialType socialType, String socialId, String nickname,
-                String profileImageUrl, Boolean isAnonymous) {
+                String email, String profileImageUrl, Boolean isAnonymous) {
         this.socialType = socialType;
         this.socialId = socialId;
         this.nickname = nickname;
+        this.email = email;
         this.profileImageUrl = profileImageUrl;
         this.isAnonymous = isAnonymous != null ? isAnonymous : false;
     }
@@ -61,6 +64,10 @@ public class User extends BaseTimeEntity {
 
     public void updateProfileImage(String profileImageUrl) {
         this.profileImageUrl = profileImageUrl;
+    }
+
+    public void updateEmail(String email) {
+        this.email = email;
     }
 
     public void updateLastLoginAt() {

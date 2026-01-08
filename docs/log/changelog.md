@@ -15,6 +15,10 @@
 - `docs/api-spec.md` - 리뷰 API imageUrl → imageUrls 배열로 변경 (최대 10개)
 - `docs/error-codes.md` - R003 설명 수정 (수정/삭제 통합), R005 추가 (이미지 개수 초과)
 - `Review.java` - imageUrl 필드 및 updateImage() 메서드 삭제
+## 2026-01-07
+
+### 수정
+- `CLAUDE.md` - 태스크 완료 조건 섹션 추가 (엣지 케이스 테스트, Confluence 문서화 필수)
 
 ---
 
