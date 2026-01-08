@@ -14,11 +14,11 @@ public record ShopMapResponse(
         @Schema(description = "대표 이미지 URL")
         String mainImageUrl,
 
-        @Schema(description = "운영 시간 (JSON 형식)", example = "{\"AM\":\"10:00\", \"PM\":\"20:00\"}")
+        @Schema(description = "운영 시간 (JSON 형식)", example = "{\"Mon\":\"10:00~22:00\",\"Tue\":null,\"Wed\":\"10:00~22:00\"}")
         String openTime,
 
-        @Schema(description = "파싱된 운영 시간 (LocalTime)")
-        OpenTimeDto parsedOpenTime,
+        @Schema(description = "영업중 여부 (현재 한국 시간 기준)", example = "true")
+        Boolean openStatus,
 
         @Schema(description = "중심 좌표로부터의 거리", example = "50m")
         String distance,
@@ -30,17 +30,17 @@ public record ShopMapResponse(
      * Shop 엔티티를 ShopMapResponse로 변환
      * @param shop Shop 엔티티
      * @param distance 거리 문자열 (예: "50m", "1.5km")
-     * @param parsedOpenTime 파싱된 운영 시간
+     * @param openStatus 영업중 여부
      * @param isFavorite 찜 여부
      * @return ShopMapResponse
      */
-    public static ShopMapResponse of(Shop shop, String distance, OpenTimeDto parsedOpenTime, Boolean isFavorite) {
+    public static ShopMapResponse of(Shop shop, String distance, Boolean openStatus, Boolean isFavorite) {
         return new ShopMapResponse(
                 shop.getId(),
                 shop.getName(),
                 shop.getMainImageUrl(),
                 shop.getOpenTime(),
-                parsedOpenTime,
+                openStatus,
                 distance,
                 isFavorite
         );
