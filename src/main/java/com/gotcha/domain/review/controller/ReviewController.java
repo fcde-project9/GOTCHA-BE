@@ -70,7 +70,7 @@ public class ReviewController {
             @Valid @RequestBody UpdateReviewRequest request
     ) {
         User currentUser = getCurrentUserOrThrow();
-        ReviewResponse response = reviewService.updateReview(reviewId, currentUser.getId(), request);
+        ReviewResponse response = reviewService.updateReview(shopId, reviewId, currentUser.getId(), request);
         return ApiResponse.success(response);
     }
 
@@ -81,7 +81,7 @@ public class ReviewController {
             @PathVariable Long reviewId
     ) {
         User currentUser = getCurrentUserOrThrow();
-        reviewService.deleteReview(reviewId, currentUser.getId());
+        reviewService.deleteReview(shopId, reviewId, currentUser.getId());
         return ApiResponse.success(null);
     }
 
