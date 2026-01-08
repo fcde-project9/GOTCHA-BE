@@ -1,6 +1,8 @@
 package com.gotcha.domain.shop.controller;
 
 import com.gotcha._global.common.ApiResponse;
+import com.gotcha.domain.favorite.dto.FavoriteResponse;
+import com.gotcha.domain.favorite.service.FavoriteService;
 import com.gotcha.domain.shop.dto.CoordinateRequest;
 import com.gotcha.domain.shop.dto.CreateShopRequest;
 import com.gotcha.domain.shop.dto.NearbyShopResponse;
@@ -10,6 +12,7 @@ import com.gotcha.domain.shop.service.ShopService;
 import com.gotcha.domain.user.entity.User;
 import com.gotcha.domain.user.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -29,6 +32,7 @@ public class ShopController {
 
     private final ShopService shopService;
     private final UserRepository userRepository;
+    private final FavoriteService favoriteService;
 
     @Operation(
             summary = "가게 생성",
@@ -91,5 +95,26 @@ public class ShopController {
                 coordinate.longitude()
         );
         return ApiResponse.success(shops);
+    }
+
+    @Operation(
+            summary = "찜 추가",
+            description = "가게를 찜 목록에 추가합니다",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PostMapping("/{shopId}/favorite")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResponse<FavoriteResponse> addFavorite(@PathVariable Long shopId) {
+        return ApiResponse.success(favoriteService.addFavorite(shopId));
+    }
+
+    @Operation(
+            summary = "찜 삭제",
+            description = "가게를 찜 목록에서 삭제합니다",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @DeleteMapping("/{shopId}/favorite")
+    public ApiResponse<FavoriteResponse> removeFavorite(@PathVariable Long shopId) {
+        return ApiResponse.success(favoriteService.removeFavorite(shopId));
     }
 }
