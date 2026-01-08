@@ -12,9 +12,13 @@ import com.gotcha.domain.shop.dto.ShopMapResponse;
 import com.gotcha.domain.shop.entity.Shop;
 import com.gotcha.domain.shop.exception.ShopException;
 import com.gotcha.domain.shop.repository.ShopRepository;
+<<<<<<< HEAD
 import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.HashMap;
+=======
+import com.gotcha.domain.user.entity.User;
+>>>>>>> e08d0e05d7893ba58c1f8be35a36e121bcefa80c
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,9 +41,11 @@ public class ShopService {
 
     @Transactional
     public Shop createShop(String name, Double latitude, Double longitude,
-                           String mainImageUrl, String locationHint, Map<String, String> openTime) {
+                           String mainImageUrl, String locationHint, Map<String, String> openTime,
+                           User createdBy) {
         log.info("=== createShop START ===");
-        log.info("Input - name: {}, lat: {}, lng: {}, openTime: {}", name, latitude, longitude, openTime);
+        log.info("Input - name: {}, lat: {}, lng: {}, openTime: {}, createdBy: {}",
+                name, latitude, longitude, openTime, createdBy != null ? createdBy.getId() : "anonymous");
 
         try {
             validateCoordinates(latitude, longitude);
@@ -68,6 +74,7 @@ public class ShopService {
                     .region3DepthName(addressInfo.region3DepthName())
                     .mainAddressNo(addressInfo.mainAddressNo())
                     .subAddressNo(addressInfo.subAddressNo())
+                    .createdBy(createdBy)
                     .build();
             log.info("Shop entity built successfully");
 
