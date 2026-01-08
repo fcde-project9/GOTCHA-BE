@@ -1,6 +1,7 @@
 package com.gotcha.domain.user.service;
 
 import com.gotcha._global.util.SecurityUtil;
+import com.gotcha.domain.user.dto.UserNicknameResponse;
 import com.gotcha.domain.user.dto.UserResponse;
 import com.gotcha.domain.user.entity.User;
 import com.gotcha.domain.user.exception.UserException;
@@ -22,6 +23,15 @@ public class UserService {
     public UserResponse getMyInfo() {
         User user = securityUtil.getCurrentUser();
         return UserResponse.from(user);
+    }
+
+    /**
+     * 현재 로그인한 사용자의 닉네임 조회
+     * @return 사용자 닉네임
+     */
+    public UserNicknameResponse getNickname() {
+        User user = securityUtil.getCurrentUser();
+        return UserNicknameResponse.from(user);
     }
 
     /**
