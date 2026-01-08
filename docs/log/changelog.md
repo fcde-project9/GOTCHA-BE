@@ -4,6 +4,24 @@
 
 ---
 
+## 2026-01-08
+
+### 추가
+- `src/main/java/com/gotcha/domain/user/entity/PermissionType.java` - 권한 타입 Enum (LOCATION, CAMERA, ALBUM)
+- `src/main/java/com/gotcha/domain/user/entity/UserPermission.java` - 사용자 권한 동의 상태 Entity (일반 PK + UNIQUE 제약)
+- `src/main/java/com/gotcha/domain/user/entity/UserPermissionHistory.java` - 사용자 권한 변경 이력 Entity (deviceInfo만 저장)
+- `src/main/java/com/gotcha/domain/user/repository/UserPermissionRepository.java` - UserPermission Repository
+- `src/main/java/com/gotcha/domain/user/repository/UserPermissionHistoryRepository.java` - UserPermissionHistory Repository
+- `src/main/java/com/gotcha/domain/user/service/UserPermissionService.java` - 권한 확인 및 업데이트 Service
+- `src/main/java/com/gotcha/domain/user/controller/UserPermissionController.java` - 권한 확인/업데이트 API
+- `src/main/java/com/gotcha/domain/user/dto/UpdatePermissionRequest.java` - 권한 업데이트 Request DTO
+- `src/main/java/com/gotcha/domain/user/dto/PermissionResponse.java` - 권한 응답 DTO
+
+### 수정
+- `docs/entity-design.md` - user_permissions, user_permission_histories 테이블 설계 추가 (ipAddress 제거, deviceInfo만 유지)
+
+---
+
 ## 2026-01-06
 
 ### 수정
