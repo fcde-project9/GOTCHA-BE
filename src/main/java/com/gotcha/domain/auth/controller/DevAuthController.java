@@ -2,6 +2,7 @@ package com.gotcha.domain.auth.controller;
 
 import com.gotcha._global.common.ApiResponse;
 import com.gotcha.domain.auth.jwt.JwtTokenProvider;
+import com.gotcha.domain.auth.service.AuthService;
 import com.gotcha.domain.user.entity.User;
 import com.gotcha.domain.user.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,6 +23,7 @@ public class DevAuthController {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
+    private final AuthService authService;
 
     @Operation(
             summary = "테스트용 토큰 발급",
@@ -34,6 +36,9 @@ public class DevAuthController {
 
         String accessToken = jwtTokenProvider.generateAccessToken(user);
         String refreshToken = jwtTokenProvider.generateRefreshToken(user);
+
+        // Refresh Token을 DB에 저장
+        authService.saveRefreshToken(user, refreshToken);
 
         return ApiResponse.success(new DevTokenResponse(accessToken, refreshToken));
     }

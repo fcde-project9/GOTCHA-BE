@@ -17,7 +17,9 @@ public enum AuthErrorCode implements ErrorCode {
     UNSUPPORTED_SOCIAL_TYPE(HttpStatus.BAD_REQUEST, "A006", "지원하지 않는 소셜 로그인입니다"),
     OAUTH_ACCESS_DENIED(HttpStatus.UNAUTHORIZED, "A007", "로그인을 취소했습니다"),
     OAUTH_INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "A008", "OAuth 토큰이 유효하지 않습니다"),
-    OAUTH_INVALID_RESPONSE(HttpStatus.UNAUTHORIZED, "A009", "OAuth 응답을 처리할 수 없습니다");
+    OAUTH_INVALID_RESPONSE(HttpStatus.UNAUTHORIZED, "A009", "OAuth 응답을 처리할 수 없습니다"),
+    REFRESH_TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "A010", "리프레시 토큰을 찾을 수 없습니다"),
+    REFRESH_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "A011", "리프레시 토큰이 만료되었습니다");
 
     private final HttpStatus status;
     private final String code;

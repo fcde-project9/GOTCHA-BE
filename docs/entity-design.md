@@ -2,7 +2,7 @@
 
 ## 개요
 
-- **MVP (V1)**: users, shops, shop_reports, favorites, comments, reviews, withdrawal_surveys
+- **MVP (V1)**: users, refresh_tokens, shops, shop_reports, favorites, comments, reviews, withdrawal_surveys
 - **V2**: post_types, posts, post_comments, chat_rooms, chats, inquiries
 
 ---
@@ -19,6 +19,20 @@
 | is_anonymous | Boolean | 게스트 여부 |
 | is_deleted | Boolean | 탈퇴 여부 (soft delete) |
 | last_login_at | LocalDateTime | |
+| created_at, updated_at | LocalDateTime | BaseTimeEntity |
+
+---
+
+## refresh_tokens
+
+리프레시 토큰 저장 (로그아웃 시 무효화용)
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | Long (PK) | |
+| user_id | Long (FK → users) | |
+| token | String (unique) | 리프레시 토큰 값 |
+| expires_at | LocalDateTime | 만료 시간 |
 | created_at, updated_at | LocalDateTime | BaseTimeEntity |
 
 ---

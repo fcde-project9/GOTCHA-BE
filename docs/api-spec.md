@@ -102,6 +102,43 @@ Authorization: Bearer {accessToken}
 
 ---
 
+### POST /auth/reissue
+
+토큰 재발급
+
+**Request Body**
+```json
+{
+  "refreshToken": "리프레시 토큰"
+}
+```
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "accessToken": "새 JWT 토큰",
+    "refreshToken": "새 리프레시 토큰",
+    "user": {
+      "id": 1,
+      "nickname": "빨간캡슐#21",
+      "email": "user@example.com",
+      "socialType": "KAKAO",
+      "isNewUser": false
+    }
+  }
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| A010 | 리프레시 토큰을 찾을 수 없습니다 |
+| A011 | 리프레시 토큰이 만료되었습니다 |
+
+---
+
 ### GET /auth/nickname/random
 
 랜덤 닉네임 생성
@@ -741,13 +778,9 @@ Authorization: Bearer {accessToken}
   "data": {
     "id": 1,
     "nickname": "빨간캡슐#21",
-    "profileImageUrl": "https://...",
-    "socialType": "KAKAO",
-    "favoriteCount": 5,
-    "commentCount": 10,
-    "reviewCount": 3,
-    "reportCount": 2,
-    "createdAt": "2025-01-01T10:00:00"
+    "email": "user@example.com",
+    "profileImageUrl": null,
+    "socialType": "KAKAO"
   }
 }
 ```
