@@ -2,6 +2,7 @@ package com.gotcha.domain.shop.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.util.Collections;
 import java.util.List;
 
 @Schema(description = "근처 가게 목록 응답")
@@ -13,6 +14,9 @@ public record NearbyShopsResponse(
         List<NearbyShopResponse> shops
 ) {
     public static NearbyShopsResponse of(List<NearbyShopResponse> shops) {
+        if (shops == null) {
+            return new NearbyShopsResponse(0, Collections.emptyList());
+        }
         return new NearbyShopsResponse(shops.size(), shops);
     }
 }
