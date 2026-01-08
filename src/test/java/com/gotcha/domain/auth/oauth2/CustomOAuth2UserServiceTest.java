@@ -125,6 +125,103 @@ class CustomOAuth2UserServiceTest {
     }
 
     @Nested
+    @DisplayName("탈퇴 사용자 테스트")
+    class DeletedUserTest {
+
+        @Test
+        @DisplayName("User.delete() 호출 시 isDeleted가 true로 변경된다")
+        void delete_setsIsDeletedToTrue() {
+            // given
+            User user = User.builder()
+                    .socialType(SocialType.KAKAO)
+                    .socialId("12345")
+                    .nickname("테스트유저#1")
+                    .email("test@example.com")
+                    .profileImageUrl("https://example.com/img.jpg")
+                    .isAnonymous(false)
+                    .build();
+            setUserId(user, 1L);
+
+            // when
+            user.delete();
+
+            // then
+            assertThat(user.getIsDeleted()).isTrue();
+        }
+
+        @Test
+        @DisplayName("User.delete() 호출 시 닉네임이 마스킹된다")
+        void delete_masksNickname() {
+            // given
+            User user = User.builder()
+                    .socialType(SocialType.KAKAO)
+                    .socialId("12345")
+                    .nickname("테스트유저#1")
+                    .isAnonymous(false)
+                    .build();
+            setUserId(user, 42L);
+
+            // when
+            user.delete();
+
+            // then
+            assertThat(user.getNickname()).isEqualTo("탈퇴한 사용자_42");
+        }
+
+        @Test
+        @DisplayName("User.delete() 호출 시 이메일과 프로필 이미지가 null로 변경된다")
+        void delete_clearsEmailAndProfileImage() {
+            // given
+            User user = User.builder()
+                    .socialType(SocialType.KAKAO)
+                    .socialId("12345")
+                    .nickname("테스트유저#1")
+                    .email("test@example.com")
+                    .profileImageUrl("https://example.com/img.jpg")
+                    .isAnonymous(false)
+                    .build();
+            setUserId(user, 1L);
+
+            // when
+            user.delete();
+
+            // then
+            assertThat(user.getEmail()).isNull();
+            assertThat(user.getProfileImageUrl()).isNull();
+        }
+
+        @Test
+        @DisplayName("User.delete() 호출 후에도 socialId는 유지된다")
+        void delete_keepsSocialId() {
+            // given
+            User user = User.builder()
+                    .socialType(SocialType.KAKAO)
+                    .socialId("12345")
+                    .nickname("테스트유저#1")
+                    .isAnonymous(false)
+                    .build();
+            setUserId(user, 1L);
+
+            // when
+            user.delete();
+
+            // then
+            assertThat(user.getSocialId()).isEqualTo("12345");
+            assertThat(user.getSocialType()).isEqualTo(SocialType.KAKAO);
+        }
+
+        private void setUserId(User user, Long id) {
+            try {
+                var field = User.class.getDeclaredField("id");
+                field.setAccessible(true);
+                field.set(user, id);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    @Nested
     @DisplayName("엣지 케이스 테스트")
     class EdgeCaseTest {
 

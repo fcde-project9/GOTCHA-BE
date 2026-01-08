@@ -211,4 +211,65 @@ class ReviewRepositoryTest {
         assertThat(reviewPage.getContent()).isEmpty();
         assertThat(reviewPage.getTotalElements()).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("사용자 ID로 모든 리뷰 조회 - 회원 탈퇴 시 이미지 삭제용")
+    void findAllByUserId_Success() {
+        // given
+        reviewRepository.save(Review.builder()
+                .shop(shop).user(user).content("리뷰1").build());
+        reviewRepository.save(Review.builder()
+                .shop(shop).user(user).content("리뷰2").build());
+
+        // when
+        var reviews = reviewRepository.findAllByUserId(user.getId());
+
+        // then
+        assertThat(reviews).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("사용자 ID로 모든 리뷰 삭제 - 회원 탈퇴 시")
+    void deleteByUserId_Success() {
+        // given
+        reviewRepository.save(Review.builder()
+                .shop(shop).user(user).content("리뷰1").build());
+        reviewRepository.save(Review.builder()
+                .shop(shop).user(user).content("리뷰2").build());
+
+        assertThat(reviewRepository.findAllByUserId(user.getId())).hasSize(2);
+
+        // when
+        reviewRepository.deleteByUserId(user.getId());
+        reviewRepository.flush();
+
+        // then
+        assertThat(reviewRepository.findAllByUserId(user.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 사용자 ID로 삭제 시 에러 없이 진행")
+    void deleteByUserId_NonExistentUser() {
+        // when & then - 존재하지 않는 사용자 삭제 시 에러 없음
+        reviewRepository.deleteByUserId(999999L);
+        reviewRepository.flush();
+    }
+
+    @Test
+    @DisplayName("다른 사용자의 리뷰는 영향받지 않음")
+    void deleteByUserId_DoesNotAffectOtherUsers() {
+        // given
+        reviewRepository.save(Review.builder()
+                .shop(shop).user(user).content("내 리뷰").build());
+        reviewRepository.save(Review.builder()
+                .shop(shop).user(user2).content("다른 유저 리뷰").build());
+
+        // when
+        reviewRepository.deleteByUserId(user.getId());
+        reviewRepository.flush();
+
+        // then
+        assertThat(reviewRepository.findAllByUserId(user.getId())).isEmpty();
+        assertThat(reviewRepository.findAllByUserId(user2.getId())).hasSize(1);
+    }
 }
