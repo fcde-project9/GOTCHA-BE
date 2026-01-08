@@ -1,7 +1,9 @@
 package com.gotcha.domain.user.entity;
 
 import com.gotcha._global.entity.BaseTimeEntity;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -12,6 +14,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -31,17 +35,19 @@ public class WithdrawalSurvey extends BaseTimeEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "withdrawal_survey_reasons", joinColumns = @JoinColumn(name = "survey_id"))
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
-    private WithdrawalReason reason;
+    @Column(name = "reason", nullable = false, length = 30)
+    private List<WithdrawalReason> reasons = new ArrayList<>();
 
     @Column(length = 500)
     private String detail;
 
     @Builder
-    public WithdrawalSurvey(User user, WithdrawalReason reason, String detail) {
+    public WithdrawalSurvey(User user, List<WithdrawalReason> reasons, String detail) {
         this.user = user;
-        this.reason = reason;
+        this.reasons = reasons != null ? new ArrayList<>(reasons) : new ArrayList<>();
         this.detail = detail;
     }
 }

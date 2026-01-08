@@ -135,7 +135,9 @@ class UserServiceTest {
             when(securityUtil.getCurrentUserId()).thenReturn(testUser.getId());
             when(userRepository.findById(testUser.getId())).thenReturn(java.util.Optional.of(testUser));
             when(reviewRepository.findAllByUserId(testUser.getId())).thenReturn(Collections.emptyList());
-            WithdrawalRequest request = new WithdrawalRequest(WithdrawalReason.LOW_USAGE, "사용 빈도가 낮아서");
+            WithdrawalRequest request = new WithdrawalRequest(
+                    List.of(WithdrawalReason.LOW_USAGE, WithdrawalReason.INSUFFICIENT_INFO),
+                    "사용 빈도가 낮아서");
 
             // when
             userService.withdraw(request);
@@ -144,7 +146,8 @@ class UserServiceTest {
             ArgumentCaptor<WithdrawalSurvey> surveyCaptor = ArgumentCaptor.forClass(WithdrawalSurvey.class);
             verify(withdrawalSurveyRepository).save(surveyCaptor.capture());
             WithdrawalSurvey savedSurvey = surveyCaptor.getValue();
-            assertThat(savedSurvey.getReason()).isEqualTo(WithdrawalReason.LOW_USAGE);
+            assertThat(savedSurvey.getReasons()).containsExactly(
+                    WithdrawalReason.LOW_USAGE, WithdrawalReason.INSUFFICIENT_INFO);
             assertThat(savedSurvey.getDetail()).isEqualTo("사용 빈도가 낮아서");
             assertThat(savedSurvey.getUser()).isEqualTo(testUser);
 
@@ -163,13 +166,13 @@ class UserServiceTest {
         }
 
         @Test
-        @DisplayName("회원 탈퇴 성공 - detail 없이 탈퇴 (reason만 필수)")
+        @DisplayName("회원 탈퇴 성공 - detail 없이 탈퇴 (reasons만 필수)")
         void withdraw_Success_WithoutDetail() {
             // given
             when(securityUtil.getCurrentUserId()).thenReturn(testUser.getId());
             when(userRepository.findById(testUser.getId())).thenReturn(java.util.Optional.of(testUser));
             when(reviewRepository.findAllByUserId(testUser.getId())).thenReturn(Collections.emptyList());
-            WithdrawalRequest request = new WithdrawalRequest(WithdrawalReason.NO_DESIRED_INFO, null);
+            WithdrawalRequest request = new WithdrawalRequest(List.of(WithdrawalReason.INSUFFICIENT_INFO), null);
 
             // when
             userService.withdraw(request);
@@ -178,7 +181,7 @@ class UserServiceTest {
             ArgumentCaptor<WithdrawalSurvey> surveyCaptor = ArgumentCaptor.forClass(WithdrawalSurvey.class);
             verify(withdrawalSurveyRepository).save(surveyCaptor.capture());
             WithdrawalSurvey savedSurvey = surveyCaptor.getValue();
-            assertThat(savedSurvey.getReason()).isEqualTo(WithdrawalReason.NO_DESIRED_INFO);
+            assertThat(savedSurvey.getReasons()).containsExactly(WithdrawalReason.INSUFFICIENT_INFO);
             assertThat(savedSurvey.getDetail()).isNull();
 
             // then - 데이터 삭제 및 soft delete
@@ -193,7 +196,7 @@ class UserServiceTest {
             testUser.delete(); // 이미 탈퇴된 상태로 설정
             when(securityUtil.getCurrentUserId()).thenReturn(testUser.getId());
             when(userRepository.findById(testUser.getId())).thenReturn(java.util.Optional.of(testUser));
-            WithdrawalRequest request = new WithdrawalRequest(WithdrawalReason.OTHER, "기타 사유");
+            WithdrawalRequest request = new WithdrawalRequest(List.of(WithdrawalReason.OTHER), "기타 사유");
 
             // when & then
             assertThatThrownBy(() -> userService.withdraw(request))
@@ -231,7 +234,7 @@ class UserServiceTest {
             when(reviewImageRepository.findAllByReviewIdInOrderByReviewIdAscDisplayOrderAsc(List.of(100L)))
                     .thenReturn(List.of(mockImage1, mockImage2));
 
-            WithdrawalRequest request = new WithdrawalRequest(WithdrawalReason.LOW_USAGE, null);
+            WithdrawalRequest request = new WithdrawalRequest(List.of(WithdrawalReason.LOW_USAGE), null);
 
             // when
             userService.withdraw(request);

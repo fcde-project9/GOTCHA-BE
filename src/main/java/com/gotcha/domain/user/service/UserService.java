@@ -105,7 +105,7 @@ public class UserService {
         Long userId = securityUtil.getCurrentUserId();
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> UserException.notFound(userId));
-        log.info("withdraw - userId: {}, reason: {}", userId, request.reason());
+        log.info("withdraw - userId: {}, reasons: {}", userId, request.reasons());
 
         // 이미 탈퇴한 사용자인지 확인
         if (Boolean.TRUE.equals(user.getIsDeleted())) {
@@ -116,7 +116,7 @@ public class UserService {
         // 1. 탈퇴 설문 저장
         WithdrawalSurvey survey = WithdrawalSurvey.builder()
                 .user(user)
-                .reason(request.reason())
+                .reasons(request.reasons())
                 .detail(request.detail())
                 .build();
         withdrawalSurveyRepository.save(survey);

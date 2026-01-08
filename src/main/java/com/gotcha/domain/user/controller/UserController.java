@@ -288,7 +288,7 @@ public class UserController {
                                                       "success": false,
                                                       "error": {
                                                         "code": "C001",
-                                                        "message": "탈퇴 사유는 필수입니다"
+                                                        "message": "탈퇴 사유는 최소 1개 이상 선택해야 합니다"
                                                       }
                                                     }
                                                     """
