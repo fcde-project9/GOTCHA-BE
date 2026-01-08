@@ -48,6 +48,7 @@ com.gotcha
 | Entity 추가/수정 | `docs/entity-design.md`, `docs/skills/gotcha-entity.md` |
 | 인증/권한 구현 | `docs/auth-policy.md` |
 | 비즈니스 로직 | `docs/business-rules.md` |
+| 이미지 업로드 구현 | `docs/file-upload-guide.md` |
 | 설계 확인 | `docs/decisions.md`, `docs/flow.md` |
 | Repository/테스트 | `docs/repository-edge-cases.md`, `docs/skills/gotcha-test.md` |
 | 설정/yml 변경 | `docs/skills/gotcha-config.md` |
@@ -72,6 +73,7 @@ com.gotcha
 | `docs/decisions.md` | 설계 결정 사항 |
 | `docs/coding-patterns.md` | 코딩 패턴 |
 | `docs/repository-edge-cases.md` | Repository 엣지 케이스 |
+| `docs/file-upload-guide.md` | 이미지 업로드 가이드 (GCS 사용법) |
 
 ## 스킬 문서 (자동화용)
 
