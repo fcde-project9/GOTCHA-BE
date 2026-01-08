@@ -102,6 +102,43 @@ Authorization: Bearer {accessToken}
 
 ---
 
+### POST /auth/reissue
+
+토큰 재발급
+
+**Request Body**
+```json
+{
+  "refreshToken": "리프레시 토큰"
+}
+```
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "accessToken": "새 JWT 토큰",
+    "refreshToken": "새 리프레시 토큰",
+    "user": {
+      "id": 1,
+      "nickname": "빨간캡슐#21",
+      "email": "user@example.com",
+      "socialType": "KAKAO",
+      "isNewUser": false
+    }
+  }
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| A010 | 리프레시 토큰을 찾을 수 없습니다 |
+| A011 | 리프레시 토큰이 만료되었습니다 |
+
+---
+
 ### GET /auth/nickname/random
 
 랜덤 닉네임 생성
@@ -741,13 +778,9 @@ Authorization: Bearer {accessToken}
   "data": {
     "id": 1,
     "nickname": "빨간캡슐#21",
-    "profileImageUrl": "https://...",
-    "socialType": "KAKAO",
-    "favoriteCount": 5,
-    "commentCount": 10,
-    "reviewCount": 3,
-    "reportCount": 2,
-    "createdAt": "2025-01-01T10:00:00"
+    "email": "user@example.com",
+    "profileImageUrl": null,
+    "socialType": "KAKAO"
   }
 }
 ```
@@ -889,11 +922,11 @@ Authorization: Bearer {accessToken}
 
 ---
 
-## 이미지 API
+## 파일 업로드 API
 
-### POST /images
+### POST /files/upload
 
-이미지 업로드
+이미지 파일을 Google Cloud Storage에 업로드
 
 **Headers**
 ```
@@ -901,22 +934,26 @@ Authorization: Bearer {accessToken}
 Content-Type: multipart/form-data
 ```
 
-**Request Body**
+**Request Parameters**
 | 필드 | 타입 | 필수 | 설명 |
 |------|------|------|------|
-| file | MultipartFile | O | 이미지 파일 |
-| type | String | O | shop, review |
+| file | MultipartFile | O | 업로드할 이미지 파일 |
+| folder | String | O | 저장할 폴더 (reviews, shops, profiles) |
 
 **Validation**
-- 허용 확장자: jpg, jpeg, png, webp
-- 최대 크기: 10MB
+- 허용 형식: jpg, jpeg, png, webp, heic, heif
+- 최대 크기: 20MB
+- 허용 폴더: reviews, shops, profiles
 
 **Response (201)**
 ```json
 {
   "success": true,
   "data": {
-    "imageUrl": "https://..."
+    "url": "https://storage.googleapis.com/gotcha-bucket/reviews/abc123-def456.jpg",
+    "originalFilename": "my-photo.jpg",
+    "size": 1024000,
+    "contentType": "image/jpeg"
   }
 }
 ```
@@ -925,4 +962,18 @@ Content-Type: multipart/form-data
 | 코드 | 상황 |
 |------|------|
 | I001 | 지원하지 않는 파일 형식 |
-| I002 | 파일 크기 초과 |
+| I002 | 파일 크기 초과 (20MB) |
+| I003 | 파일 업로드 실패 |
+| I004 | 잘못된 폴더명 |
+
+**사용 예시**
+```bash
+curl -X POST /api/files/upload \
+  -H "Authorization: Bearer {accessToken}" \
+  -F "file=@photo.jpg" \
+  -F "folder=reviews"
+```
+
+**참고**
+- 상세한 사용법은 `docs/file-upload-guide.md` 참고
+- 업로드된 URL을 리뷰/가게 API에 전달하여 사용

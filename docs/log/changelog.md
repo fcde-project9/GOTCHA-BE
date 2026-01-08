@@ -8,13 +8,32 @@
 
 ### 추가
 - `docs/entity-design.md` - review_images 테이블 추가 (리뷰 다중 이미지 지원)
+- `docs/entity-design.md` - refresh_tokens 테이블 추가
 - `docs/api-spec.md` - PUT /shops/{shopId}/reviews/{reviewId}, DELETE /shops/{shopId}/reviews/{reviewId} API 추가
+- `docs/api-spec.md` - POST /auth/reissue API 명세 추가
+- `docs/api-design.md` - POST /auth/reissue 엔드포인트 추가
+- `docs/file-upload-guide.md` - 이미지 업로드 가이드 (프론트/백엔드 개발자용, GCS 사용법, 패턴 예시)
 
 ### 수정
+- `docs/auth-policy.md` - JWT 토큰 정책 업데이트
+  - 변경: Access Token 1시간 → 15분, Refresh Token 14일 → 7일
+  - 추가: Refresh Token 관리 정책 (DB 저장, 로그아웃 시 삭제)
+  - 변경: 토큰 재발급 엔드포인트 /auth/refresh → /auth/reissue
+  - 추가: 로그아웃 동작 설명
 - `docs/entity-design.md` - reviews.image_url 필드 삭제 (review_images로 완전 이동)
 - `docs/api-spec.md` - 리뷰 API imageUrl → imageUrls 배열로 변경 (최대 10개)
+- `docs/api-spec.md` - 파일 업로드 API 스펙 업데이트 (POST /files/upload, folder 파라미터, 실제 구현과 일치)
+- `docs/error-codes.md` - 인증 에러 코드 추가 (A007-A011)
 - `docs/error-codes.md` - R003 설명 수정 (수정/삭제 통합), R005 추가 (이미지 개수 초과)
+- `CLAUDE.md` - 개발 가이드 및 문서 목록에 file-upload-guide.md 추가
+- `ReviewService.java` - updateReview() 메서드 개선 (GCS 안전 삭제: 삭제된 이미지만 GCS에서 제거)
+- `ReviewService.java` - updateReview(), deleteReview() shopId 검증 추가 (보안 강화)
+- `ReviewController.java` - updateReview(), deleteReview() shopId 파라미터 전달
+- `CreateReviewRequest.java`, `UpdateReviewRequest.java` - imageUrls 스키마 설명 명확화 (null/빈 리스트 정책)
 - `Review.java` - imageUrl 필드 및 updateImage() 메서드 삭제
+
+---
+
 ## 2026-01-07
 
 ### 수정

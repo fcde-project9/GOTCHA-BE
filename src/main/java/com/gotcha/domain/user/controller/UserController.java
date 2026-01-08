@@ -54,7 +54,7 @@ public class UserController {
                                         "id": 1,
                                         "nickname": "빨간캡슐#21",
                                         "email": "user@example.com",
-                                        "profileImageUrl": "https://k.kakaocdn.net/...",
+                                        "profileImageUrl": null,
                                         "socialType": "KAKAO"
                                       }
                                     }
@@ -133,6 +133,110 @@ public class UserController {
             description = "현재 로그인한 사용자의 닉네임을 변경합니다. 중복된 닉네임은 사용할 수 없습니다.",
             security = @SecurityRequirement(name = "bearerAuth")
     )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "변경 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "success": true,
+                                      "data": {
+                                        "id": 1,
+                                        "nickname": "새닉네임#99",
+                                        "email": "user@example.com",
+                                        "profileImageUrl": null,
+                                        "socialType": "KAKAO"
+                                      }
+                                    }
+                                    """)
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "잘못된 요청",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "U002 - 닉네임 형식 오류",
+                                    value = """
+                                            {
+                                              "success": false,
+                                              "error": {
+                                                "code": "U002",
+                                                "message": "닉네임 형식이 올바르지 않습니다"
+                                              }
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description = "인증 실패",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "A001 - 토큰 없음",
+                                            value = """
+                                                    {
+                                                      "success": false,
+                                                      "error": {
+                                                        "code": "A001",
+                                                        "message": "로그인이 필요합니다"
+                                                      }
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "A003 - 토큰 만료",
+                                            value = """
+                                                    {
+                                                      "success": false,
+                                                      "error": {
+                                                        "code": "A003",
+                                                        "message": "토큰이 만료되었습니다"
+                                                      }
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "A004 - 유효하지 않은 토큰",
+                                            value = """
+                                                    {
+                                                      "success": false,
+                                                      "error": {
+                                                        "code": "A004",
+                                                        "message": "유효하지 않은 토큰입니다"
+                                                      }
+                                                    }
+                                                    """
+                                    )
+                            }
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "409",
+                    description = "닉네임 중복",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "U001 - 닉네임 중복",
+                                    value = """
+                                            {
+                                              "success": false,
+                                              "error": {
+                                                "code": "U001",
+                                                "message": "이미 사용 중인 닉네임입니다"
+                                              }
+                                            }
+                                            """
+                            )
+                    )
+            )
+    })
     @PatchMapping("/me/nickname")
     public ApiResponse<UserResponse> updateNickname(
             @Valid @RequestBody UpdateNicknameRequest request
