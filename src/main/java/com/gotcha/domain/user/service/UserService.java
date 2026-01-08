@@ -101,8 +101,10 @@ public class UserService {
      */
     @Transactional
     public void withdraw(WithdrawalRequest request) {
-        User user = securityUtil.getCurrentUser();
-        Long userId = user.getId();
+        // SecurityUtil.getCurrentUser() 대신 직접 조회 (탈퇴 후 응답 시 A012 에러 방지)
+        Long userId = securityUtil.getCurrentUserId();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> UserException.notFound(userId));
         log.info("withdraw - userId: {}, reason: {}", userId, request.reason());
 
         // 이미 탈퇴한 사용자인지 확인

@@ -47,8 +47,8 @@ public class User extends BaseTimeEntity {
     @Column(nullable = false)
     private Boolean isAnonymous;
 
-    @Column(nullable = false)
-    private Boolean isDeleted;
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private Boolean isDeleted = false;
 
     @Builder
     public User(SocialType socialType, String socialId, String nickname,

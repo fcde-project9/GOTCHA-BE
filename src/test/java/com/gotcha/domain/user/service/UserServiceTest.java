@@ -132,7 +132,8 @@ class UserServiceTest {
                     .build();
             setUserId(testUser, 1L);
 
-            when(securityUtil.getCurrentUser()).thenReturn(testUser);
+            when(securityUtil.getCurrentUserId()).thenReturn(testUser.getId());
+            when(userRepository.findById(testUser.getId())).thenReturn(java.util.Optional.of(testUser));
             when(reviewRepository.findAllByUserId(testUser.getId())).thenReturn(Collections.emptyList());
             WithdrawalRequest request = new WithdrawalRequest(WithdrawalReason.LOW_USAGE, "사용 빈도가 낮아서");
 
@@ -165,7 +166,8 @@ class UserServiceTest {
         @DisplayName("회원 탈퇴 성공 - detail 없이 탈퇴 (reason만 필수)")
         void withdraw_Success_WithoutDetail() {
             // given
-            when(securityUtil.getCurrentUser()).thenReturn(testUser);
+            when(securityUtil.getCurrentUserId()).thenReturn(testUser.getId());
+            when(userRepository.findById(testUser.getId())).thenReturn(java.util.Optional.of(testUser));
             when(reviewRepository.findAllByUserId(testUser.getId())).thenReturn(Collections.emptyList());
             WithdrawalRequest request = new WithdrawalRequest(WithdrawalReason.NO_DESIRED_INFO, null);
 
@@ -189,7 +191,8 @@ class UserServiceTest {
         void withdraw_AlreadyDeleted_ThrowsException() {
             // given
             testUser.delete(); // 이미 탈퇴된 상태로 설정
-            when(securityUtil.getCurrentUser()).thenReturn(testUser);
+            when(securityUtil.getCurrentUserId()).thenReturn(testUser.getId());
+            when(userRepository.findById(testUser.getId())).thenReturn(java.util.Optional.of(testUser));
             WithdrawalRequest request = new WithdrawalRequest(WithdrawalReason.OTHER, "기타 사유");
 
             // when & then
@@ -202,7 +205,8 @@ class UserServiceTest {
         @DisplayName("회원 탈퇴 시 리뷰 이미지 GCS 삭제 및 DB 삭제")
         void withdraw_WithReviewImages_DeletesGCSAndDB() {
             // given
-            when(securityUtil.getCurrentUser()).thenReturn(testUser);
+            when(securityUtil.getCurrentUserId()).thenReturn(testUser.getId());
+            when(userRepository.findById(testUser.getId())).thenReturn(java.util.Optional.of(testUser));
 
             // 리뷰 mock 설정
             Review mockReview = Review.builder()
