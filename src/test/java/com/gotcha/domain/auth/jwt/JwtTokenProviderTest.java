@@ -19,8 +19,8 @@ class JwtTokenProviderTest {
     @BeforeEach
     void setUp() {
         String testSecret = "test-secret-key-for-unit-testing-must-be-at-least-32-characters-long";
-        long accessTokenValidity = 3600000L; // 1시간
-        long refreshTokenValidity = 1209600000L; // 14일
+        long accessTokenValidity = 900000L; // 15분
+        long refreshTokenValidity = 604800000L; // 7일
 
         jwtTokenProvider = new JwtTokenProvider(testSecret, accessTokenValidity, refreshTokenValidity);
 

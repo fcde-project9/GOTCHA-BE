@@ -32,4 +32,12 @@ public class AuthException extends BusinessException {
     public static AuthException unsupportedSocialType() {
         return new AuthException(AuthErrorCode.UNSUPPORTED_SOCIAL_TYPE);
     }
+
+    public static AuthException refreshTokenNotFound() {
+        return new AuthException(AuthErrorCode.REFRESH_TOKEN_NOT_FOUND);
+    }
+
+    public static AuthException refreshTokenExpired() {
+        return new AuthException(AuthErrorCode.REFRESH_TOKEN_EXPIRED);
+    }
 }

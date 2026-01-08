@@ -45,8 +45,8 @@ spring:
 # JWT Configuration for tests
 jwt:
   secret: test-secret-key-for-unit-testing-must-be-at-least-32-characters-long
-  access-token-validity: 3600000
-  refresh-token-validity: 1209600000
+  access-token-validity: 900000       # 15분 (15 * 60 * 1000)
+  refresh-token-validity: 604800000   # 7일 (7 * 24 * 60 * 60 * 1000)
 
 # OAuth2 Configuration for tests
 oauth2:
