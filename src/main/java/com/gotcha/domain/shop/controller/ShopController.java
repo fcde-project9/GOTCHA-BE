@@ -86,9 +86,6 @@ public class ShopController {
     public ApiResponse<List<ShopMapResponse>> getShopsInMap(
             @Valid @ModelAttribute MapBoundsRequest bounds
     ) {
-        // 현재 로그인한 사용자 ID 가져오기 (비로그인 시 null)
-        //Long userId = getCurrentUserId();
-
         User user = getCurrentUser();
         List<ShopMapResponse> shops = shopService.getShopsInMap(
                 bounds.northEastLat(),
