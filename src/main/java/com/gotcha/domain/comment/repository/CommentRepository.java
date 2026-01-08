@@ -12,7 +12,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     Page<Comment> findAllByShopIdOrderByCreatedAtDesc(Long shopId, Pageable pageable);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("DELETE FROM Comment c WHERE c.user.id = :userId")
     void deleteByUserId(@Param("userId") Long userId);
 }
