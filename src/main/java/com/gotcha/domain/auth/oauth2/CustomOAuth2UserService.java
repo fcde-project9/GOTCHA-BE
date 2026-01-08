@@ -75,9 +75,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     }
 
     private User updateExistingUser(User user, OAuth2UserInfo userInfo) {
-        if (userInfo.getProfileImageUrl() != null) {
-            user.updateProfileImage(userInfo.getProfileImageUrl());
-        }
         if (userInfo.getEmail() != null) {
             user.updateEmail(userInfo.getEmail());
         }
@@ -93,7 +90,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .socialId(userInfo.getId())
                 .nickname(nickname)
                 .email(userInfo.getEmail())
-                .profileImageUrl(userInfo.getProfileImageUrl())
                 .isAnonymous(false)
                 .build();
 
