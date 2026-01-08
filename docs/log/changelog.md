@@ -4,6 +4,26 @@
 
 ---
 
+## 2026-01-08
+
+### 수정
+- `docs/auth-policy.md` - JWT 토큰 정책 업데이트
+  - 변경: Access Token 1시간 → 15분, Refresh Token 14일 → 7일
+  - 추가: Refresh Token 관리 정책 (DB 저장, 로그아웃 시 삭제)
+  - 변경: 토큰 재발급 엔드포인트 /auth/refresh → /auth/reissue
+  - 추가: 로그아웃 동작 설명
+- `docs/api-spec.md` - POST /auth/reissue API 명세 추가
+- `docs/api-design.md` - POST /auth/reissue 엔드포인트 추가
+- `docs/entity-design.md` - refresh_tokens 테이블 추가
+- `docs/error-codes.md` - 인증 에러 코드 추가
+  - A007: 로그인 취소
+  - A008: OAuth 토큰 오류
+  - A009: OAuth 응답 오류
+  - A010: 리프레시 토큰 없음
+  - A011: 리프레시 토큰 만료
+
+---
+
 ## 2026-01-07
 
 ### 수정
