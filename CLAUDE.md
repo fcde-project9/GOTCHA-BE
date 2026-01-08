@@ -82,6 +82,29 @@ com.gotcha
 | `docs/skills/gotcha-test.md` | 테스트 작성 패턴 (Repository/Service/Controller) |
 | `docs/skills/gotcha-config.md` | 설정/yml 관리 규칙 (환경변수화) |
 
+## 태스크 완료 조건
+
+모든 기능 개발 태스크는 다음 조건을 충족해야 합니다:
+
+### 1. 엣지 케이스 테스트 (필수)
+- 정상 케이스 테스트
+- 경계값 테스트 (최소/최대/빈값)
+- 예외 상황 테스트 (null, 잘못된 입력 등)
+- 동시성 이슈 가능성 검토
+- 의존성 실패 시나리오 (외부 API, DB 등)
+
+### 2. 빌드 & 테스트
+- `./gradlew build` 성공
+- `./gradlew test` 모든 테스트 통과
+
+### 3. Confluence 문서화 (필수)
+작업 완료 시 Confluence에 상세 문서 작성:
+- 구현 개요
+- 변경된 파일 목록
+- API 변경 사항 (있는 경우)
+- 테스트 케이스 목록
+- 엣지 케이스 처리 방법
+
 ## 문서 변경 로그
 
 문서 추가/수정/삭제 시 `docs/log/changelog.md`에 기록
