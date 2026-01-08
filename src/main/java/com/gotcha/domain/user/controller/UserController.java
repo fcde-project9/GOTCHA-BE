@@ -5,6 +5,7 @@ import com.gotcha._global.common.PageResponse;
 import com.gotcha.domain.favorite.dto.FavoriteShopResponse;
 import com.gotcha.domain.favorite.service.FavoriteService;
 import com.gotcha.domain.user.dto.UpdateNicknameRequest;
+import com.gotcha.domain.user.dto.UserNicknameResponse;
 import com.gotcha.domain.user.dto.UserResponse;
 import com.gotcha.domain.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -137,5 +138,15 @@ public class UserController {
             @Valid @RequestBody UpdateNicknameRequest request
     ) {
         return ApiResponse.success(userService.updateNickname(request.nickname()));
+    }
+
+    @Operation(
+            summary = "내 닉네임 조회",
+            description = "현재 로그인한 사용자의 닉네임만 조회합니다",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @GetMapping("/me/nickname")
+    public ApiResponse<UserNicknameResponse> getNickname() {
+        return ApiResponse.success(userService.getNickname());
     }
 }
