@@ -658,13 +658,9 @@ Authorization: Bearer {accessToken}
   "data": {
     "id": 1,
     "nickname": "빨간캡슐#21",
-    "profileImageUrl": "https://...",
-    "socialType": "KAKAO",
-    "favoriteCount": 5,
-    "commentCount": 10,
-    "reviewCount": 3,
-    "reportCount": 2,
-    "createdAt": "2025-01-01T10:00:00"
+    "email": "user@example.com",
+    "profileImageUrl": null,
+    "socialType": "KAKAO"
   }
 }
 ```
