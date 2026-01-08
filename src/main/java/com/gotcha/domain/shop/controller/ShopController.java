@@ -5,7 +5,9 @@ import com.gotcha.domain.favorite.dto.FavoriteResponse;
 import com.gotcha.domain.favorite.service.FavoriteService;
 import com.gotcha.domain.shop.dto.CoordinateRequest;
 import com.gotcha.domain.shop.dto.CreateShopRequest;
+import com.gotcha.domain.shop.dto.MapBoundsRequest;
 import com.gotcha.domain.shop.dto.NearbyShopResponse;
+import com.gotcha.domain.shop.dto.ShopMapResponse;
 import com.gotcha.domain.shop.dto.ShopResponse;
 import com.gotcha.domain.shop.entity.Shop;
 import com.gotcha.domain.shop.service.ShopService;
@@ -60,28 +62,6 @@ public class ShopController {
         return ApiResponse.success(ShopResponse.from(shop));
     }
 
-    /**
-     * SecurityContext에서 현재 로그인한 사용자 정보 가져오기
-     * @return 로그인한 사용자 (User) 또는 비로그인 시 null
-     */
-    private User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        // 인증 정보가 없거나 익명 사용자인 경우
-        if (authentication == null || !authentication.isAuthenticated()
-                || authentication.getPrincipal().equals("anonymousUser")) {
-            return null;
-        }
-
-        // JWT 필터에서 userId(Long)를 principal로 설정함
-        Object principal = authentication.getPrincipal();
-        if (principal instanceof Long userId) {
-            return userRepository.findById(userId).orElse(null);
-        }
-
-        return null;
-    }
-
     @Operation(
             summary = "가게 저장 전 근처 가게 조회",
             description = "가게 등록 전 현재 위도/경도 기준 50m 이내 가게를 거리 가까운 순서로 조회합니다 (중복 체크용)"
@@ -96,6 +76,30 @@ public class ShopController {
         );
         return ApiResponse.success(shops);
     }
+
+    @Operation(
+            summary = "지도 영역 내 가게 목록 조회",
+            description = "카카오맵에서 보이는 영역(bounds) 내의 가게를 거리 가까운 순서로 조회합니다. " +
+                    "거리는 50m 단위로 표시되며, 로그인한 사용자는 찜 여부를 확인할 수 있습니다."
+    )
+    @GetMapping("/map")
+    public ApiResponse<List<ShopMapResponse>> getShopsInMap(
+            @Valid @ModelAttribute MapBoundsRequest bounds
+    ) {
+        User user = getCurrentUser();
+        List<ShopMapResponse> shops = shopService.getShopsInMap(
+                bounds.northEastLat(),
+                bounds.northEastLng(),
+                bounds.southWestLat(),
+                bounds.southWestLng(),
+                bounds.centerLat(),
+                bounds.centerLng(),
+                user
+        );
+
+        return ApiResponse.success(shops);
+    }
+
 
     @Operation(
             summary = "찜 추가",
@@ -116,5 +120,27 @@ public class ShopController {
     @DeleteMapping("/{shopId}/favorite")
     public ApiResponse<FavoriteResponse> removeFavorite(@PathVariable Long shopId) {
         return ApiResponse.success(favoriteService.removeFavorite(shopId));
+    }
+
+    /**
+     * SecurityContext에서 현재 로그인한 사용자 정보 가져오기
+     * @return 로그인한 사용자 (User) 또는 비로그인 시 null
+     */
+    private User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        // 인증 정보가 없거나 익명 사용자인 경우
+        if (authentication == null || !authentication.isAuthenticated()
+                || authentication.getPrincipal().equals("anonymousUser")) {
+            return null;
+        }
+
+        // JWT 필터에서 userId(Long)를 principal로 설정함
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof Long userId) {
+            return userRepository.findById(userId).orElse(null);
+        }
+
+        return null;
     }
 }
