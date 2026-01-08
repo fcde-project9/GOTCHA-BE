@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-01-08
+
+### 추가
+- `docs/entity-design.md` - review_images 테이블 추가 (리뷰 다중 이미지 지원)
+- `docs/api-spec.md` - PUT /shops/{shopId}/reviews/{reviewId}, DELETE /shops/{shopId}/reviews/{reviewId} API 추가
+
+### 수정
+- `docs/entity-design.md` - reviews.image_url 필드 삭제 (review_images로 완전 이동)
+- `docs/api-spec.md` - 리뷰 API imageUrl → imageUrls 배열로 변경 (최대 10개)
+- `docs/error-codes.md` - R003 설명 수정 (수정/삭제 통합), R005 추가 (이미지 개수 초과)
+- `Review.java` - imageUrl 필드 및 updateImage() 메서드 삭제
 ## 2026-01-07
 
 ### 수정
