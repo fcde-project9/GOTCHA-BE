@@ -80,7 +80,6 @@ class ReviewRepositoryTest {
                 .shop(shop)
                 .user(user2)
                 .content("두번째 리뷰")
-                .imageUrl("https://example.com/image.jpg")
                 .build());
 
         // when

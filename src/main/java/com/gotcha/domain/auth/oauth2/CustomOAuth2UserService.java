@@ -68,7 +68,17 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         boolean isNewUser = !userRepository.existsBySocialTypeAndSocialId(socialType, socialId);
 
         User user = userRepository.findBySocialTypeAndSocialId(socialType, socialId)
-                .map(existingUser -> updateExistingUser(existingUser, userInfo))
+                .map(existingUser -> {
+                    // 탈퇴한 사용자 로그인 차단
+                    if (Boolean.TRUE.equals(existingUser.getIsDeleted())) {
+                        log.warn("Deleted user attempted login - userId: {}, socialType: {}",
+                                existingUser.getId(), socialType);
+                        throw new OAuth2AuthenticationException(
+                                new OAuth2Error(AuthErrorCode.USER_DELETED.getCode(),
+                                        AuthErrorCode.USER_DELETED.getMessage(), null));
+                    }
+                    return updateExistingUser(existingUser, userInfo);
+                })
                 .orElseGet(() -> createNewUser(userInfo, socialType));
 
         return new CustomOAuth2User(user, oauth2User.getAttributes(), isNewUser);

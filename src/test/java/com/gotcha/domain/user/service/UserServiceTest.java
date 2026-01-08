@@ -1,12 +1,28 @@
 package com.gotcha.domain.user.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.gotcha._global.util.SecurityUtil;
+import com.gotcha.domain.auth.repository.RefreshTokenRepository;
+import com.gotcha.domain.comment.repository.CommentRepository;
+import com.gotcha.domain.favorite.repository.FavoriteRepository;
+import com.gotcha.domain.file.service.FileUploadService;
+import com.gotcha.domain.review.repository.ReviewImageRepository;
+import com.gotcha.domain.review.repository.ReviewRepository;
 import com.gotcha.domain.user.dto.UserResponse;
+import com.gotcha.domain.user.dto.WithdrawalRequest;
 import com.gotcha.domain.user.entity.SocialType;
 import com.gotcha.domain.user.entity.User;
+import com.gotcha.domain.user.entity.WithdrawalReason;
+import com.gotcha.domain.user.entity.WithdrawalSurvey;
+import com.gotcha.domain.user.exception.UserException;
+import com.gotcha.domain.user.repository.UserRepository;
+import com.gotcha.domain.user.repository.WithdrawalSurveyRepository;
+import java.util.Collections;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -21,6 +37,30 @@ class UserServiceTest {
 
     @Mock
     private SecurityUtil securityUtil;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private WithdrawalSurveyRepository withdrawalSurveyRepository;
+
+    @Mock
+    private RefreshTokenRepository refreshTokenRepository;
+
+    @Mock
+    private FavoriteRepository favoriteRepository;
+
+    @Mock
+    private ReviewRepository reviewRepository;
+
+    @Mock
+    private ReviewImageRepository reviewImageRepository;
+
+    @Mock
+    private CommentRepository commentRepository;
+
+    @Mock
+    private FileUploadService fileUploadService;
 
     @InjectMocks
     private UserService userService;
@@ -66,6 +106,63 @@ class UserServiceTest {
             assertThat(result.nickname()).isEqualTo("테스트유저");
             assertThat(result.profileImageUrl()).isEqualTo("https://example.com/profile.jpg");
             assertThat(result.socialType()).isEqualTo(SocialType.KAKAO);
+        }
+    }
+
+    @Nested
+    @DisplayName("withdraw")
+    class Withdraw {
+
+        @Test
+        @DisplayName("회원 탈퇴 성공 - 설문 저장, 관련 데이터 삭제, soft delete")
+        void withdraw_Success() {
+            // given
+            when(securityUtil.getCurrentUser()).thenReturn(testUser);
+            when(reviewRepository.findAllByUserId(testUser.getId())).thenReturn(Collections.emptyList());
+            WithdrawalRequest request = new WithdrawalRequest(WithdrawalReason.LOW_USAGE, "사용 빈도가 낮아서");
+
+            // when
+            userService.withdraw(request);
+
+            // then
+            verify(withdrawalSurveyRepository).save(any(WithdrawalSurvey.class));
+            verify(favoriteRepository).deleteByUserId(testUser.getId());
+            verify(reviewRepository).deleteByUserId(testUser.getId());
+            verify(commentRepository).deleteByUserId(testUser.getId());
+            verify(refreshTokenRepository).deleteByUserId(testUser.getId());
+            assertThat(testUser.getIsDeleted()).isTrue();
+            assertThat(testUser.getNickname()).startsWith("탈퇴한 사용자_");
+        }
+
+        @Test
+        @DisplayName("회원 탈퇴 성공 - detail 없이 탈퇴")
+        void withdraw_Success_WithoutDetail() {
+            // given
+            when(securityUtil.getCurrentUser()).thenReturn(testUser);
+            when(reviewRepository.findAllByUserId(testUser.getId())).thenReturn(Collections.emptyList());
+            WithdrawalRequest request = new WithdrawalRequest(WithdrawalReason.NO_DESIRED_INFO, null);
+
+            // when
+            userService.withdraw(request);
+
+            // then
+            verify(withdrawalSurveyRepository).save(any(WithdrawalSurvey.class));
+            verify(refreshTokenRepository).deleteByUserId(testUser.getId());
+            assertThat(testUser.getIsDeleted()).isTrue();
+        }
+
+        @Test
+        @DisplayName("이미 탈퇴한 사용자 - U005 예외 발생")
+        void withdraw_AlreadyDeleted_ThrowsException() {
+            // given
+            testUser.delete(); // 이미 탈퇴된 상태로 설정
+            when(securityUtil.getCurrentUser()).thenReturn(testUser);
+            WithdrawalRequest request = new WithdrawalRequest(WithdrawalReason.OTHER, "기타 사유");
+
+            // when & then
+            assertThatThrownBy(() -> userService.withdraw(request))
+                    .isInstanceOf(UserException.class)
+                    .hasMessageContaining("이미 탈퇴한 사용자입니다");
         }
     }
 }

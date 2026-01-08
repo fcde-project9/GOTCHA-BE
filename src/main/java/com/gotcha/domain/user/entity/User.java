@@ -47,6 +47,9 @@ public class User extends BaseTimeEntity {
     @Column(nullable = false)
     private Boolean isAnonymous;
 
+    @Column(nullable = false)
+    private Boolean isDeleted;
+
     @Builder
     public User(SocialType socialType, String socialId, String nickname,
                 String email, String profileImageUrl, Boolean isAnonymous) {
@@ -56,6 +59,7 @@ public class User extends BaseTimeEntity {
         this.email = email;
         this.profileImageUrl = profileImageUrl;
         this.isAnonymous = isAnonymous != null ? isAnonymous : false;
+        this.isDeleted = false;
     }
 
     public void updateNickname(String nickname) {
@@ -72,5 +76,17 @@ public class User extends BaseTimeEntity {
 
     public void updateLastLoginAt() {
         this.lastLoginAt = LocalDateTime.now();
+    }
+
+    /**
+     * 회원 탈퇴 처리
+     * - 개인정보 마스킹 (닉네임, 이메일, 프로필 이미지)
+     * - soft delete 플래그 설정
+     */
+    public void delete() {
+        this.nickname = "탈퇴한 사용자_" + this.id;
+        this.email = null;
+        this.profileImageUrl = null;
+        this.isDeleted = true;
     }
 }
