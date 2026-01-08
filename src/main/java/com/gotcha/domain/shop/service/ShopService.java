@@ -7,12 +7,16 @@ import com.gotcha._global.external.kakao.KakaoMapClient;
 import com.gotcha._global.external.kakao.dto.AddressInfo;
 import com.gotcha.domain.favorite.repository.FavoriteRepository;
 import com.gotcha.domain.shop.dto.NearbyShopResponse;
+import com.gotcha.domain.shop.dto.NearbyShopsResponse;
 import com.gotcha.domain.shop.dto.OpenTimeDto;
 import com.gotcha.domain.shop.dto.ShopMapResponse;
 import com.gotcha.domain.shop.entity.Shop;
 import com.gotcha.domain.shop.exception.ShopException;
 import com.gotcha.domain.shop.repository.ShopRepository;
+import java.time.DayOfWeek;
 import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.HashMap;
 import com.gotcha.domain.user.entity.User;
@@ -117,7 +121,7 @@ public class ShopService {
     }
 
     @Transactional(readOnly = true)
-    public List<NearbyShopResponse> checkNearbyShopsBeforeSave(Double latitude, Double longitude) {
+    public NearbyShopsResponse checkNearbyShopsBeforeSave(Double latitude, Double longitude) {
         log.info("checkNearbyShopsBeforeSave - lat: {}, lng: {}", latitude, longitude);
 
         // 좌표 검증 (기존 validateCoordinates 재사용)
@@ -129,9 +133,11 @@ public class ShopService {
         log.info("Found {} shops within 50m", shops.size());
 
         // Stream으로 DTO 변환
-        return shops.stream()
+        List<NearbyShopResponse> shopResponses = shops.stream()
                 .map(NearbyShopResponse::from)
                 .collect(Collectors.toList());
+
+        return NearbyShopsResponse.of(shopResponses);
     }
 
     /**
@@ -193,8 +199,8 @@ public class ShopService {
                     double distanceKm = shopDistances.get(shop);
                     String distanceStr = formatDistance(distanceKm);
                     boolean isFavorite = finalFavoriteShopIds.contains(shop.getId());
-                    OpenTimeDto parsedOpenTime = parseOpenTime(shop.getOpenTime());
-                    return ShopMapResponse.of(shop, distanceStr, parsedOpenTime, isFavorite);
+                    boolean openStatus = isOpenNow(shop.getOpenTime());
+                    return ShopMapResponse.of(shop, distanceStr, openStatus, isFavorite);
                 })
                 .collect(Collectors.toList());
 
@@ -249,33 +255,73 @@ public class ShopService {
     }
 
     /**
-     * JSON 형식의 운영 시간 문자열을 OpenTimeDto로 파싱
-     * @param openTimeJson JSON 문자열 (예: {"AM":"10:00", "PM":"20:00"})
-     * @return 파싱된 OpenTimeDto 또는 파싱 실패 시 null
+     * 현재 한국 시간 기준으로 영업중인지 판단
+     * @param openTimeJson JSON 문자열 (예: {"Mon":"10:00~22:00","Tue":null,"Wed":"10:00~22:00"})
+     * @return 영업중이면 true, 아니면 false
      */
-    private OpenTimeDto parseOpenTime(String openTimeJson) {
+    private boolean isOpenNow(String openTimeJson) {
         if (openTimeJson == null || openTimeJson.isEmpty()) {
-            return null;
+            return false;
         }
 
         try {
+            // 현재 한국 시간 가져오기
+            ZonedDateTime nowInKorea = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
+            DayOfWeek dayOfWeek = nowInKorea.getDayOfWeek();
+            LocalTime currentTime = nowInKorea.toLocalTime();
+
+            // 요일을 "Mon", "Tue" 형식으로 변환
+            String dayKey = getDayKey(dayOfWeek);
+
+            // open_time JSON 파싱
             Map<String, String> timeMap = objectMapper.readValue(openTimeJson,
                     new TypeReference<Map<String, String>>() {});
-            String amTime = timeMap.get("AM");
-            String pmTime = timeMap.get("PM");
 
-            if (amTime == null || pmTime == null) {
-                log.warn("Missing AM or PM in openTime JSON: {}", openTimeJson);
-                return null;
+            String daySchedule = timeMap.get(dayKey);
+
+            // 해당 요일이 null이거나 없으면 휴무
+            if (daySchedule == null) {
+                return false;
             }
 
-            LocalTime openAm = LocalTime.parse(amTime);
-            LocalTime closePm = LocalTime.parse(pmTime);
+            // "10:00~22:00" 형식 파싱
+            if (!daySchedule.contains("~")) {
+                log.warn("Invalid time format: {}", daySchedule);
+                return false;
+            }
 
-            return new OpenTimeDto(openAm, closePm);
+            String[] times = daySchedule.split("~");
+            if (times.length != 2) {
+                log.warn("Invalid time format: {}", daySchedule);
+                return false;
+            }
+
+            LocalTime openTime = LocalTime.parse(times[0].trim());
+            LocalTime closeTime = LocalTime.parse(times[1].trim());
+
+            // 현재 시간이 영업 시간 범위 내인지 확인
+            return !currentTime.isBefore(openTime) && !currentTime.isAfter(closeTime);
+
         } catch (Exception e) {
-            log.error("Error parsing openTime JSON: {}", openTimeJson, e);
-            return null;
+            log.error("Error checking open status for openTime JSON: {}", openTimeJson, e);
+            return false;
         }
+    }
+
+    /**
+     * DayOfWeek를 "Mon", "Tue" 형식으로 변환
+     * @param dayOfWeek DayOfWeek
+     * @return "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"
+     */
+    private String getDayKey(DayOfWeek dayOfWeek) {
+        return switch (dayOfWeek) {
+            case MONDAY -> "Mon";
+            case TUESDAY -> "Tue";
+            case WEDNESDAY -> "Wed";
+            case THURSDAY -> "Thu";
+            case FRIDAY -> "Fri";
+            case SATURDAY -> "Sat";
+            case SUNDAY -> "Sun";
+        };
     }
 }

@@ -1,6 +1,7 @@
 package com.gotcha.domain.auth.oauth2;
 
 import com.gotcha.domain.auth.jwt.JwtTokenProvider;
+import com.gotcha.domain.auth.service.AuthService;
 import com.gotcha.domain.user.entity.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -17,6 +18,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final AuthService authService;
 
     // TODO: 프로덕션 배포 전 리다이렉트 URI 화이트리스트 검증 추가 필요
     @Value("${oauth2.redirect-uri:http://localhost:3000/oauth/callback}")
@@ -32,13 +34,18 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                                         Authentication authentication) throws IOException {
         CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
         User user = oAuth2User.getUser();
+        boolean isNewUser = oAuth2User.isNewUser();
 
         String accessToken = jwtTokenProvider.generateAccessToken(user);
         String refreshToken = jwtTokenProvider.generateRefreshToken(user);
 
+        // Refresh Token을 DB에 저장
+        authService.saveRefreshToken(user, refreshToken);
+
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
                 .queryParam("accessToken", accessToken)
                 .queryParam("refreshToken", refreshToken)
+                .queryParam("isNewUser", isNewUser)
                 .build()
                 .toUriString();
 

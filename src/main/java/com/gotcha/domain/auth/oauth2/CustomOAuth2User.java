@@ -13,10 +13,12 @@ public class CustomOAuth2User implements OAuth2User {
 
     private final User user;
     private final Map<String, Object> attributes;
+    private final boolean isNewUser;
 
-    public CustomOAuth2User(User user, Map<String, Object> attributes) {
+    public CustomOAuth2User(User user, Map<String, Object> attributes, boolean isNewUser) {
         this.user = user;
         this.attributes = attributes;
+        this.isNewUser = isNewUser;
     }
 
     @Override
@@ -48,5 +50,13 @@ public class CustomOAuth2User implements OAuth2User {
 
     public User getUser() {
         return user;
+    }
+
+    public boolean isNewUser() {
+        return isNewUser;
+    }
+
+    public String getEmail() {
+        return user.getEmail();
     }
 }

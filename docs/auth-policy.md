@@ -4,10 +4,16 @@
 
 ### JWT 토큰
 
-| 토큰 | 만료 시간 | 용도 |
-|------|----------|------|
-| Access Token | 1시간 | API 인증 |
-| Refresh Token | 14일 | Access Token 재발급 |
+| 토큰 | 만료 시간 | 용도 | 저장 위치 |
+|------|----------|------|----------|
+| Access Token | 15분 | API 인증 | 클라이언트 |
+| Refresh Token | 7일 | Access Token 재발급 | DB + 클라이언트 |
+
+### Refresh Token 관리
+
+- **DB 저장**: 로그인 성공 시 `refresh_tokens` 테이블에 저장
+- **로그아웃**: DB에서 해당 사용자의 Refresh Token 삭제
+- **재발급**: 기존 토큰 삭제 후 새 토큰 저장 (Rotation 방식)
 
 ### 토큰 구조
 
@@ -237,7 +243,7 @@ public class SecurityConfig {
 
 ## 토큰 재발급
 
-### POST /auth/refresh
+### POST /auth/reissue
 
 **Request Body**
 ```json
@@ -252,7 +258,42 @@ public class SecurityConfig {
   "success": true,
   "data": {
     "accessToken": "새 액세스 토큰",
-    "refreshToken": "새 리프레시 토큰"
+    "refreshToken": "새 리프레시 토큰",
+    "user": {
+      "id": 1,
+      "nickname": "빨간캡슐#21",
+      "email": "user@example.com",
+      "socialType": "KAKAO",
+      "isNewUser": false
+    }
   }
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| A010 | 리프레시 토큰을 찾을 수 없습니다 |
+| A011 | 리프레시 토큰이 만료되었습니다 |
+
+---
+
+## 로그아웃
+
+### POST /auth/logout
+
+로그아웃 시 서버에서 Refresh Token을 삭제합니다.
+Access Token은 Stateless이므로 즉시 무효화되지 않으며, 만료될 때까지 유효합니다.
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": null
 }
 ```

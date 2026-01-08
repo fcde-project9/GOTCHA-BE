@@ -6,7 +6,7 @@ import com.gotcha.domain.favorite.service.FavoriteService;
 import com.gotcha.domain.shop.dto.CoordinateRequest;
 import com.gotcha.domain.shop.dto.CreateShopRequest;
 import com.gotcha.domain.shop.dto.MapBoundsRequest;
-import com.gotcha.domain.shop.dto.NearbyShopResponse;
+import com.gotcha.domain.shop.dto.NearbyShopsResponse;
 import com.gotcha.domain.shop.dto.ShopMapResponse;
 import com.gotcha.domain.shop.dto.ShopResponse;
 import com.gotcha.domain.shop.entity.Shop;
@@ -67,14 +67,14 @@ public class ShopController {
             description = "가게 등록 전 현재 위도/경도 기준 50m 이내 가게를 거리 가까운 순서로 조회합니다 (중복 체크용)"
     )
     @GetMapping("/nearby")
-    public ApiResponse<List<NearbyShopResponse>> checkNearbyShopsBeforeSave(
+    public ApiResponse<NearbyShopsResponse> checkNearbyShopsBeforeSave(
             @Valid @ModelAttribute CoordinateRequest coordinate
     ) {
-        List<NearbyShopResponse> shops = shopService.checkNearbyShopsBeforeSave(
+        NearbyShopsResponse response = shopService.checkNearbyShopsBeforeSave(
                 coordinate.latitude(),
                 coordinate.longitude()
         );
-        return ApiResponse.success(shops);
+        return ApiResponse.success(response);
     }
 
     @Operation(

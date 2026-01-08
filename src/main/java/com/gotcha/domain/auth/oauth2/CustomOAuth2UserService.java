@@ -65,16 +65,18 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         SocialType socialType = SocialType.valueOf(registrationId.toUpperCase());
 
+        boolean isNewUser = !userRepository.existsBySocialTypeAndSocialId(socialType, socialId);
+
         User user = userRepository.findBySocialTypeAndSocialId(socialType, socialId)
                 .map(existingUser -> updateExistingUser(existingUser, userInfo))
                 .orElseGet(() -> createNewUser(userInfo, socialType));
 
-        return new CustomOAuth2User(user, oauth2User.getAttributes());
+        return new CustomOAuth2User(user, oauth2User.getAttributes(), isNewUser);
     }
 
     private User updateExistingUser(User user, OAuth2UserInfo userInfo) {
-        if (userInfo.getProfileImageUrl() != null) {
-            user.updateProfileImage(userInfo.getProfileImageUrl());
+        if (userInfo.getEmail() != null) {
+            user.updateEmail(userInfo.getEmail());
         }
         user.updateLastLoginAt();
         return user;
@@ -87,7 +89,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .socialType(socialType)
                 .socialId(userInfo.getId())
                 .nickname(nickname)
-                .profileImageUrl(userInfo.getProfileImageUrl())
+                .email(userInfo.getEmail())
                 .isAnonymous(false)
                 .build();
 

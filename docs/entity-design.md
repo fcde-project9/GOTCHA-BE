@@ -2,7 +2,7 @@
 
 ## 개요
 
-- **MVP (V1)**: users, shops, shop_reports, favorites, comments, reviews, withdrawal_surveys
+- **MVP (V1)**: users, refresh_tokens, shops, shop_reports, favorites, comments, reviews, withdrawal_surveys
 - **V2**: post_types, posts, post_comments, chat_rooms, chats, inquiries
 
 ---
@@ -19,6 +19,20 @@
 | is_anonymous | Boolean | 게스트 여부 |
 | is_deleted | Boolean | 탈퇴 여부 (soft delete) |
 | last_login_at | LocalDateTime | |
+| created_at, updated_at | LocalDateTime | BaseTimeEntity |
+
+---
+
+## refresh_tokens
+
+리프레시 토큰 저장 (로그아웃 시 무효화용)
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | Long (PK) | |
+| user_id | Long (FK → users) | |
+| token | String (unique) | 리프레시 토큰 값 |
+| expires_at | LocalDateTime | 만료 시간 |
 | created_at, updated_at | LocalDateTime | BaseTimeEntity |
 
 ---
@@ -89,7 +103,7 @@
 
 ## reviews
 
-리뷰/후기/인증 (이미지 포함 가능)
+리뷰/후기/인증
 
 | 필드 | 타입 | 설명 |
 |------|------|------|
@@ -97,7 +111,20 @@
 | shop_id | Long (FK) | |
 | user_id | Long (FK) | |
 | content | String | |
-| image_url | String | 인증 이미지 |
+| created_at, updated_at | LocalDateTime | |
+
+---
+
+## review_images
+
+리뷰 이미지 (리뷰당 최대 10개)
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | Long (PK) | |
+| review_id | Long (FK → reviews) | |
+| image_url | String | GCS 이미지 URL |
+| display_order | Integer | 표시 순서 (0부터 시작) |
 | created_at, updated_at | LocalDateTime | |
 
 ---

@@ -14,6 +14,7 @@
 |--------|----------|------|
 | POST | /auth/login/{provider} | 소셜 로그인 (kakao, google, naver) |
 | POST | /auth/logout | 로그아웃 |
+| POST | /auth/reissue | 토큰 재발급 |
 | GET | /auth/nickname/random | 랜덤 닉네임 생성 |
 | GET | /auth/nickname/check | 닉네임 중복/유효성 체크 |
 

@@ -1,5 +1,6 @@
 package com.gotcha.domain.auth.dto;
 
+import com.gotcha.domain.user.entity.SocialType;
 import com.gotcha.domain.user.entity.User;
 
 public record TokenResponse(
@@ -14,14 +15,16 @@ public record TokenResponse(
     public record UserResponse(
             Long id,
             String nickname,
-            String profileImageUrl,
+            String email,
+            SocialType socialType,
             boolean isNewUser
     ) {
         public static UserResponse from(User user, boolean isNewUser) {
             return new UserResponse(
                     user.getId(),
                     user.getNickname(),
-                    user.getProfileImageUrl(),
+                    user.getEmail(),
+                    user.getSocialType(),
                     isNewUser
             );
         }
