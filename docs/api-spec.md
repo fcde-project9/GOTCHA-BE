@@ -549,6 +549,12 @@ Authorization: Bearer {accessToken}
 
 리뷰 목록 조회
 
+**Query Parameters**
+| 파라미터 | 타입 | 필수 | 기본값 |
+|---------|------|------|--------|
+| page | Integer | X | 0 |
+| size | Integer | X | 20 |
+
 **Response (200)**
 ```json
 {
@@ -558,7 +564,10 @@ Authorization: Bearer {accessToken}
       {
         "id": 1,
         "content": "원하는 캐릭터 뽑았어요!",
-        "imageUrl": "https://...",
+        "imageUrls": [
+          "https://storage.googleapis.com/.../image1.jpg",
+          "https://storage.googleapis.com/.../image2.jpg"
+        ],
         "author": {
           "id": 1,
           "nickname": "빨간캡슐#21",
@@ -591,7 +600,10 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "content": "원하는 캐릭터 뽑았어요!",
-  "imageUrl": "https://..."
+  "imageUrls": [
+    "https://storage.googleapis.com/.../image1.jpg",
+    "https://storage.googleapis.com/.../image2.jpg"
+  ]
 }
 ```
 
@@ -599,7 +611,115 @@ Authorization: Bearer {accessToken}
 | 필드 | 규칙 |
 |------|------|
 | content | 필수, 10-1000자 |
-| imageUrl | 선택 |
+| imageUrls | 선택, 최대 10개 |
+
+**Response (201)**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "content": "원하는 캐릭터 뽑았어요!",
+    "imageUrls": [
+      "https://storage.googleapis.com/.../image1.jpg",
+      "https://storage.googleapis.com/.../image2.jpg"
+    ],
+    "author": {
+      "id": 1,
+      "nickname": "빨간캡슐#21",
+      "profileImageUrl": "https://..."
+    },
+    "isOwner": true,
+    "createdAt": "2025-01-08T12:00:00"
+  }
+}
+```
+
+---
+
+### PUT /shops/{shopId}/reviews/{reviewId}
+
+리뷰 수정
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Request Body**
+```json
+{
+  "content": "수정된 리뷰 내용입니다!",
+  "imageUrls": [
+    "https://storage.googleapis.com/.../new-image1.jpg",
+    "https://storage.googleapis.com/.../new-image2.jpg"
+  ]
+}
+```
+
+**Validation**
+| 필드 | 규칙 |
+|------|------|
+| content | 필수, 10-1000자 |
+| imageUrls | 선택, 최대 10개 |
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "content": "수정된 리뷰 내용입니다!",
+    "imageUrls": [
+      "https://storage.googleapis.com/.../new-image1.jpg",
+      "https://storage.googleapis.com/.../new-image2.jpg"
+    ],
+    "author": {
+      "id": 1,
+      "nickname": "빨간캡슐#21",
+      "profileImageUrl": "https://..."
+    },
+    "isOwner": true,
+    "createdAt": "2025-01-08T12:00:00"
+  }
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| R001 | 리뷰를 찾을 수 없음 |
+| R003 | 본인의 리뷰만 수정 가능 |
+| R005 | 이미지 개수 초과 (최대 10개) |
+
+**참고**
+- 기존 이미지는 모두 삭제되고 새로운 이미지로 대체됩니다
+- 이미지를 모두 삭제하려면 imageUrls를 빈 배열 [] 또는 null로 전송
+
+---
+
+### DELETE /shops/{shopId}/reviews/{reviewId}
+
+리뷰 삭제
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": null
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| R001 | 리뷰를 찾을 수 없음 |
+| R003 | 본인의 리뷰만 삭제 가능 |
 
 ---
 
