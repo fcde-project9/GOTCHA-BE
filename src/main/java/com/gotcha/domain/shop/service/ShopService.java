@@ -7,6 +7,7 @@ import com.gotcha._global.external.kakao.KakaoMapClient;
 import com.gotcha._global.external.kakao.dto.AddressInfo;
 import com.gotcha.domain.favorite.repository.FavoriteRepository;
 import com.gotcha.domain.shop.dto.NearbyShopResponse;
+import com.gotcha.domain.shop.dto.NearbyShopsResponse;
 import com.gotcha.domain.shop.dto.OpenTimeDto;
 import com.gotcha.domain.shop.dto.ShopMapResponse;
 import com.gotcha.domain.shop.entity.Shop;
@@ -117,7 +118,7 @@ public class ShopService {
     }
 
     @Transactional(readOnly = true)
-    public List<NearbyShopResponse> checkNearbyShopsBeforeSave(Double latitude, Double longitude) {
+    public NearbyShopsResponse checkNearbyShopsBeforeSave(Double latitude, Double longitude) {
         log.info("checkNearbyShopsBeforeSave - lat: {}, lng: {}", latitude, longitude);
 
         // 좌표 검증 (기존 validateCoordinates 재사용)
@@ -129,9 +130,11 @@ public class ShopService {
         log.info("Found {} shops within 50m", shops.size());
 
         // Stream으로 DTO 변환
-        return shops.stream()
+        List<NearbyShopResponse> shopResponses = shops.stream()
                 .map(NearbyShopResponse::from)
                 .collect(Collectors.toList());
+
+        return NearbyShopsResponse.of(shopResponses);
     }
 
     /**
