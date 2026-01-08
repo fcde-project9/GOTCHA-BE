@@ -2,7 +2,9 @@ package com.gotcha.domain.auth.oauth2;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 
 import com.gotcha.domain.auth.jwt.JwtTokenProvider;
 import com.gotcha.domain.auth.service.AuthService;
@@ -72,6 +74,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
             assertThat(redirectUrl).contains("isNewUser=true");
             assertThat(redirectUrl).contains("accessToken=access-token");
             assertThat(redirectUrl).contains("refreshToken=refresh-token");
+            verify(authService).saveRefreshToken(any(User.class), eq("refresh-token"));
         }
     }
 
@@ -97,6 +100,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
             String redirectUrl = response.getRedirectedUrl();
             assertThat(redirectUrl).isNotNull();
             assertThat(redirectUrl).contains("isNewUser=false");
+            verify(authService).saveRefreshToken(any(User.class), eq("refresh-token"));
         }
     }
 
@@ -121,6 +125,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
             // then
             assertThat(response.getStatus()).isEqualTo(302);
             assertThat(response.getRedirectedUrl()).contains("http://localhost:3000/oauth/callback");
+            verify(authService).saveRefreshToken(any(User.class), eq("kakao-refresh-token"));
         }
 
         @Test
@@ -140,6 +145,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
             // then
             assertThat(response.getStatus()).isEqualTo(302);
             assertThat(response.getRedirectedUrl()).contains("accessToken=google-access-token");
+            verify(authService).saveRefreshToken(any(User.class), eq("google-refresh-token"));
         }
 
         @Test
@@ -159,6 +165,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
             // then
             assertThat(response.getStatus()).isEqualTo(302);
             assertThat(response.getRedirectedUrl()).contains("accessToken=naver-access-token");
+            verify(authService).saveRefreshToken(any(User.class), eq("naver-refresh-token"));
         }
     }
 
@@ -183,6 +190,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
             // then
             assertThat(response.getStatus()).isEqualTo(302);
             assertThat(response.getRedirectedUrl()).isNotNull();
+            verify(authService).saveRefreshToken(any(User.class), eq("refresh-token"));
         }
     }
 
