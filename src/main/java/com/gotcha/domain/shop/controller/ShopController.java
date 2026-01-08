@@ -62,28 +62,6 @@ public class ShopController {
         return ApiResponse.success(ShopResponse.from(shop));
     }
 
-    /**
-     * SecurityContext에서 현재 로그인한 사용자 정보 가져오기
-     * @return 로그인한 사용자 (User) 또는 비로그인 시 null
-     */
-    private User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        // 인증 정보가 없거나 익명 사용자인 경우
-        if (authentication == null || !authentication.isAuthenticated()
-                || authentication.getPrincipal().equals("anonymousUser")) {
-            return null;
-        }
-
-        // JWT 필터에서 userId(Long)를 principal로 설정함
-        Object principal = authentication.getPrincipal();
-        if (principal instanceof Long userId) {
-            return userRepository.findById(userId).orElse(null);
-        }
-
-        return null;
-    }
-
     @Operation(
             summary = "가게 저장 전 근처 가게 조회",
             description = "가게 등록 전 현재 위도/경도 기준 50m 이내 가게를 거리 가까운 순서로 조회합니다 (중복 체크용)"
@@ -109,8 +87,9 @@ public class ShopController {
             @Valid @ModelAttribute MapBoundsRequest bounds
     ) {
         // 현재 로그인한 사용자 ID 가져오기 (비로그인 시 null)
-        Long userId = getCurrentUserId();
+        //Long userId = getCurrentUserId();
 
+        User user = getCurrentUser();
         List<ShopMapResponse> shops = shopService.getShopsInMap(
                 bounds.northEastLat(),
                 bounds.northEastLng(),
@@ -118,33 +97,12 @@ public class ShopController {
                 bounds.southWestLng(),
                 bounds.centerLat(),
                 bounds.centerLng(),
-                userId
+                user
         );
 
         return ApiResponse.success(shops);
     }
 
-    /**
-     * SecurityContext에서 현재 로그인한 사용자 ID 가져오기
-     * @return 로그인한 사용자 ID 또는 비로그인 시 null
-     */
-    private Long getCurrentUserId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        // 인증 정보가 없거나 익명 사용자인 경우
-        if (authentication == null || !authentication.isAuthenticated()
-                || authentication.getPrincipal().equals("anonymousUser")) {
-            return null;
-        }
-
-        // JWT 필터에서 userId(Long)를 principal로 설정함
-        Object principal = authentication.getPrincipal();
-        if (principal instanceof Long userId) {
-            return userId;
-        }
-
-        return null;
-    }
 
     @Operation(
             summary = "찜 추가",
@@ -165,5 +123,27 @@ public class ShopController {
     @DeleteMapping("/{shopId}/favorite")
     public ApiResponse<FavoriteResponse> removeFavorite(@PathVariable Long shopId) {
         return ApiResponse.success(favoriteService.removeFavorite(shopId));
+    }
+
+    /**
+     * SecurityContext에서 현재 로그인한 사용자 정보 가져오기
+     * @return 로그인한 사용자 (User) 또는 비로그인 시 null
+     */
+    private User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        // 인증 정보가 없거나 익명 사용자인 경우
+        if (authentication == null || !authentication.isAuthenticated()
+                || authentication.getPrincipal().equals("anonymousUser")) {
+            return null;
+        }
+
+        // JWT 필터에서 userId(Long)를 principal로 설정함
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof Long userId) {
+            return userRepository.findById(userId).orElse(null);
+        }
+
+        return null;
     }
 }

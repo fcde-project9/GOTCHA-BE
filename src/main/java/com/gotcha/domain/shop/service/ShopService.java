@@ -12,13 +12,10 @@ import com.gotcha.domain.shop.dto.ShopMapResponse;
 import com.gotcha.domain.shop.entity.Shop;
 import com.gotcha.domain.shop.exception.ShopException;
 import com.gotcha.domain.shop.repository.ShopRepository;
-<<<<<<< HEAD
 import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.HashMap;
-=======
 import com.gotcha.domain.user.entity.User;
->>>>>>> e08d0e05d7893ba58c1f8be35a36e121bcefa80c
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -145,7 +142,7 @@ public class ShopService {
      * @param southWestLng 남서쪽 경도
      * @param centerLat 중심 위도 (거리 계산용)
      * @param centerLng 중심 경도 (거리 계산용)
-     * @param userId 현재 로그인한 사용자 ID (null 가능)
+     * @param user 현재 로그인한 사용자 (null 가능)
      * @return 지도용 가게 응답 리스트 (거리순 정렬)
      */
     @Transactional(readOnly = true)
@@ -153,8 +150,9 @@ public class ShopService {
             Double northEastLat, Double northEastLng,
             Double southWestLat, Double southWestLng,
             Double centerLat, Double centerLng,
-            Long userId) {
+            User user) {
 
+        Long userId = user != null ? user.getId() : null;
         log.info("getShopsInMap - bounds: NE({}, {}), SW({}, {}), center: ({}, {}), userId: {}",
                 northEastLat, northEastLng, southWestLat, southWestLng, centerLat, centerLng, userId);
 
