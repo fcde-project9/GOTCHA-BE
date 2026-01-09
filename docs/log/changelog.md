@@ -22,8 +22,24 @@
 - `docs/api-spec.md` - POST /auth/reissue API 명세 추가
 - `docs/api-design.md` - POST /auth/reissue 엔드포인트 추가
 - `docs/file-upload-guide.md` - 이미지 업로드 가이드 (프론트/백엔드 개발자용, GCS 사용법, 패턴 예시)
+- `User.java` - isDeleted 필드 추가, delete() 메서드 (개인정보 마스킹 포함)
+- `UserErrorCode.java` - ALREADY_DELETED (U005) 에러코드 추가
+- `UserException.java` - alreadyDeleted() 팩토리 메서드 추가
+- `UserService.java` - withdraw() 메서드 (설문 저장, 찜/리뷰/댓글 삭제, GCS 이미지 삭제, RefreshToken 삭제, soft delete)
+- `UserController.java` - DELETE /users/me 엔드포인트 추가 (탈퇴 설문 포함)
+- `AuthErrorCode.java` - USER_DELETED (A012) 에러코드 추가
+- `AuthException.java` - userDeleted() 팩토리 메서드 추가
+- `FavoriteRepository.java` - deleteByUserId() 메서드 추가
+- `ReviewRepository.java` - findAllByUserId(), deleteByUserId() 메서드 추가
+- `ReviewImageRepository.java` - deleteAllByReviewIdIn() 메서드 추가
+- `CommentRepository.java` - deleteByUserId() 메서드 추가
+- `SecurityUtil.java` - 탈퇴 사용자 API 접근 차단 로직 추가
+- `CustomOAuth2UserService.java` - 탈퇴 사용자 로그인 차단 로직 추가
 
 ### 수정
+- `docs/api-spec.md` - DELETE /users/me 수정 (탈퇴 설문 통합, POST /users/me/withdrawal-survey 제거)
+- `docs/error-codes.md` - U005 에러코드 추가 (이미 탈퇴한 사용자)
+- `docs/error-codes.md` - A012 에러코드 추가 (탈퇴 사용자 접근 차단)
 - `docs/entity-design.md` - user_permissions, user_permission_histories 테이블 설계 추가 (ipAddress 제거, deviceInfo만 유지)
 - `docs/auth-policy.md` - JWT 토큰 정책 업데이트
   - 변경: Access Token 1시간 → 15분, Refresh Token 14일 → 7일

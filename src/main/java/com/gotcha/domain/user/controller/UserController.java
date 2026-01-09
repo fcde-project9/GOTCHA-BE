@@ -7,6 +7,7 @@ import com.gotcha.domain.favorite.service.FavoriteService;
 import com.gotcha.domain.user.dto.UpdateNicknameRequest;
 import com.gotcha.domain.user.dto.UserNicknameResponse;
 import com.gotcha.domain.user.dto.UserResponse;
+import com.gotcha.domain.user.dto.WithdrawalRequest;
 import com.gotcha.domain.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -20,6 +21,7 @@ import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -252,5 +254,83 @@ public class UserController {
     @GetMapping("/me/nickname")
     public ApiResponse<UserNicknameResponse> getNickname() {
         return ApiResponse.success(userService.getNickname());
+    }
+
+    @Operation(
+            summary = "회원 탈퇴",
+            description = "회원 탈퇴 및 설문 제출. 탈퇴 시 Refresh Token이 삭제되고 사용자는 soft delete됩니다.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "탈퇴 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "success": true,
+                                      "data": null
+                                    }
+                                    """)
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "잘못된 요청",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "C001 - 필수 파라미터 누락",
+                                            value = """
+                                                    {
+                                                      "success": false,
+                                                      "error": {
+                                                        "code": "C001",
+                                                        "message": "탈퇴 사유는 최소 1개 이상 선택해야 합니다"
+                                                      }
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "U005 - 이미 탈퇴한 사용자",
+                                            value = """
+                                                    {
+                                                      "success": false,
+                                                      "error": {
+                                                        "code": "U005",
+                                                        "message": "이미 탈퇴한 사용자입니다"
+                                                      }
+                                                    }
+                                                    """
+                                    )
+                            }
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description = "인증 실패",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "A001 - 토큰 없음",
+                                    value = """
+                                            {
+                                              "success": false,
+                                              "error": {
+                                                "code": "A001",
+                                                "message": "로그인이 필요합니다"
+                                              }
+                                            }
+                                            """
+                            )
+                    )
+            )
+    })
+    @DeleteMapping("/me")
+    public ApiResponse<Void> withdraw(@Valid @RequestBody WithdrawalRequest request) {
+        userService.withdraw(request);
+        return ApiResponse.success(null);
     }
 }

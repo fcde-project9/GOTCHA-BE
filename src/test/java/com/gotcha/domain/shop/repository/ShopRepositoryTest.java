@@ -144,6 +144,30 @@ class ShopRepositoryTest {
     @Test
     @DisplayName("반경 내 여러 샵 조회")
     void findNearbyShops_MultipleShops() {
+        // given - 반경 내 3개의 샵 생성
+        Shop shop1 = Shop.builder()
+                .name("가챠샵1")
+                .addressName("서울시 강남구")
+                .latitude(37.4980)
+                .longitude(127.0277)
+                .createdBy(creator)
+                .build();
+        Shop shop2 = Shop.builder()
+                .name("가챠샵2")
+                .addressName("서울시 강남구")
+                .latitude(37.4981)
+                .longitude(127.0278)
+                .createdBy(creator)
+                .build();
+        Shop shop3 = Shop.builder()
+                .name("가챠샵3")
+                .addressName("서울시 강남구")
+                .latitude(37.4982)
+                .longitude(127.0279)
+                .createdBy(creator)
+                .build();
+        shopRepository.saveAll(List.of(shop1, shop2, shop3));
+
         // when - 1km 반경 검색
         List<Shop> nearbyShops = shopRepository.findNearbyShops(37.4979, 127.0276, 1.0);
 
