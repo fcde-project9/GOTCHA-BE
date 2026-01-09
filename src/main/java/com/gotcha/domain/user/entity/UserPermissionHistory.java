@@ -11,6 +11,7 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
@@ -23,6 +24,7 @@ import lombok.NoArgsConstructor;
  */
 @Entity
 @Table(name = "user_permission_histories")
+@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserPermissionHistory {
 
