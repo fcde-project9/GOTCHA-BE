@@ -48,18 +48,25 @@ public class ReviewLikeService {
 
     @Transactional
     public ReviewLikeResponse removeLike(Long reviewId) {
-        Long userId = securityUtil.getCurrentUserId();
+        User currentUser = securityUtil.getCurrentUser();
 
+        // 1. 리뷰 존재 확인
         if (!reviewRepository.existsById(reviewId)) {
             throw ReviewException.notFound(reviewId);
         }
 
-        ReviewLike reviewLike = reviewLikeRepository.findByUserIdAndReviewId(userId, reviewId)
-                .orElseThrow(() -> ReviewException.likeNotFound(reviewId));
+        // 2. 현재 사용자가 이 리뷰에 좋아요를 했는지 확인 (본인의 좋아요만 취소 가능)
+        ReviewLike reviewLike = reviewLikeRepository.findByUserIdAndReviewId(currentUser.getId(), reviewId)
+                .orElseThrow(() -> {
+                    log.warn("User {} attempted to remove like from review {} but never liked it",
+                            currentUser.getId(), reviewId);
+                    return ReviewException.likeNotFound(reviewId);
+                });
 
+        // 3. 좋아요 삭제
         reviewLikeRepository.delete(reviewLike);
 
-        log.info("Review like removed - userId: {}, reviewId: {}", userId, reviewId);
+        log.info("Review like removed - userId: {}, reviewId: {}", currentUser.getId(), reviewId);
 
         return ReviewLikeResponse.of(reviewId, false);
     }

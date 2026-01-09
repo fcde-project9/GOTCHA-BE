@@ -12,6 +12,7 @@ import com.gotcha.domain.review.service.ReviewService;
 import com.gotcha.domain.user.entity.User;
 import com.gotcha.domain.user.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -98,7 +99,11 @@ public class ReviewController {
         return ApiResponse.success(null);
     }
 
-    @Operation(summary = "리뷰 좋아요", description = "리뷰에 좋아요를 추가합니다")
+    @Operation(
+            summary = "리뷰 좋아요",
+            description = "리뷰에 좋아요를 추가합니다",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
     @PostMapping("/reviews/{reviewId}/like")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<ReviewLikeResponse> addLike(
@@ -107,7 +112,11 @@ public class ReviewController {
         return ApiResponse.success(reviewLikeService.addLike(reviewId));
     }
 
-    @Operation(summary = "리뷰 좋아요 취소", description = "리뷰 좋아요를 취소합니다")
+    @Operation(
+            summary = "리뷰 좋아요 취소",
+            description = "리뷰 좋아요를 취소합니다",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
     @DeleteMapping("/reviews/{reviewId}/like")
     public ApiResponse<ReviewLikeResponse> removeLike(
             @PathVariable Long reviewId
