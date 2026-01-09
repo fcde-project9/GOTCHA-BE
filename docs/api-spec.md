@@ -870,26 +870,7 @@ Authorization: Bearer {accessToken}
 
 ### DELETE /users/me
 
-회원 탈퇴
-
-**Headers**
-```
-Authorization: Bearer {accessToken}
-```
-
-**Response (200)**
-```json
-{
-  "success": true,
-  "data": null
-}
-```
-
----
-
-### POST /users/me/withdrawal-survey
-
-회원 탈퇴 설문 저장
+회원 탈퇴 (탈퇴 설문 포함)
 
 **Headers**
 ```
@@ -900,7 +881,7 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "reason": "NO_DESIRED_INFO",
-  "detail": "사용자가 입력한 기타 사유"
+  "detail": "사용자가 입력한 상세 사유"
 }
 ```
 
@@ -910,15 +891,32 @@ Authorization: Bearer {accessToken}
 | NO_DESIRED_INFO | 원하는 정보가 없어요 |
 | LOW_USAGE | 사용 빈도가 낮아요 |
 | INCONVENIENT | 이용이 불편해요 |
-| OTHER | 기타 (detail 필수) |
+| OTHER | 기타 |
 
-**Response (201)**
+**Validation**
+| 필드 | 규칙 |
+|------|------|
+| reason | 필수 |
+| detail | 선택, 최대 500자 |
+
+**Response (200)**
 ```json
 {
   "success": true,
   "data": null
 }
 ```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| U005 | 이미 탈퇴한 사용자 |
+| A001 | 인증 필요 |
+
+**참고**
+- 설문 저장과 탈퇴가 하나의 트랜잭션으로 처리됨
+- 탈퇴 시 Refresh Token 삭제됨 (Access Token은 15분간 유효)
+- 사용자는 soft delete 처리됨 (isDeleted = true)
 
 ---
 

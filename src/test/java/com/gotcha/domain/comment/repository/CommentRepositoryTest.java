@@ -155,4 +155,61 @@ class CommentRepositoryTest {
         assertThat(commentPage.getContent()).hasSize(2);
         assertThat(commentPage.getTotalElements()).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("사용자 ID로 모든 댓글 삭제 - 회원 탈퇴 시")
+    void deleteByUserId_Success() {
+        // given
+        commentRepository.save(Comment.builder()
+                .shop(shop).user(user).content("댓글1").isAnonymous(false).build());
+        commentRepository.save(Comment.builder()
+                .shop(shop).user(user).content("댓글2").isAnonymous(false).build());
+
+        Page<Comment> before = commentRepository.findAllByShopIdOrderByCreatedAtDesc(
+                shop.getId(), PageRequest.of(0, 10));
+        assertThat(before.getTotalElements()).isEqualTo(2);
+
+        // when
+        commentRepository.deleteByUserId(user.getId());
+        commentRepository.flush();
+
+        // then
+        Page<Comment> after = commentRepository.findAllByShopIdOrderByCreatedAtDesc(
+                shop.getId(), PageRequest.of(0, 10));
+        assertThat(after.getTotalElements()).isZero();
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 사용자 ID로 삭제 시 에러 없이 진행")
+    void deleteByUserId_NonExistentUser() {
+        // when & then - 존재하지 않는 사용자 삭제 시 에러 없음
+        commentRepository.deleteByUserId(999999L);
+        commentRepository.flush();
+    }
+
+    @Test
+    @DisplayName("다른 사용자의 댓글은 영향받지 않음")
+    void deleteByUserId_DoesNotAffectOtherUsers() {
+        // given
+        User otherUser = userRepository.save(User.builder()
+                .socialType(SocialType.NAVER)
+                .socialId("other123")
+                .nickname("다른유저")
+                .build());
+
+        commentRepository.save(Comment.builder()
+                .shop(shop).user(user).content("내 댓글").isAnonymous(false).build());
+        commentRepository.save(Comment.builder()
+                .shop(shop).user(otherUser).content("다른 유저 댓글").isAnonymous(false).build());
+
+        // when
+        commentRepository.deleteByUserId(user.getId());
+        commentRepository.flush();
+
+        // then
+        Page<Comment> remaining = commentRepository.findAllByShopIdOrderByCreatedAtDesc(
+                shop.getId(), PageRequest.of(0, 10));
+        assertThat(remaining.getTotalElements()).isEqualTo(1);
+        assertThat(remaining.getContent().get(0).getContent()).isEqualTo("다른 유저 댓글");
+    }
 }

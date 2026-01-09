@@ -17,4 +17,7 @@ public interface ReviewImageRepository extends JpaRepository<ReviewImage, Long> 
 
     // 이미지 개수 카운트
     int countByReviewId(Long reviewId);
+
+    // 여러 Review의 이미지 일괄 삭제
+    void deleteAllByReviewIdIn(List<Long> reviewIds);
 }

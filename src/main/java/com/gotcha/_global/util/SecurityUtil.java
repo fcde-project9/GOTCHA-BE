@@ -16,10 +16,15 @@ public class SecurityUtil {
 
     public User getCurrentUser() {
         Long userId = getCurrentUserId();
-        // TODO: 사용자 삭제 시 별도 에러 코드(A010: 사용자를 찾을 수 없습니다) 분리 검토
-        // 현재는 unauthorized로 처리하지만, 탈퇴/삭제된 사용자 구분이 필요하면 userNotFound 추가
-        return userRepository.findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(AuthException::unauthorized);
+
+        // 탈퇴한 사용자 차단
+        if (Boolean.TRUE.equals(user.getIsDeleted())) {
+            throw AuthException.userDeleted();
+        }
+
+        return user;
     }
 
     public Long getCurrentUserId() {

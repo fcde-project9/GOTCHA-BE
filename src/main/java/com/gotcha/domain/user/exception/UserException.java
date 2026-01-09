@@ -36,4 +36,12 @@ public class UserException extends BusinessException {
     public static UserException notFound(Long userId) {
         return new UserException(UserErrorCode.USER_NOT_FOUND, "ID: " + userId);
     }
+
+    public static UserException alreadyDeleted() {
+        return new UserException(UserErrorCode.ALREADY_DELETED);
+    }
+
+    public static UserException alreadyDeleted(Long userId) {
+        return new UserException(UserErrorCode.ALREADY_DELETED, "ID: " + userId);
+    }
 }

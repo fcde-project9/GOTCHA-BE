@@ -109,6 +109,20 @@ class SecurityUtilTest {
             assertThatThrownBy(() -> securityUtil.getCurrentUser())
                     .isInstanceOf(AuthException.class);
         }
+
+        @Test
+        @DisplayName("탈퇴한 사용자가 API 접근 시 A012 예외를 던진다")
+        void shouldThrowExceptionWhenUserIsDeleted() {
+            // given
+            testUser.delete(); // 탈퇴 처리
+            setAuthentication(1L);
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+
+            // when & then
+            assertThatThrownBy(() -> securityUtil.getCurrentUser())
+                    .isInstanceOf(AuthException.class)
+                    .hasMessageContaining("탈퇴한 사용자입니다");
+        }
     }
 
     @Nested

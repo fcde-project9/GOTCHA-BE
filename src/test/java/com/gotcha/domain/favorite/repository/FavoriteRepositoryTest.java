@@ -190,4 +190,50 @@ class FavoriteRepositoryTest {
         // then
         assertThat(favorites).isEmpty();
     }
+
+    @Test
+    @DisplayName("사용자 ID로 모든 즐겨찾기 삭제 - 회원 탈퇴 시")
+    void deleteByUserId_Success() {
+        // given
+        favoriteRepository.save(Favorite.builder().user(user).shop(shop).build());
+        favoriteRepository.save(Favorite.builder().user(user).shop(shop2).build());
+        assertThat(favoriteRepository.findAllByUserId(user.getId())).hasSize(2);
+
+        // when
+        favoriteRepository.deleteByUserId(user.getId());
+        favoriteRepository.flush();
+
+        // then
+        assertThat(favoriteRepository.findAllByUserId(user.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 사용자 ID로 삭제 시 에러 없이 진행")
+    void deleteByUserId_NonExistentUser() {
+        // when & then - 존재하지 않는 사용자 삭제 시 에러 없음
+        favoriteRepository.deleteByUserId(999999L);
+        favoriteRepository.flush();
+    }
+
+    @Test
+    @DisplayName("다른 사용자의 즐겨찾기는 영향받지 않음")
+    void deleteByUserId_DoesNotAffectOtherUsers() {
+        // given
+        User otherUser = userRepository.save(User.builder()
+                .socialType(SocialType.NAVER)
+                .socialId("other123")
+                .nickname("다른유저")
+                .build());
+
+        favoriteRepository.save(Favorite.builder().user(user).shop(shop).build());
+        favoriteRepository.save(Favorite.builder().user(otherUser).shop(shop).build());
+
+        // when
+        favoriteRepository.deleteByUserId(user.getId());
+        favoriteRepository.flush();
+
+        // then
+        assertThat(favoriteRepository.findAllByUserId(user.getId())).isEmpty();
+        assertThat(favoriteRepository.findAllByUserId(otherUser.getId())).hasSize(1);
+    }
 }

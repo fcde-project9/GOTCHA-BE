@@ -40,4 +40,8 @@ public class AuthException extends BusinessException {
     public static AuthException refreshTokenExpired() {
         return new AuthException(AuthErrorCode.REFRESH_TOKEN_EXPIRED);
     }
+
+    public static AuthException userDeleted() {
+        return new AuthException(AuthErrorCode.USER_DELETED);
+    }
 }
