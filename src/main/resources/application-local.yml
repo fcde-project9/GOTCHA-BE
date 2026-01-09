@@ -33,3 +33,6 @@ oauth2:
 gcs:
   bucket-name: ${GCS_BUCKET_NAME:gotcha-dev-files}
   project-id: ${GCS_PROJECT_ID:local-project}
+
+user:
+  default-profile-image-url: ${USER_DEFAULT_PROFILE_IMAGE_URL:https://storage.googleapis.com/gotcha-dev-files/defaults/profile-default-join.png}

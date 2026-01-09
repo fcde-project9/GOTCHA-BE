@@ -37,6 +37,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private final UserRepository userRepository;
     private final SecureRandom secureRandom = new SecureRandom();
 
+    @org.springframework.beans.factory.annotation.Value("${user.default-profile-image-url}")
+    private String defaultProfileImageUrl;
+
     @Override
     @Transactional
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -100,6 +103,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .socialId(userInfo.getId())
                 .nickname(nickname)
                 .email(userInfo.getEmail())
+                .profileImageUrl(defaultProfileImageUrl)
                 .isAnonymous(false)
                 .build();
 

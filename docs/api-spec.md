@@ -826,6 +826,92 @@ Authorization: Bearer {accessToken}
 
 ---
 
+### PATCH /users/me/profile-image
+
+프로필 이미지 변경
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Request Body**
+```json
+{
+  "profileImageUrl": "https://storage.googleapis.com/gotcha-dev-files/profiles/abc-123.webp"
+}
+```
+
+**Validation**
+| 필드 | 규칙 |
+|------|------|
+| profileImageUrl | 필수, GCS URL 형식 (https://storage.googleapis.com/...) |
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "nickname": "빨간캡슐#21",
+    "email": "user@example.com",
+    "profileImageUrl": "https://storage.googleapis.com/gotcha-dev-files/profiles/abc-123.webp",
+    "socialType": "KAKAO"
+  }
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| C001 | URL 형식 오류 |
+| A001 | 인증 필요 |
+
+**참고**
+- 먼저 `/api/files/upload`로 이미지를 업로드한 후 반환된 URL 사용
+- 기존 커스텀 이미지는 GCS에서 자동 삭제됨
+- 기본 프로필 이미지는 삭제되지 않음 (공유 리소스)
+
+---
+
+### DELETE /users/me/profile-image
+
+프로필 이미지 삭제 (기본 이미지로 복구)
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Request Body**
+- 없음 (Body 없이 DELETE 요청)
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "nickname": "빨간캡슐#21",
+    "email": "user@example.com",
+    "profileImageUrl": "https://storage.googleapis.com/gotcha-dev-files/defaults/profile-default-join.png",
+    "socialType": "KAKAO"
+  }
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| A001 | 인증 필요 |
+
+**참고**
+- 프로필 이미지를 삭제하고 자동으로 기본 프로필 이미지로 복구
+- 기존 커스텀 이미지는 GCS에서 자동 삭제됨
+- 기본 프로필 이미지를 사용 중인 경우 변화 없음
+
+---
+
 ### GET /users/me/shops
 
 내가 제보한 가게 목록 조회

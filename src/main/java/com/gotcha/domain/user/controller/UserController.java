@@ -6,6 +6,7 @@ import com.gotcha.domain.favorite.dto.FavoriteShopResponse;
 import com.gotcha.domain.favorite.service.FavoriteService;
 import com.gotcha.domain.user.dto.MyShopResponse;
 import com.gotcha.domain.user.dto.UpdateNicknameRequest;
+import com.gotcha.domain.user.dto.UpdateProfileImageRequest;
 import com.gotcha.domain.user.dto.UserNicknameResponse;
 import com.gotcha.domain.user.dto.UserResponse;
 import com.gotcha.domain.user.dto.WithdrawalRequest;
@@ -318,6 +319,179 @@ public class UserController {
     @GetMapping("/me/nickname")
     public ApiResponse<UserNicknameResponse> getNickname() {
         return ApiResponse.success(userService.getNickname());
+    }
+
+    @Operation(
+            summary = "프로필 이미지 변경",
+            description = "현재 로그인한 사용자의 프로필 이미지를 변경합니다. 먼저 /api/files/upload로 이미지를 업로드한 후, 반환된 URL을 사용하세요.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "변경 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "success": true,
+                                      "data": {
+                                        "id": 1,
+                                        "nickname": "빨간캡슐#21",
+                                        "email": "user@example.com",
+                                        "profileImageUrl": "https://storage.googleapis.com/gotcha-dev-files/profiles/abc-123.webp",
+                                        "socialType": "KAKAO"
+                                      }
+                                    }
+                                    """)
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "잘못된 요청",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "C001 - URL 형식 오류",
+                                    value = """
+                                            {
+                                              "success": false,
+                                              "error": {
+                                                "code": "C001",
+                                                "message": "올바른 GCS URL 형식이 아닙니다"
+                                              }
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description = "인증 실패",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "A001 - 토큰 없음",
+                                            value = """
+                                                    {
+                                                      "success": false,
+                                                      "error": {
+                                                        "code": "A001",
+                                                        "message": "로그인이 필요합니다"
+                                                      }
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "A003 - 토큰 만료",
+                                            value = """
+                                                    {
+                                                      "success": false,
+                                                      "error": {
+                                                        "code": "A003",
+                                                        "message": "토큰이 만료되었습니다"
+                                                      }
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "A004 - 유효하지 않은 토큰",
+                                            value = """
+                                                    {
+                                                      "success": false,
+                                                      "error": {
+                                                        "code": "A004",
+                                                        "message": "유효하지 않은 토큰입니다"
+                                                      }
+                                                    }
+                                                    """
+                                    )
+                            }
+                    )
+            )
+    })
+    @PatchMapping("/me/profile-image")
+    public ApiResponse<UserResponse> updateProfileImage(
+            @Valid @RequestBody UpdateProfileImageRequest request
+    ) {
+        return ApiResponse.success(userService.updateProfileImage(request.profileImageUrl()));
+    }
+
+    @Operation(
+            summary = "프로필 이미지 삭제",
+            description = "현재 로그인한 사용자의 프로필 이미지를 삭제하고 기본 프로필 이미지로 복구합니다. 커스텀 이미지는 GCS에서 자동 삭제됩니다.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "삭제 성공 (기본 이미지로 복구)",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "success": true,
+                                      "data": {
+                                        "id": 1,
+                                        "nickname": "빨간캡슐#21",
+                                        "email": "user@example.com",
+                                        "profileImageUrl": "https://storage.googleapis.com/gotcha-dev-files/defaults/profile-default-join.png",
+                                        "socialType": "KAKAO"
+                                      }
+                                    }
+                                    """)
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description = "인증 실패",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "A001 - 토큰 없음",
+                                            value = """
+                                                    {
+                                                      "success": false,
+                                                      "error": {
+                                                        "code": "A001",
+                                                        "message": "로그인이 필요합니다"
+                                                      }
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "A003 - 토큰 만료",
+                                            value = """
+                                                    {
+                                                      "success": false,
+                                                      "error": {
+                                                        "code": "A003",
+                                                        "message": "토큰이 만료되었습니다"
+                                                      }
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "A004 - 유효하지 않은 토큰",
+                                            value = """
+                                                    {
+                                                      "success": false,
+                                                      "error": {
+                                                        "code": "A004",
+                                                        "message": "유효하지 않은 토큰입니다"
+                                                      }
+                                                    }
+                                                    """
+                                    )
+                            }
+                    )
+            )
+    })
+    @DeleteMapping("/me/profile-image")
+    public ApiResponse<UserResponse> deleteProfileImage() {
+        return ApiResponse.success(userService.deleteProfileImage());
     }
 
     @Operation(
