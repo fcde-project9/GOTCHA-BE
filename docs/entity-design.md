@@ -12,14 +12,21 @@
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | id | Long (PK) | |
-| social_type | Enum | KAKAO, GOOGLE, NAVER |
-| social_id | String | 소셜 제공자 ID |
-| nickname | String | ex: 빨간캡슐#21 |
-| profile_image_url | String | |
+| social_type | Enum | KAKAO, GOOGLE, NAVER (탈퇴 시 null) |
+| social_id | String | 소셜 제공자 ID (탈퇴 시 null) |
+| nickname | String | ex: 빨간캡슐#21 (탈퇴 시 "탈퇴한 사용자_{id}") |
+| email | String | 소셜 이메일 (탈퇴 시 null) |
+| profile_image_url | String | 프로필 이미지 URL (탈퇴 시 null) |
 | is_anonymous | Boolean | 게스트 여부 |
 | is_deleted | Boolean | 탈퇴 여부 (soft delete) |
 | last_login_at | LocalDateTime | |
 | created_at, updated_at | LocalDateTime | BaseTimeEntity |
+
+**탈퇴 처리**
+- soft delete: is_deleted = true
+- 개인정보 마스킹: email, profile_image_url = null
+- 소셜 연동 해제: social_type, social_id = null (재가입 허용)
+- 닉네임 변경: "탈퇴한 사용자_{id}"
 
 ---
 

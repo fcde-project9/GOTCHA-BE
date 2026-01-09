@@ -80,10 +80,13 @@ public class User extends BaseTimeEntity {
 
     /**
      * 회원 탈퇴 처리
+     * - 소셜 연동 정보 제거 (재가입 허용)
      * - 개인정보 마스킹 (닉네임, 이메일, 프로필 이미지)
      * - soft delete 플래그 설정
      */
     public void delete() {
+        this.socialType = null;
+        this.socialId = null;
         this.nickname = "탈퇴한 사용자_" + this.id;
         this.email = null;
         this.profileImageUrl = null;
