@@ -4,6 +4,7 @@ import com.gotcha._global.common.ApiResponse;
 import com.gotcha._global.common.PageResponse;
 import com.gotcha.domain.favorite.dto.FavoriteShopResponse;
 import com.gotcha.domain.favorite.service.FavoriteService;
+import com.gotcha.domain.user.dto.MyShopResponse;
 import com.gotcha.domain.user.dto.UpdateNicknameRequest;
 import com.gotcha.domain.user.dto.UserNicknameResponse;
 import com.gotcha.domain.user.dto.UserResponse;
@@ -128,6 +129,69 @@ public class UserController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         return ApiResponse.success(favoriteService.getMyFavorites(lat, lng, pageable));
+    }
+
+    @Operation(
+            summary = "내가 제보한 가게 목록 조회",
+            description = "현재 로그인한 사용자가 제보한 가게 목록을 최신순으로 조회합니다. lat, lng 파라미터를 제공하면 거리가 계산됩니다.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "success": true,
+                                      "data": {
+                                        "content": [
+                                          {
+                                            "id": 1,
+                                            "name": "가챠샵 신사점",
+                                            "mainImageUrl": "https://...",
+                                            "addressName": "서울시 강남구 신사동 123-45",
+                                            "isOpen": true,
+                                            "createdAt": "2025-01-01"
+                                          }
+                                        ],
+                                        "totalCount": 2,
+                                        "page": 0,
+                                        "size": 20,
+                                        "hasNext": false
+                                      }
+                                    }
+                                    """)
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description = "인증 실패",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "A001 - 토큰 없음",
+                                    value = """
+                                            {
+                                              "success": false,
+                                              "error": {
+                                                "code": "A001",
+                                                "message": "로그인이 필요합니다"
+                                              }
+                                            }
+                                            """
+                            )
+                    )
+            )
+    })
+    @GetMapping("/me/shops")
+    public ApiResponse<PageResponse<MyShopResponse>> getMyShops(
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ApiResponse.success(userService.getMyShops(pageable));
     }
 
     @Operation(

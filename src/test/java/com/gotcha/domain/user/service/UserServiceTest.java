@@ -68,6 +68,12 @@ class UserServiceTest {
     @Mock
     private FileUploadService fileUploadService;
 
+    @Mock
+    private com.gotcha.domain.shop.repository.ShopRepository shopRepository;
+
+    @Mock
+    private com.gotcha.domain.shop.service.ShopService shopService;
+
     @InjectMocks
     private UserService userService;
 

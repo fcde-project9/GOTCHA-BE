@@ -1,5 +1,6 @@
 package com.gotcha.domain.user.service;
 
+import com.gotcha._global.common.PageResponse;
 import com.gotcha._global.util.SecurityUtil;
 import com.gotcha.domain.auth.repository.RefreshTokenRepository;
 import com.gotcha.domain.comment.repository.CommentRepository;
@@ -9,6 +10,10 @@ import com.gotcha.domain.review.entity.Review;
 import com.gotcha.domain.review.entity.ReviewImage;
 import com.gotcha.domain.review.repository.ReviewImageRepository;
 import com.gotcha.domain.review.repository.ReviewRepository;
+import com.gotcha.domain.shop.entity.Shop;
+import com.gotcha.domain.shop.repository.ShopRepository;
+import com.gotcha.domain.shop.service.ShopService;
+import com.gotcha.domain.user.dto.MyShopResponse;
 import com.gotcha.domain.user.dto.UserNicknameResponse;
 import com.gotcha.domain.user.dto.UserResponse;
 import com.gotcha.domain.user.dto.WithdrawalRequest;
@@ -18,8 +23,11 @@ import com.gotcha.domain.user.exception.UserException;
 import com.gotcha.domain.user.repository.UserRepository;
 import com.gotcha.domain.user.repository.WithdrawalSurveyRepository;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +46,8 @@ public class UserService {
     private final ReviewImageRepository reviewImageRepository;
     private final CommentRepository commentRepository;
     private final FileUploadService fileUploadService;
+    private final ShopRepository shopRepository;
+    private final ShopService shopService;
 
     public UserResponse getMyInfo() {
         User user = securityUtil.getCurrentUser();
@@ -51,6 +61,28 @@ public class UserService {
     public UserNicknameResponse getNickname() {
         User user = securityUtil.getCurrentUser();
         return UserNicknameResponse.from(user);
+    }
+
+    /**
+     * 내가 제보한 가게 목록 조회
+     * @param pageable 페이징 정보
+     * @return 내가 제보한 가게 목록
+     */
+    public PageResponse<MyShopResponse> getMyShops(Pageable pageable) {
+        Long userId = securityUtil.getCurrentUserId();
+
+        Page<Shop> shopPage = shopRepository.findAllByCreatedByIdWithUser(userId, pageable);
+
+        List<MyShopResponse> content = shopPage.getContent().stream()
+                .map(shop -> {
+
+                    Boolean isOpen = shopService.isOpenNow(shop.getOpenTime());
+
+                    return MyShopResponse.from(shop, isOpen);
+                })
+                .collect(Collectors.toList());
+
+        return PageResponse.from(shopPage, content);
     }
 
     /**

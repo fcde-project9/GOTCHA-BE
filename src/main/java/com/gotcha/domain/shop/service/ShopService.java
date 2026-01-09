@@ -259,7 +259,7 @@ public class ShopService {
      * @param openTimeJson JSON 문자열 (예: {"Mon":"10:00~22:00","Tue":null,"Wed":"10:00~22:00"})
      * @return 영업중이면 true, 아니면 false
      */
-    private boolean isOpenNow(String openTimeJson) {
+    public boolean isOpenNow(String openTimeJson) {
         if (openTimeJson == null || openTimeJson.isEmpty()) {
             return false;
         }
