@@ -66,3 +66,7 @@ kakao:
 gcs:
   project-id: test-project-id
   bucket-name: test-bucket-name
+
+# User Configuration for tests
+user:
+  default-profile-image-url: https://storage.googleapis.com/test-bucket/defaults/profile-default.png

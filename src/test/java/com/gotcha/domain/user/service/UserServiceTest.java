@@ -226,7 +226,8 @@ class UserServiceTest {
             assertThat(testUser.getNickname()).isEqualTo("탈퇴한 사용자_1");
             assertThat(testUser.getEmail()).isNull();
             assertThat(testUser.getProfileImageUrl()).isNull();
-            assertThat(testUser.getSocialId()).isEqualTo("12345"); // socialId는 유지
+            assertThat(testUser.getSocialId()).isNull(); // 재가입 허용을 위해 socialId 제거
+            assertThat(testUser.getSocialType()).isNull(); // 재가입 허용을 위해 socialType 제거
         }
 
         @Test

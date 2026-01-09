@@ -24,6 +24,19 @@
   - 변경: reason (단일 Enum) → reasons (JSON 배열, 복수 선택 가능)
   - 변경: Enum 값 업데이트 (LOW_USAGE, INSUFFICIENT_INFO, INACCURATE_INFO, PRIVACY_CONCERN, HAS_OTHER_ACCOUNT, OTHER)
   - 추가: WithdrawalReason Enum 상세 설명
+- `docs/entity-design.md` - users 테이블 업데이트
+  - 추가: email 필드
+  - 추가: 탈퇴 처리 설명 (soft delete, 개인정보 마스킹, 소셜 연동 해제, 재가입 허용)
+- `docs/api-spec.md` - DELETE /users/me API 수정
+  - 변경: reason (단일) → reasons (배열, 복수 선택)
+  - 변경: Enum 값 현재 구현과 일치하도록 수정
+  - 추가: 탈퇴 시 삭제되는 데이터 목록, 재가입 가능 안내
+- `docs/business-rules.md` - 회원 탈퇴 섹션 전면 수정
+  - 변경: 탈퇴 시 삭제되는 데이터 명시 (찜, 리뷰, 댓글 물리 삭제)
+  - 추가: 소셜 연동 해제, 재가입 가능
+  - 변경: 탈퇴 사유 Enum 현재 구현과 일치하도록 수정
+- `docs/business-rules.md` - 리뷰 섹션 수정
+  - 변경: 이미지 "1장" → "최대 10장"
 
 ---
 

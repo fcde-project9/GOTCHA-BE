@@ -134,4 +134,92 @@ class UserRepositoryTest {
         // then
         assertThat(found).isEmpty();
     }
+
+    @Test
+    @DisplayName("탈퇴한 사용자는 소셜 계정으로 검색되지 않는다 (재가입 허용)")
+    void findBySocialTypeAndSocialId_DeletedUserNotFound() {
+        // given - 사용자 생성 후 탈퇴
+        User user = User.builder()
+                .socialType(SocialType.KAKAO)
+                .socialId("kakao-rejoin-test")
+                .nickname("탈퇴예정유저#1")
+                .isAnonymous(false)
+                .build();
+        userRepository.save(user);
+
+        // when - 탈퇴 처리 (socialId, socialType을 null로 설정)
+        user.delete();
+        userRepository.save(user);
+
+        // then - 동일 소셜 계정으로 검색 시 찾지 못함
+        Optional<User> found = userRepository.findBySocialTypeAndSocialId(SocialType.KAKAO, "kakao-rejoin-test");
+        assertThat(found).isEmpty();
+    }
+
+    @Test
+    @DisplayName("탈퇴 후 동일 소셜 계정으로 재가입 가능 (새 사용자 생성)")
+    void rejoin_AfterWithdrawal_CreatesNewUser() {
+        // given - 기존 사용자 생성 후 탈퇴
+        User originalUser = User.builder()
+                .socialType(SocialType.KAKAO)
+                .socialId("kakao-rejoin-123")
+                .nickname("원래유저#1")
+                .email("original@test.com")
+                .isAnonymous(false)
+                .build();
+        userRepository.saveAndFlush(originalUser);
+        Long originalUserId = originalUser.getId();
+
+        originalUser.delete();
+        userRepository.saveAndFlush(originalUser); // DB에 즉시 반영 (socialId=null)
+
+        // when - 동일 소셜 계정으로 새 사용자 생성 (재가입)
+        User newUser = User.builder()
+                .socialType(SocialType.KAKAO)
+                .socialId("kakao-rejoin-123")
+                .nickname("새유저#2")
+                .email("new@test.com")
+                .isAnonymous(false)
+                .build();
+        userRepository.save(newUser);
+
+        // then - 새 사용자가 생성되고, 기존 탈퇴 사용자와 분리됨
+        assertThat(newUser.getId()).isNotEqualTo(originalUserId);
+
+        Optional<User> foundByNewSocial = userRepository.findBySocialTypeAndSocialId(SocialType.KAKAO, "kakao-rejoin-123");
+        assertThat(foundByNewSocial).isPresent();
+        assertThat(foundByNewSocial.get().getId()).isEqualTo(newUser.getId());
+        assertThat(foundByNewSocial.get().getNickname()).isEqualTo("새유저#2");
+
+        // 탈퇴한 사용자는 여전히 DB에 존재하지만 socialId가 null
+        User deletedUser = userRepository.findById(originalUserId).orElseThrow();
+        assertThat(deletedUser.getSocialId()).isNull();
+        assertThat(deletedUser.getSocialType()).isNull();
+        assertThat(deletedUser.getIsDeleted()).isTrue();
+    }
+
+    @Test
+    @DisplayName("탈퇴한 사용자 닉네임으로 검색 가능")
+    void findByNickname_DeletedUser() {
+        // given
+        User user = User.builder()
+                .socialType(SocialType.GOOGLE)
+                .socialId("google-delete-test")
+                .nickname("삭제될유저#1")
+                .isAnonymous(false)
+                .build();
+        userRepository.save(user);
+        Long userId = user.getId();
+
+        user.delete();
+        userRepository.save(user);
+
+        // when - 탈퇴 후 마스킹된 닉네임으로 검색
+        String maskedNickname = "탈퇴한 사용자_" + userId;
+        Optional<User> found = userRepository.findByNickname(maskedNickname);
+
+        // then
+        assertThat(found).isPresent();
+        assertThat(found.get().getIsDeleted()).isTrue();
+    }
 }

@@ -191,8 +191,8 @@ class CustomOAuth2UserServiceTest {
         }
 
         @Test
-        @DisplayName("User.delete() 호출 후에도 socialId는 유지된다")
-        void delete_keepsSocialId() {
+        @DisplayName("User.delete() 호출 시 socialId, socialType이 null로 설정된다 (재가입 허용)")
+        void delete_clearsSocialInfo() {
             // given
             User user = User.builder()
                     .socialType(SocialType.KAKAO)
@@ -205,9 +205,9 @@ class CustomOAuth2UserServiceTest {
             // when
             user.delete();
 
-            // then
-            assertThat(user.getSocialId()).isEqualTo("12345");
-            assertThat(user.getSocialType()).isEqualTo(SocialType.KAKAO);
+            // then - 재가입 허용을 위해 소셜 정보 제거
+            assertThat(user.getSocialId()).isNull();
+            assertThat(user.getSocialType()).isNull();
         }
 
         private void setUserId(User user, Long id) {

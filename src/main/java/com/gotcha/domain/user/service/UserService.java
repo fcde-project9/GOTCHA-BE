@@ -242,6 +242,7 @@ public class UserService {
 
         // 7. 사용자 soft delete (개인정보 마스킹 포함)
         user.delete();
+        userRepository.save(user);
         log.info("User soft deleted with masked info - userId: {}", userId);
     }
 

@@ -966,23 +966,25 @@ Authorization: Bearer {accessToken}
 **Request Body**
 ```json
 {
-  "reason": "NO_DESIRED_INFO",
+  "reasons": ["LOW_USAGE", "INSUFFICIENT_INFO"],
   "detail": "사용자가 입력한 상세 사유"
 }
 ```
 
-**reason 값**
+**reasons 값 (복수 선택 가능)**
 | 값 | 설명 |
 |---|------|
-| NO_DESIRED_INFO | 원하는 정보가 없어요 |
-| LOW_USAGE | 사용 빈도가 낮아요 |
-| INCONVENIENT | 이용이 불편해요 |
+| LOW_USAGE | 사용을 잘 안하게 돼요 |
+| INSUFFICIENT_INFO | 가챠샵 정보가 부족해요 |
+| INACCURATE_INFO | 가챠샵 정보가 기재된 내용과 달라요 |
+| PRIVACY_CONCERN | 개인정보 보호를 위해 삭제할래요 |
+| HAS_OTHER_ACCOUNT | 다른 계정이 있어요 |
 | OTHER | 기타 |
 
 **Validation**
 | 필드 | 규칙 |
 |------|------|
-| reason | 필수 |
+| reasons | 필수, 최소 1개 이상 |
 | detail | 선택, 최대 500자 |
 
 **Response (200)**
@@ -1001,8 +1003,9 @@ Authorization: Bearer {accessToken}
 
 **참고**
 - 설문 저장과 탈퇴가 하나의 트랜잭션으로 처리됨
-- 탈퇴 시 Refresh Token 삭제됨 (Access Token은 15분간 유효)
-- 사용자는 soft delete 처리됨 (isDeleted = true)
+- 탈퇴 시 삭제되는 데이터: 찜 목록, 리뷰(+이미지), 댓글, Refresh Token
+- 사용자는 soft delete 처리됨 (isDeleted = true, 개인정보 마스킹)
+- 소셜 연동 해제됨 (동일 계정으로 재가입 가능)
 
 ---
 
