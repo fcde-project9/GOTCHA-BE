@@ -34,6 +34,7 @@ public interface ShopRepository extends JpaRepository<Shop, Long> {
             @Param("southWestLng") Double southWestLng
     );
 
-    @Query("SELECT s FROM Shop s JOIN FETCH s.createdBy WHERE s.createdBy.id = :userId ORDER BY s.createdAt DESC")
+
+    @Query(value = "SELECT s FROM Shop s JOIN FETCH s.createdBy WHERE s.createdBy.id = :userId ORDER BY s.createdAt DESC",countQuery = "SELECT COUNT(s) FROM Shop s WHERE s.createdBy.id = :userId")
     Page<Shop> findAllByCreatedByIdWithUser(@Param("userId") Long userId, Pageable pageable);
 }

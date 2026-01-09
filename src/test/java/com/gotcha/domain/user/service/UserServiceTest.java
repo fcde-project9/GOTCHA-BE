@@ -2,7 +2,6 @@ package com.gotcha.domain.user.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -67,13 +66,6 @@ class UserServiceTest {
 
     @Mock
     private FileUploadService fileUploadService;
-
-    @Mock
-    private com.gotcha.domain.shop.repository.ShopRepository shopRepository;
-
-    @Mock
-    private com.gotcha.domain.shop.service.ShopService shopService;
-
     @InjectMocks
     private UserService userService;
 

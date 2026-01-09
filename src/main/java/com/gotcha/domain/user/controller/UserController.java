@@ -133,7 +133,7 @@ public class UserController {
 
     @Operation(
             summary = "내가 제보한 가게 목록 조회",
-            description = "현재 로그인한 사용자가 제보한 가게 목록을 최신순으로 조회합니다. lat, lng 파라미터를 제공하면 거리가 계산됩니다.",
+            description = "현재 로그인한 사용자가 제보한 가게 목록을 최신순으로 조회합니다.",
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses({
