@@ -61,6 +61,7 @@ class OAuth2AuthenticationFailureHandlerTest {
 
             String redirectUrl = urlCaptor.getValue();
             assertThat(redirectUrl).contains("code=" + AuthErrorCode.SOCIAL_LOGIN_FAILED.getCode());
+            assertThat(redirectUrl).contains("message=");
             // 내부 에러 메시지가 노출되지 않음을 확인
             assertThat(redirectUrl).doesNotContain("Internal");
         }
@@ -81,6 +82,7 @@ class OAuth2AuthenticationFailureHandlerTest {
 
             String redirectUrl = urlCaptor.getValue();
             assertThat(redirectUrl).contains("code=" + AuthErrorCode.OAUTH_ACCESS_DENIED.getCode());
+            assertThat(redirectUrl).contains("message=");
         }
 
         @Test
@@ -99,6 +101,7 @@ class OAuth2AuthenticationFailureHandlerTest {
 
             String redirectUrl = urlCaptor.getValue();
             assertThat(redirectUrl).contains("code=" + AuthErrorCode.OAUTH_INVALID_TOKEN.getCode());
+            assertThat(redirectUrl).contains("message=");
         }
 
         @Test
@@ -117,6 +120,7 @@ class OAuth2AuthenticationFailureHandlerTest {
 
             String redirectUrl = urlCaptor.getValue();
             assertThat(redirectUrl).contains("code=" + AuthErrorCode.SOCIAL_LOGIN_FAILED.getCode());
+            assertThat(redirectUrl).contains("message=");
             // OAuth2 표준 에러 상세 메시지가 노출되지 않음을 확인
             assertThat(redirectUrl).doesNotContain("authorization");
         }
@@ -135,7 +139,9 @@ class OAuth2AuthenticationFailureHandlerTest {
             verify(redirectStrategy).sendRedirect(any(), any(), urlCaptor.capture());
 
             String redirectUrl = urlCaptor.getValue();
-            assertThat(redirectUrl).startsWith("http://localhost:3000/oauth/callback?code=");
+            assertThat(redirectUrl).startsWith("http://localhost:3000/oauth/callback?");
+            assertThat(redirectUrl).contains("code=");
+            assertThat(redirectUrl).contains("message=");
         }
     }
 }
