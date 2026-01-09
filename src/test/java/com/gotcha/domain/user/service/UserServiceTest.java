@@ -98,6 +98,9 @@ class UserServiceTest {
     @DisplayName("getMyInfo")
     class GetMyInfo {
 
+        private static final String DEFAULT_PROFILE_IMAGE_URL =
+                "https://storage.googleapis.com/gotcha-dev-files/profile-default-join.png";
+
         @Test
         @DisplayName("현재 로그인한 사용자의 정보를 반환한다")
         void shouldReturnCurrentUserInfo() {
@@ -112,6 +115,29 @@ class UserServiceTest {
             assertThat(result.nickname()).isEqualTo("테스트유저");
             assertThat(result.profileImageUrl()).isEqualTo("https://example.com/profile.jpg");
             assertThat(result.socialType()).isEqualTo(SocialType.KAKAO);
+        }
+
+        @Test
+        @DisplayName("프로필 이미지가 null이면 기본 이미지 URL을 반환한다")
+        void shouldReturnDefaultProfileImageWhenNull() {
+            // given
+            User userWithoutProfileImage = User.builder()
+                    .socialType(SocialType.GOOGLE)
+                    .socialId("google123")
+                    .nickname("프로필없는유저")
+                    .profileImageUrl(null)
+                    .build();
+            setUserId(userWithoutProfileImage, 2L);
+            when(securityUtil.getCurrentUser()).thenReturn(userWithoutProfileImage);
+
+            // when
+            UserResponse result = userService.getMyInfo();
+
+            // then
+            assertThat(result.id()).isEqualTo(2L);
+            assertThat(result.nickname()).isEqualTo("프로필없는유저");
+            assertThat(result.profileImageUrl()).isEqualTo(DEFAULT_PROFILE_IMAGE_URL);
+            assertThat(result.socialType()).isEqualTo(SocialType.GOOGLE);
         }
     }
 
