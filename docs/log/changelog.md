@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-01-09
+
+### 수정
+- `docs/entity-design.md` - withdrawal_surveys 테이블 구조 업데이트
+  - 변경: reason (단일 Enum) → reasons (JSON 배열, 복수 선택 가능)
+  - 변경: Enum 값 업데이트 (LOW_USAGE, INSUFFICIENT_INFO, INACCURATE_INFO, PRIVACY_CONCERN, HAS_OTHER_ACCOUNT, OTHER)
+  - 추가: WithdrawalReason Enum 상세 설명
+
+---
+
 ## 2026-01-08
 
 ### 추가
