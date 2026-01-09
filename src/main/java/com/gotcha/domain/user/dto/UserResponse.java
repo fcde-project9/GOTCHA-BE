@@ -29,7 +29,7 @@ public record UserResponse(
                 user.getId(),
                 user.getNickname(),
                 user.getEmail(),
-                user.getProfileImageUrl() != null
+                user.getProfileImageUrl() != null && !user.getProfileImageUrl().isBlank()
                         ? user.getProfileImageUrl()
                         : DEFAULT_PROFILE_IMAGE_URL,
                 user.getSocialType()
