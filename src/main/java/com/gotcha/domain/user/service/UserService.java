@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -48,6 +49,9 @@ public class UserService {
     private final FileUploadService fileUploadService;
     private final ShopRepository shopRepository;
     private final ShopService shopService;
+
+    @Value("${user.default-profile-image-url}")
+    private String defaultProfileImageUrl;
 
     public UserResponse getMyInfo() {
         User user = securityUtil.getCurrentUser();
@@ -114,6 +118,69 @@ public class UserService {
         // 닉네임 변경
         currentUser.updateNickname(nickname);
         log.info("Nickname updated successfully: {} -> {}", currentUser.getId(), nickname);
+
+        return UserResponse.from(currentUser);
+    }
+
+    /**
+     * 프로필 이미지 변경
+     * @param profileImageUrl 새 프로필 이미지 URL
+     * @return 변경된 사용자 정보
+     */
+    @Transactional
+    public UserResponse updateProfileImage(String profileImageUrl) {
+        log.info("updateProfileImage - profileImageUrl: {}", profileImageUrl);
+
+        // 현재 로그인한 사용자 조회
+        User currentUser = securityUtil.getCurrentUser();
+        String oldImageUrl = currentUser.getProfileImageUrl();
+        log.info("Current user ID: {}, old profileImageUrl: {}", currentUser.getId(), oldImageUrl);
+
+        // 기존 이미지가 있고 기본 이미지가 아닌 경우 GCS에서 삭제
+        if (oldImageUrl != null && !oldImageUrl.contains("/defaults/")) {
+            try {
+                fileUploadService.deleteFile(oldImageUrl);
+                log.info("Deleted old profile image: {}", oldImageUrl);
+            } catch (Exception e) {
+                log.warn("Failed to delete old profile image: {} - {}", oldImageUrl, e.getMessage());
+                // 삭제 실패해도 계속 진행 (이미 삭제된 파일일 수 있음)
+            }
+        }
+
+        // 프로필 이미지 변경
+        currentUser.updateProfileImage(profileImageUrl);
+        log.info("Profile image updated successfully: {} -> {}", currentUser.getId(), profileImageUrl);
+
+        return UserResponse.from(currentUser);
+    }
+
+    /**
+     * 프로필 이미지 삭제 (기본 이미지로 복구)
+     * @return 변경된 사용자 정보
+     */
+    @Transactional
+    public UserResponse deleteProfileImage() {
+        log.info("deleteProfileImage - resetting to default");
+
+        // 현재 로그인한 사용자 조회
+        User currentUser = securityUtil.getCurrentUser();
+        String oldImageUrl = currentUser.getProfileImageUrl();
+        log.info("Current user ID: {}, old profileImageUrl: {}", currentUser.getId(), oldImageUrl);
+
+        // 기존 커스텀 이미지 GCS에서 삭제 (기본 이미지는 제외)
+        if (oldImageUrl != null && !oldImageUrl.contains("/defaults/")) {
+            try {
+                fileUploadService.deleteFile(oldImageUrl);
+                log.info("Deleted custom profile image: {}", oldImageUrl);
+            } catch (Exception e) {
+                log.warn("Failed to delete old profile image: {} - {}", oldImageUrl, e.getMessage());
+                // 삭제 실패해도 계속 진행 (이미 삭제된 파일일 수 있음)
+            }
+        }
+
+        // 기본 프로필 이미지로 복구
+        currentUser.updateProfileImage(defaultProfileImageUrl);
+        log.info("Profile image reset to default: {} -> {}", currentUser.getId(), defaultProfileImageUrl);
 
         return UserResponse.from(currentUser);
     }
