@@ -15,8 +15,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -34,7 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Review", description = "리뷰 API")
 @RestController
-@RequestMapping("/api/shops/{shopId}/reviews")
+@RequestMapping("/api/shops")
 @RequiredArgsConstructor
 @Validated
 public class ReviewController {
@@ -44,7 +44,7 @@ public class ReviewController {
     private final UserRepository userRepository;
 
     @Operation(summary = "리뷰 작성", description = "리뷰 작성 (이미지 0~10개)")
-    @PostMapping
+    @PostMapping("/{shopId}/reviews")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<ReviewResponse> createReview(
             @PathVariable Long shopId,
@@ -61,12 +61,14 @@ public class ReviewController {
                     "정렬: LATEST(최신순, 기본값), LIKE_COUNT(좋아요순). " +
                     "무한스크롤 구현: page 파라미터를 증가시키면서 호출, hasNext로 다음 페이지 존재 여부 확인"
     )
-    @GetMapping
+    @GetMapping("/{shopId}/reviews")
     public ApiResponse<PageResponse<ReviewResponse>> getReviews(
             @PathVariable Long shopId,
             @RequestParam(defaultValue = "LATEST") ReviewSortType sortBy,
-            @PageableDefault(size = 20) Pageable pageable
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
     ) {
+        Pageable pageable = PageRequest.of(page, size);
         User currentUser = getCurrentUser();
         Long currentUserId = currentUser != null ? currentUser.getId() : null;
         PageResponse<ReviewResponse> response = reviewService.getReviews(shopId, sortBy, pageable, currentUserId);
@@ -74,7 +76,7 @@ public class ReviewController {
     }
 
     @Operation(summary = "리뷰 수정", description = "본인이 작성한 리뷰를 수정합니다 (이미지 0~10개)")
-    @PutMapping("/{reviewId}")
+    @PutMapping("/{shopId}/reviews/{reviewId}")
     public ApiResponse<ReviewResponse> updateReview(
             @PathVariable Long shopId,
             @PathVariable Long reviewId,
@@ -86,7 +88,7 @@ public class ReviewController {
     }
 
     @Operation(summary = "리뷰 삭제", description = "본인이 작성한 리뷰를 삭제합니다")
-    @DeleteMapping("/{reviewId}")
+    @DeleteMapping("/{shopId}/reviews/{reviewId}")
     public ApiResponse<Void> deleteReview(
             @PathVariable Long shopId,
             @PathVariable Long reviewId
@@ -97,19 +99,17 @@ public class ReviewController {
     }
 
     @Operation(summary = "리뷰 좋아요", description = "리뷰에 좋아요를 추가합니다")
-    @PostMapping("/{reviewId}/like")
+    @PostMapping("/reviews/{reviewId}/like")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<ReviewLikeResponse> addLike(
-            @PathVariable Long shopId,
             @PathVariable Long reviewId
     ) {
         return ApiResponse.success(reviewLikeService.addLike(reviewId));
     }
 
     @Operation(summary = "리뷰 좋아요 취소", description = "리뷰 좋아요를 취소합니다")
-    @DeleteMapping("/{reviewId}/like")
+    @DeleteMapping("/reviews/{reviewId}/like")
     public ApiResponse<ReviewLikeResponse> removeLike(
-            @PathVariable Long shopId,
             @PathVariable Long reviewId
     ) {
         return ApiResponse.success(reviewLikeService.removeLike(reviewId));
