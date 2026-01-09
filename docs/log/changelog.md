@@ -4,9 +4,28 @@
 
 ---
 
+## 2026-01-09
+
+### 수정
+- `docs/entity-design.md` - withdrawal_surveys 테이블 구조 업데이트
+  - 변경: reason (단일 Enum) → reasons (JSON 배열, 복수 선택 가능)
+  - 변경: Enum 값 업데이트 (LOW_USAGE, INSUFFICIENT_INFO, INACCURATE_INFO, PRIVACY_CONCERN, HAS_OTHER_ACCOUNT, OTHER)
+  - 추가: WithdrawalReason Enum 상세 설명
+
+---
+
 ## 2026-01-08
 
 ### 추가
+- `src/main/java/com/gotcha/domain/user/entity/PermissionType.java` - 권한 타입 Enum (LOCATION, CAMERA, ALBUM)
+- `src/main/java/com/gotcha/domain/user/entity/UserPermission.java` - 사용자 권한 동의 상태 Entity (일반 PK + UNIQUE 제약)
+- `src/main/java/com/gotcha/domain/user/entity/UserPermissionHistory.java` - 사용자 권한 변경 이력 Entity (deviceInfo만 저장)
+- `src/main/java/com/gotcha/domain/user/repository/UserPermissionRepository.java` - UserPermission Repository
+- `src/main/java/com/gotcha/domain/user/repository/UserPermissionHistoryRepository.java` - UserPermissionHistory Repository
+- `src/main/java/com/gotcha/domain/user/service/UserPermissionService.java` - 권한 확인 및 업데이트 Service
+- `src/main/java/com/gotcha/domain/user/controller/UserPermissionController.java` - 권한 확인/업데이트 API
+- `src/main/java/com/gotcha/domain/user/dto/UpdatePermissionRequest.java` - 권한 업데이트 Request DTO
+- `src/main/java/com/gotcha/domain/user/dto/PermissionResponse.java` - 권한 응답 DTO
 - `docs/entity-design.md` - review_images 테이블 추가 (리뷰 다중 이미지 지원)
 - `docs/entity-design.md` - refresh_tokens 테이블 추가
 - `docs/api-spec.md` - PUT /shops/{shopId}/reviews/{reviewId}, DELETE /shops/{shopId}/reviews/{reviewId} API 추가
@@ -31,6 +50,7 @@
 - `docs/api-spec.md` - DELETE /users/me 수정 (탈퇴 설문 통합, POST /users/me/withdrawal-survey 제거)
 - `docs/error-codes.md` - U005 에러코드 추가 (이미 탈퇴한 사용자)
 - `docs/error-codes.md` - A012 에러코드 추가 (탈퇴 사용자 접근 차단)
+- `docs/entity-design.md` - user_permissions, user_permission_histories 테이블 설계 추가 (ipAddress 제거, deviceInfo만 유지)
 - `docs/auth-policy.md` - JWT 토큰 정책 업데이트
   - 변경: Access Token 1시간 → 15분, Refresh Token 14일 → 7일
   - 추가: Refresh Token 관리 정책 (DB 저장, 로그아웃 시 삭제)

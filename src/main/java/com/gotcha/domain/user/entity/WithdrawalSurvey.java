@@ -1,12 +1,9 @@
 package com.gotcha.domain.user.entity;
 
 import com.gotcha._global.entity.BaseTimeEntity;
-import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -35,10 +32,8 @@ public class WithdrawalSurvey extends BaseTimeEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "withdrawal_survey_reasons", joinColumns = @JoinColumn(name = "survey_id"))
-    @Enumerated(EnumType.STRING)
-    @Column(name = "reason", nullable = false, length = 30)
+    @Convert(converter = WithdrawalReasonsConverter.class)
+    @Column(name = "reasons", columnDefinition = "text", nullable = false)
     private List<WithdrawalReason> reasons = new ArrayList<>();
 
     @Column(length = 500)

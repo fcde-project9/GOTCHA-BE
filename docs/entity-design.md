@@ -137,9 +137,52 @@
 |------|------|------|
 | id | Long (PK) | |
 | user_id | Long (FK) | |
-| reason | Enum | NO_DESIRED_INFO, LOW_USAGE, INCONVENIENT, OTHER |
+| reasons | JSON (text) | 탈퇴 사유 목록 (복수 선택 가능, JSON 배열로 저장) |
 | detail | String | 기타 사유 상세 |
-| created_at | LocalDateTime | |
+| created_at, updated_at | LocalDateTime | BaseTimeEntity |
+
+### WithdrawalReason (Enum)
+
+| 값 | 설명 |
+|----|------|
+| LOW_USAGE | 사용을 잘 안하게 돼요 |
+| INSUFFICIENT_INFO | 가챠샵 정보가 부족해요 |
+| INACCURATE_INFO | 가챠샵 정보가 기재된 내용과 달라요 |
+| PRIVACY_CONCERN | 개인정보 보호를 위해 삭제할래요 |
+| HAS_OTHER_ACCOUNT | 다른 계정이 있어요 |
+| OTHER | 기타 |
+
+---
+
+## user_permissions
+
+사용자 권한 동의 상태 (최신 상태만 저장)
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | Long (PK) | AUTO_INCREMENT |
+| user_id | Long (FK) | 사용자 ID |
+| permission_type | Enum | LOCATION, CAMERA, ALBUM |
+| is_agreed | Boolean | 동의 여부 |
+| agreed_at | LocalDateTime | 동의한 시간 (nullable) |
+| created_at, updated_at | LocalDateTime | BaseTimeEntity |
+
+- UNIQUE(user_id, permission_type): 중복 방지
+
+---
+
+## user_permission_histories
+
+사용자 권한 변경 이력 (법적 증빙용)
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | Long (PK) | AUTO_INCREMENT |
+| user_id | Long | FK (직접 저장) |
+| permission_type | Enum | LOCATION, CAMERA, ALBUM |
+| is_agreed | Boolean | 동의 여부 |
+| changed_at | LocalDateTime | 변경 시간 |
+| device_info | String (200) | User-Agent (nullable) |
 
 ---
 
