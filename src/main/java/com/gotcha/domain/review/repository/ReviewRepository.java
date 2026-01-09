@@ -13,6 +13,12 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     Page<Review> findAllByShopIdOrderByCreatedAtDesc(Long shopId, Pageable pageable);
 
+    @Query("SELECT r FROM Review r LEFT JOIN ReviewLike rl ON r.id = rl.review.id " +
+            "WHERE r.shop.id = :shopId " +
+            "GROUP BY r.id " +
+            "ORDER BY COUNT(rl.id) DESC, r.createdAt DESC")
+    Page<Review> findAllByShopIdOrderByLikeCountDesc(@Param("shopId") Long shopId, Pageable pageable);
+
     boolean existsByUserIdAndShopId(Long userId, Long shopId);
 
     List<Review> findAllByUserId(Long userId);

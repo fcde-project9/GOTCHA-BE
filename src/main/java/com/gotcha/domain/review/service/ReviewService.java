@@ -4,11 +4,13 @@ import com.gotcha.domain.file.service.FileUploadService;
 import com.gotcha.domain.review.dto.CreateReviewRequest;
 import com.gotcha.domain.review.dto.PageResponse;
 import com.gotcha.domain.review.dto.ReviewResponse;
+import com.gotcha.domain.review.dto.ReviewSortType;
 import com.gotcha.domain.review.dto.UpdateReviewRequest;
 import com.gotcha.domain.review.entity.Review;
 import com.gotcha.domain.review.entity.ReviewImage;
 import com.gotcha.domain.review.exception.ReviewException;
 import com.gotcha.domain.review.repository.ReviewImageRepository;
+import com.gotcha.domain.review.repository.ReviewLikeRepository;
 import com.gotcha.domain.review.repository.ReviewRepository;
 import com.gotcha.domain.shop.entity.Shop;
 import com.gotcha.domain.shop.exception.ShopException;
@@ -33,6 +35,7 @@ public class ReviewService {
 
     private final ReviewRepository reviewRepository;
     private final ReviewImageRepository reviewImageRepository;
+    private final ReviewLikeRepository reviewLikeRepository;
     private final ShopRepository shopRepository;
     private final UserRepository userRepository;
     private final FileUploadService fileUploadService;
@@ -73,14 +76,21 @@ public class ReviewService {
         // 6. Response 생성 (이미지 포함)
         List<ReviewImage> images = reviewImageRepository
                 .findAllByReviewIdOrderByDisplayOrder(review.getId());
-        return ReviewResponse.from(review, user, images, true);
+        Long likeCount = reviewLikeRepository.countByReviewId(review.getId());
+        return ReviewResponse.from(review, user, images, true, likeCount);
     }
 
-    public PageResponse<ReviewResponse> getReviews(Long shopId, Pageable pageable, Long currentUserId) {
-        log.info("Getting reviews for shop {} (page: {})", shopId, pageable.getPageNumber());
+    public PageResponse<ReviewResponse> getReviews(Long shopId, ReviewSortType sortBy, Pageable pageable, Long currentUserId) {
+        log.info("Getting reviews for shop {} (page: {}, sortBy: {})", shopId, pageable.getPageNumber(), sortBy);
 
-        Page<Review> reviewPage = reviewRepository
-                .findAllByShopIdOrderByCreatedAtDesc(shopId, pageable);
+        // 정렬 타입에 따라 다른 쿼리 호출
+        Page<Review> reviewPage;
+        if (sortBy == ReviewSortType.LIKE_COUNT) {
+            reviewPage = reviewRepository.findAllByShopIdOrderByLikeCountDesc(shopId, pageable);
+        } else {
+            // 기본값: 최신순
+            reviewPage = reviewRepository.findAllByShopIdOrderByCreatedAtDesc(shopId, pageable);
+        }
 
         // N+1 방지: 이미지 일괄 조회
         List<Long> reviewIds = reviewPage.getContent().stream()
@@ -92,12 +102,20 @@ public class ReviewService {
                 .stream()
                 .collect(Collectors.groupingBy(img -> img.getReview().getId()));
 
+        // N+1 방지: 좋아요 수 일괄 조회
+        Map<Long, Long> likeCountMap = reviewIds.stream()
+                .collect(Collectors.toMap(
+                        reviewId -> reviewId,
+                        reviewId -> reviewLikeRepository.countByReviewId(reviewId)
+                ));
+
         List<ReviewResponse> responses = reviewPage.getContent().stream()
                 .map(review -> ReviewResponse.from(
                         review,
                         review.getUser(),
                         imageMap.getOrDefault(review.getId(), List.of()),
-                        currentUserId != null && review.getUser().getId().equals(currentUserId)
+                        currentUserId != null && review.getUser().getId().equals(currentUserId),
+                        likeCountMap.getOrDefault(review.getId(), 0L)
                 ))
                 .toList();
 
@@ -165,9 +183,10 @@ public class ReviewService {
         // 9. Response 생성
         List<ReviewImage> images = reviewImageRepository
                 .findAllByReviewIdOrderByDisplayOrder(reviewId);
+        Long likeCount = reviewLikeRepository.countByReviewId(reviewId);
 
         log.info("Review {} updated successfully", reviewId);
-        return ReviewResponse.from(review, review.getUser(), images, true);
+        return ReviewResponse.from(review, review.getUser(), images, true, likeCount);
     }
 
     @Transactional

@@ -32,4 +32,16 @@ public class ReviewException extends BusinessException {
     public static ReviewException tooManyImages(int count) {
         return new ReviewException(ReviewErrorCode.TOO_MANY_IMAGES, "제공된 이미지 개수: " + count);
     }
+
+    public static ReviewException alreadyLiked() {
+        return new ReviewException(ReviewErrorCode.ALREADY_LIKED);
+    }
+
+    public static ReviewException likeNotFound() {
+        return new ReviewException(ReviewErrorCode.LIKE_NOT_FOUND);
+    }
+
+    public static ReviewException likeNotFound(Long reviewId) {
+        return new ReviewException(ReviewErrorCode.LIKE_NOT_FOUND, "reviewId: " + reviewId);
+    }
 }

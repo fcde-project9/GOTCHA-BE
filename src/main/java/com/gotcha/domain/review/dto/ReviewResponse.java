@@ -26,11 +26,14 @@ public record ReviewResponse(
         @Schema(description = "본인 작성 여부", example = "false")
         boolean isOwner,
 
+        @Schema(description = "좋아요 수", example = "5")
+        Long likeCount,
+
         @Schema(description = "생성일시", example = "2025-01-01T10:00:00")
         LocalDateTime createdAt
 ) {
 
-    public static ReviewResponse from(Review review, User author, List<ReviewImage> images, boolean isOwner) {
+    public static ReviewResponse from(Review review, User author, List<ReviewImage> images, boolean isOwner, Long likeCount) {
         return new ReviewResponse(
                 review.getId(),
                 review.getContent(),
@@ -40,6 +43,7 @@ public record ReviewResponse(
                         .toList(),
                 AuthorSummary.from(author),
                 isOwner,
+                likeCount,
                 review.getCreatedAt()
         );
     }
