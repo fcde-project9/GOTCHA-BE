@@ -6,7 +6,20 @@
 
 ## 2026-01-09
 
+### 추가
+- `src/main/java/com/gotcha/domain/user/dto/UpdateProfileImageRequest.java` - 프로필 이미지 변경 Request DTO (GCS URL 검증)
+- `application-local.yml` - user.default-profile-image-url 기본값 추가 (local 환경)
+- `CustomOAuth2UserService.java` - 신규 가입 시 기본 프로필 이미지 자동 설정
+- `UserService.java` - updateProfileImage() 메서드 (프로필 이미지 변경, 기존 커스텀 이미지 GCS 삭제)
+- `UserService.java` - deleteProfileImage() 메서드 (프로필 이미지 삭제, 기본 이미지로 복구)
+- `UserController.java` - PATCH /users/me/profile-image 엔드포인트 추가 (프로필 이미지 변경)
+- `UserController.java` - DELETE /users/me/profile-image 엔드포인트 추가 (프로필 이미지 삭제)
+- `docs/api-spec.md` - PATCH /users/me/profile-image API 명세 추가
+- `docs/api-spec.md` - DELETE /users/me/profile-image API 명세 추가
+- `.github/workflows/cicd-dev.yml` - USER_DEFAULT_PROFILE_IMAGE_URL_DEV 환경변수 추가
+
 ### 수정
+- `application.yml` - user.default-profile-image-url 설정 추가 (환경변수 필수)
 - `docs/entity-design.md` - withdrawal_surveys 테이블 구조 업데이트
   - 변경: reason (단일 Enum) → reasons (JSON 배열, 복수 선택 가능)
   - 변경: Enum 값 업데이트 (LOW_USAGE, INSUFFICIENT_INFO, INACCURATE_INFO, PRIVACY_CONCERN, HAS_OTHER_ACCOUNT, OTHER)
