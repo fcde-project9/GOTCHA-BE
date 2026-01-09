@@ -69,6 +69,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/shops/*/reviews").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/shops/*/reviews/*").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/shops/*/reviews/*").authenticated()
+                        // Authenticated - 리뷰 좋아요
+                        .requestMatchers(HttpMethod.POST, "/api/shops/reviews/*/like").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/shops/reviews/*/like").authenticated()
                         // Admin
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         // TODO: 프로덕션 배포 전 .authenticated()로 변경 필수!
