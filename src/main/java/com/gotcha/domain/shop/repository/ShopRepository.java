@@ -3,6 +3,8 @@ package com.gotcha.domain.shop.repository;
 import com.gotcha.domain.shop.entity.Shop;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -31,4 +33,8 @@ public interface ShopRepository extends JpaRepository<Shop, Long> {
             @Param("southWestLat") Double southWestLat,
             @Param("southWestLng") Double southWestLng
     );
+
+
+    @Query(value = "SELECT s FROM Shop s JOIN FETCH s.createdBy WHERE s.createdBy.id = :userId ORDER BY s.createdAt DESC",countQuery = "SELECT COUNT(s) FROM Shop s WHERE s.createdBy.id = :userId")
+    Page<Shop> findAllByCreatedByIdWithUser(@Param("userId") Long userId, Pageable pageable);
 }
