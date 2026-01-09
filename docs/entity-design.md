@@ -137,9 +137,20 @@
 |------|------|------|
 | id | Long (PK) | |
 | user_id | Long (FK) | |
-| reason | Enum | NO_DESIRED_INFO, LOW_USAGE, INCONVENIENT, OTHER |
+| reasons | JSON (text) | 탈퇴 사유 목록 (복수 선택 가능, JSON 배열로 저장) |
 | detail | String | 기타 사유 상세 |
-| created_at | LocalDateTime | |
+| created_at, updated_at | LocalDateTime | BaseTimeEntity |
+
+### WithdrawalReason (Enum)
+
+| 값 | 설명 |
+|----|------|
+| LOW_USAGE | 사용을 잘 안하게 돼요 |
+| INSUFFICIENT_INFO | 가챠샵 정보가 부족해요 |
+| INACCURATE_INFO | 가챠샵 정보가 기재된 내용과 달라요 |
+| PRIVACY_CONCERN | 개인정보 보호를 위해 삭제할래요 |
+| HAS_OTHER_ACCOUNT | 다른 계정이 있어요 |
+| OTHER | 기타 |
 
 ---
 

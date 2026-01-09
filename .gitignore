@@ -55,4 +55,4 @@ docs/chan/
 
 ### Logs and system files ###
 *.log
-nul.DS_Store
+.DS_Store
