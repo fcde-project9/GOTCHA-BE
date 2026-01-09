@@ -67,4 +67,5 @@ jobs:
             --update-env-vars NAVER_CLIENT_ID="${{ secrets.NAVER_CLIENT_ID }}" \
             --update-env-vars NAVER_CLIENT_SECRET="${{ secrets.NAVER_CLIENT_SECRET }}" \
             --update-env-vars GCS_BUCKET_NAME="${{ secrets.GCS_BUCKET_NAME_DEV }}" \
-            --update-env-vars GCS_PROJECT_ID="${{ secrets.GCS_PROJECT_ID }}"
+            --update-env-vars GCS_PROJECT_ID="${{ secrets.GCS_PROJECT_ID }}" \
+            --update-env-vars USER_DEFAULT_PROFILE_IMAGE_URL="${{ secrets.USER_DEFAULT_PROFILE_IMAGE_URL_DEV }}"
