@@ -26,6 +26,7 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
         implements AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
 
     private static final String OAUTH2_STATE_COOKIE_NAME = "oauth2_auth_state";
+    private static final String REDIRECT_URI_COOKIE_NAME = "oauth2_redirect_uri";
     private static final int COOKIE_EXPIRE_SECONDS = 180;
 
     // state -> OAuth2AuthorizationRequest 매핑 (TTL 기반 캐시)
@@ -60,14 +61,28 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
         String state = authorizationRequest.getState();
         authorizationRequests.put(state, authorizationRequest);
 
-        ResponseCookie cookie = ResponseCookie.from(OAUTH2_STATE_COOKIE_NAME, state)
+        ResponseCookie stateCookie = ResponseCookie.from(OAUTH2_STATE_COOKIE_NAME, state)
                 .path("/")
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("Lax")
                 .maxAge(COOKIE_EXPIRE_SECONDS)
                 .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, stateCookie.toString());
+
+        // 프론트엔드에서 전달한 redirect_uri를 쿠키에 저장
+        String redirectUri = request.getParameter("redirect_uri");
+        if (redirectUri != null && !redirectUri.isBlank()) {
+            ResponseCookie redirectCookie = ResponseCookie.from(REDIRECT_URI_COOKIE_NAME, redirectUri)
+                    .path("/")
+                    .httpOnly(true)
+                    .secure(true)
+                    .sameSite("Lax")
+                    .maxAge(COOKIE_EXPIRE_SECONDS)
+                    .build();
+            response.addHeader(HttpHeaders.SET_COOKIE, redirectCookie.toString());
+            log.debug("Saved redirect_uri: {}", redirectUri);
+        }
 
         log.debug("Saved authorization request with state: {}", state);
     }
@@ -108,6 +123,29 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
 
     private void removeAuthorizationRequestCookie(HttpServletRequest request, HttpServletResponse response) {
         ResponseCookie cookie = ResponseCookie.from(OAUTH2_STATE_COOKIE_NAME, "")
+                .path("/")
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("Lax")
+                .maxAge(0)
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    }
+
+    /**
+     * 쿠키에서 프론트엔드가 전달한 redirect_uri를 읽음
+     */
+    public String getRedirectUriFromCookie(HttpServletRequest request) {
+        return getCookie(request, REDIRECT_URI_COOKIE_NAME)
+                .map(Cookie::getValue)
+                .orElse(null);
+    }
+
+    /**
+     * redirect_uri 쿠키 삭제
+     */
+    public void removeRedirectUriCookie(HttpServletResponse response) {
+        ResponseCookie cookie = ResponseCookie.from(REDIRECT_URI_COOKIE_NAME, "")
                 .path("/")
                 .httpOnly(true)
                 .secure(true)

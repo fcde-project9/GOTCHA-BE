@@ -19,10 +19,11 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthService authService;
+    private final HttpCookieOAuth2AuthorizationRequestRepository cookieRepository;
 
     // TODO: 프로덕션 배포 전 리다이렉트 URI 화이트리스트 검증 추가 필요
     @Value("${oauth2.redirect-uri:http://localhost:3000/oauth/callback}")
-    private String redirectUri;
+    private String defaultRedirectUri;
 
     // TODO: HTTP-only 쿠키 방식으로 변경 예정
     // 현재 쿼리 파라미터 방식은 보안 취약점 존재:
@@ -41,6 +42,13 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         // Refresh Token을 DB에 저장
         authService.saveRefreshToken(user, refreshToken);
+
+        // 프론트엔드에서 전달한 redirect_uri 사용, 없으면 기본값 사용
+        String redirectUri = cookieRepository.getRedirectUriFromCookie(request);
+        if (redirectUri == null || redirectUri.isBlank()) {
+            redirectUri = defaultRedirectUri;
+        }
+        cookieRepository.removeRedirectUriCookie(response);
 
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
                 .queryParam("accessToken", accessToken)
