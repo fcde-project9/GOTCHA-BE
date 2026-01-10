@@ -38,6 +38,9 @@ class OAuth2AuthenticationSuccessHandlerTest {
     private AuthService authService;
 
     @Mock
+    private HttpCookieOAuth2AuthorizationRequestRepository cookieRepository;
+
+    @Mock
     private Authentication authentication;
 
     private MockHttpServletRequest request;
@@ -47,7 +50,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
     void setUp() {
         request = new MockHttpServletRequest();
         response = new MockHttpServletResponse();
-        ReflectionTestUtils.setField(successHandler, "redirectUri", "http://localhost:3000/oauth/callback");
+        ReflectionTestUtils.setField(successHandler, "defaultRedirectUri", "http://localhost:3000/oauth/callback");
     }
 
     @Nested
@@ -191,6 +194,75 @@ class OAuth2AuthenticationSuccessHandlerTest {
             assertThat(response.getStatus()).isEqualTo(302);
             assertThat(response.getRedirectedUrl()).isNotNull();
             verify(authService).saveRefreshToken(any(User.class), eq("refresh-token"));
+        }
+    }
+
+    @Nested
+    @DisplayName("redirect_uri 쿠키 사용")
+    class RedirectUriCookie {
+
+        @Test
+        @DisplayName("쿠키에 redirect_uri 있으면 해당 URI로 리다이렉트")
+        void redirectUri_fromCookie() throws Exception {
+            // given
+            User user = createTestUser(SocialType.KAKAO, "test@kakao.com");
+            CustomOAuth2User oAuth2User = new CustomOAuth2User(user, new HashMap<>(), true);
+            String customRedirectUri = "https://custom.gotcha.com/oauth/callback";
+
+            given(authentication.getPrincipal()).willReturn(oAuth2User);
+            given(jwtTokenProvider.generateAccessToken(any(User.class))).willReturn("access-token");
+            given(jwtTokenProvider.generateRefreshToken(any(User.class))).willReturn("refresh-token");
+            given(cookieRepository.getRedirectUriFromCookie(request)).willReturn(customRedirectUri);
+
+            // when
+            successHandler.onAuthenticationSuccess(request, response, authentication);
+
+            // then
+            String redirectUrl = response.getRedirectedUrl();
+            assertThat(redirectUrl).startsWith(customRedirectUri);
+            assertThat(redirectUrl).contains("accessToken=access-token");
+            verify(cookieRepository).removeRedirectUriCookie(response);
+        }
+
+        @Test
+        @DisplayName("쿠키에 redirect_uri 없으면 기본값 사용")
+        void redirectUri_useDefault() throws Exception {
+            // given
+            User user = createTestUser(SocialType.KAKAO, "test@kakao.com");
+            CustomOAuth2User oAuth2User = new CustomOAuth2User(user, new HashMap<>(), true);
+
+            given(authentication.getPrincipal()).willReturn(oAuth2User);
+            given(jwtTokenProvider.generateAccessToken(any(User.class))).willReturn("access-token");
+            given(jwtTokenProvider.generateRefreshToken(any(User.class))).willReturn("refresh-token");
+            given(cookieRepository.getRedirectUriFromCookie(request)).willReturn(null);
+
+            // when
+            successHandler.onAuthenticationSuccess(request, response, authentication);
+
+            // then
+            String redirectUrl = response.getRedirectedUrl();
+            assertThat(redirectUrl).startsWith("http://localhost:3000/oauth/callback");
+            verify(cookieRepository).removeRedirectUriCookie(response);
+        }
+
+        @Test
+        @DisplayName("쿠키에 빈 문자열 redirect_uri면 기본값 사용")
+        void redirectUri_blankUseDefault() throws Exception {
+            // given
+            User user = createTestUser(SocialType.KAKAO, "test@kakao.com");
+            CustomOAuth2User oAuth2User = new CustomOAuth2User(user, new HashMap<>(), true);
+
+            given(authentication.getPrincipal()).willReturn(oAuth2User);
+            given(jwtTokenProvider.generateAccessToken(any(User.class))).willReturn("access-token");
+            given(jwtTokenProvider.generateRefreshToken(any(User.class))).willReturn("refresh-token");
+            given(cookieRepository.getRedirectUriFromCookie(request)).willReturn("   ");
+
+            // when
+            successHandler.onAuthenticationSuccess(request, response, authentication);
+
+            // then
+            String redirectUrl = response.getRedirectedUrl();
+            assertThat(redirectUrl).startsWith("http://localhost:3000/oauth/callback");
         }
     }
 

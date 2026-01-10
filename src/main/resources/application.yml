@@ -69,6 +69,7 @@ jwt:
 # OAuth2 Configuration
 oauth2:
   redirect-uri: ${OAUTH2_REDIRECT_URI}
+  allowed-redirect-uris: ${OAUTH2_ALLOWED_REDIRECT_URIS:http://localhost:3000/oauth/callback}
 
 # Springdoc OpenAPI Configuration
 springdoc:

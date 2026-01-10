@@ -6,8 +6,11 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
@@ -28,6 +31,9 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
     private static final String OAUTH2_STATE_COOKIE_NAME = "oauth2_auth_state";
     private static final String REDIRECT_URI_COOKIE_NAME = "oauth2_redirect_uri";
     private static final int COOKIE_EXPIRE_SECONDS = 180;
+
+    @Value("${oauth2.allowed-redirect-uris:http://localhost:3000/oauth/callback}")
+    private String allowedRedirectUrisString;
 
     // state -> OAuth2AuthorizationRequest 매핑 (TTL 기반 캐시)
     private final Cache<String, OAuth2AuthorizationRequest> authorizationRequests = Caffeine.newBuilder()
@@ -70,18 +76,22 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, stateCookie.toString());
 
-        // 프론트엔드에서 전달한 redirect_uri를 쿠키에 저장
+        // 프론트엔드에서 전달한 redirect_uri를 쿠키에 저장 (화이트리스트 검증)
         String redirectUri = request.getParameter("redirect_uri");
         if (redirectUri != null && !redirectUri.isBlank()) {
-            ResponseCookie redirectCookie = ResponseCookie.from(REDIRECT_URI_COOKIE_NAME, redirectUri)
-                    .path("/")
-                    .httpOnly(true)
-                    .secure(true)
-                    .sameSite("Lax")
-                    .maxAge(COOKIE_EXPIRE_SECONDS)
-                    .build();
-            response.addHeader(HttpHeaders.SET_COOKIE, redirectCookie.toString());
-            log.debug("Saved redirect_uri: {}", redirectUri);
+            if (isValidRedirectUri(redirectUri)) {
+                ResponseCookie redirectCookie = ResponseCookie.from(REDIRECT_URI_COOKIE_NAME, redirectUri)
+                        .path("/")
+                        .httpOnly(true)
+                        .secure(true)
+                        .sameSite("Lax")
+                        .maxAge(COOKIE_EXPIRE_SECONDS)
+                        .build();
+                response.addHeader(HttpHeaders.SET_COOKIE, redirectCookie.toString());
+                log.debug("Saved redirect_uri: {}", redirectUri);
+            } else {
+                log.warn("Invalid redirect_uri blocked: {}", redirectUri);
+            }
         }
 
         log.debug("Saved authorization request with state: {}", state);
@@ -98,6 +108,7 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
         OAuth2AuthorizationRequest authRequest = authorizationRequests.getIfPresent(state);
         authorizationRequests.invalidate(state);
         removeAuthorizationRequestCookie(request, response);
+        removeRedirectUriCookie(response);
 
         log.debug("Removed authorization request with state: {}", state);
         return authRequest;
@@ -153,5 +164,20 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
                 .maxAge(0)
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    }
+
+    /**
+     * redirect_uri가 화이트리스트에 포함되어 있는지 검증
+     */
+    boolean isValidRedirectUri(String redirectUri) {
+        if (redirectUri == null || redirectUri.isBlank()) {
+            return false;
+        }
+        return getAllowedRedirectUris().stream()
+                .anyMatch(redirectUri::equals);
+    }
+
+    private List<String> getAllowedRedirectUris() {
+        return Arrays.asList(allowedRedirectUrisString.split(","));
     }
 }
