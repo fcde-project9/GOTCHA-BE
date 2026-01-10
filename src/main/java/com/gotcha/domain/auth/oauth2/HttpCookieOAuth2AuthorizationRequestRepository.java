@@ -70,10 +70,11 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
         String state = authorizationRequest.getState();
         authorizationRequests.put(state, authorizationRequest);
 
+        boolean isSecure = isSecureRequest(request);
         ResponseCookie stateCookie = ResponseCookie.from(OAUTH2_STATE_COOKIE_NAME, state)
                 .path("/")
                 .httpOnly(true)
-                .secure(true)
+                .secure(isSecure)
                 .sameSite("Lax")
                 .maxAge(COOKIE_EXPIRE_SECONDS)
                 .build();
@@ -87,7 +88,7 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
                 ResponseCookie redirectCookie = ResponseCookie.from(REDIRECT_URI_COOKIE_NAME, encodedUri)
                         .path("/")
                         .httpOnly(true)
-                        .secure(true)
+                        .secure(isSecure)
                         .sameSite("Lax")
                         .maxAge(COOKIE_EXPIRE_SECONDS)
                         .build();
@@ -153,7 +154,14 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
     public String getRedirectUriFromCookie(HttpServletRequest request) {
         return getCookie(request, REDIRECT_URI_COOKIE_NAME)
                 .map(Cookie::getValue)
-                .map(value -> URLDecoder.decode(value, StandardCharsets.UTF_8))
+                .flatMap(value -> {
+                    try {
+                        return Optional.of(URLDecoder.decode(value, StandardCharsets.UTF_8));
+                    } catch (IllegalArgumentException e) {
+                        log.warn("Invalid redirect_uri cookie value (decode failed)");
+                        return Optional.empty();
+                    }
+                })
                 .orElse(null);
     }
 
@@ -187,5 +195,16 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
                 .map(String::trim)
                 .filter(uri -> !uri.isEmpty())
                 .toList();
+    }
+
+    /**
+     * 요청이 HTTPS인지 확인 (프록시 뒤에서도 동작하도록 X-Forwarded-Proto 헤더 확인)
+     */
+    private boolean isSecureRequest(HttpServletRequest request) {
+        if (request.isSecure()) {
+            return true;
+        }
+        String forwardedProto = request.getHeader("X-Forwarded-Proto");
+        return "https".equalsIgnoreCase(forwardedProto);
     }
 }
