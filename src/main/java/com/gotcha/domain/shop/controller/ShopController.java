@@ -7,6 +7,7 @@ import com.gotcha.domain.shop.dto.CoordinateRequest;
 import com.gotcha.domain.shop.dto.CreateShopRequest;
 import com.gotcha.domain.shop.dto.MapBoundsRequest;
 import com.gotcha.domain.shop.dto.NearbyShopsResponse;
+import com.gotcha.domain.shop.dto.ShopDetailResponse;
 import com.gotcha.domain.shop.dto.ShopMapResponse;
 import com.gotcha.domain.shop.dto.ShopResponse;
 import com.gotcha.domain.shop.entity.Shop;
@@ -100,6 +101,16 @@ public class ShopController {
         return ApiResponse.success(shops);
     }
 
+    @Operation(
+            summary = "가게 상세 조회",
+            description = "가게 ID로 상세 정보를 조회합니다. 로그인한 사용자는 찜 여부를 확인할 수 있습니다."
+    )
+    @GetMapping("/{shopId}")
+    public ApiResponse<ShopDetailResponse> getShopDetail(@PathVariable Long shopId) {
+        User user = getCurrentUser();
+        ShopDetailResponse response = shopService.getShopDetail(shopId, user);
+        return ApiResponse.success(response);
+    }
 
     @Operation(
             summary = "찜 추가",

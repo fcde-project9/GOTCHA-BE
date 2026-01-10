@@ -9,6 +9,7 @@ import com.gotcha.domain.favorite.repository.FavoriteRepository;
 import com.gotcha.domain.shop.dto.NearbyShopResponse;
 import com.gotcha.domain.shop.dto.NearbyShopsResponse;
 import com.gotcha.domain.shop.dto.OpenTimeDto;
+import com.gotcha.domain.shop.dto.ShopDetailResponse;
 import com.gotcha.domain.shop.dto.ShopMapResponse;
 import com.gotcha.domain.shop.entity.Shop;
 import com.gotcha.domain.shop.exception.ShopException;
@@ -323,5 +324,29 @@ public class ShopService {
             case SATURDAY -> "Sat";
             case SUNDAY -> "Sun";
         };
+    }
+
+    /**
+     * 가게 상세 조회
+     * @param shopId 가게 ID
+     * @param user 현재 로그인한 사용자 (null 가능)
+     * @return 가게 상세 정보 (찜 여부 포함)
+     */
+    @Transactional(readOnly = true)
+    public ShopDetailResponse getShopDetail(Long shopId, User user) {
+        log.info("getShopDetail - shopId: {}, userId: {}", shopId, user != null ? user.getId() : null);
+
+        // 가게 조회
+        Shop shop = shopRepository.findById(shopId)
+                .orElseThrow(() -> ShopException.notFound(shopId));
+
+        // 찜 여부 확인 (로그인 사용자만)
+        boolean isFavorite = false;
+        if (user != null) {
+            isFavorite = favoriteRepository.existsByUserIdAndShopId(user.getId(), shopId);
+        }
+
+        log.info("Shop detail retrieved - shopId: {}, isFavorite: {}", shopId, isFavorite);
+        return ShopDetailResponse.of(shop, isFavorite);
     }
 }
