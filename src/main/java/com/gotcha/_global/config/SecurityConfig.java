@@ -47,6 +47,8 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // CORS preflight (OPTIONS) must always be allowed
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Public - 인증
                         .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auth/**").permitAll()
@@ -60,6 +62,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/users/**").authenticated()
                         // Public - 가게 제보 (비회원도 가능)
                         .requestMatchers(HttpMethod.POST, "/api/shops/report").permitAll()
+                        // Public - file upload (used by reviews, reports, etc.)
+                        .requestMatchers(HttpMethod.POST, "/api/files/**").permitAll()
                         // Authenticated - 가게 관련 인증 필요 액션
                         .requestMatchers(HttpMethod.POST, "/api/shops/*/favorite").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/shops/*/favorite").authenticated()
@@ -74,10 +78,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/shops/reviews/*/like").authenticated()
                         // Admin
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        // TODO: 프로덕션 배포 전 .authenticated()로 변경 필수!
-                        // 현재는 개발 편의상 permitAll() 사용 중
-                        // 변경하지 않으면 새로 추가되는 API가 인증 없이 노출됨
-                        .anyRequest().permitAll()
+                        // 그 외는 전부 인증 필요
+                        .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .authorizationEndpoint(authorization ->
