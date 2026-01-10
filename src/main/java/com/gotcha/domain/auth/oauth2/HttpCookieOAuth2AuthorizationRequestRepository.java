@@ -5,6 +5,9 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
@@ -80,7 +83,8 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
         String redirectUri = request.getParameter("redirect_uri");
         if (redirectUri != null && !redirectUri.isBlank()) {
             if (isValidRedirectUri(redirectUri)) {
-                ResponseCookie redirectCookie = ResponseCookie.from(REDIRECT_URI_COOKIE_NAME, redirectUri)
+                String encodedUri = URLEncoder.encode(redirectUri, StandardCharsets.UTF_8);
+                ResponseCookie redirectCookie = ResponseCookie.from(REDIRECT_URI_COOKIE_NAME, encodedUri)
                         .path("/")
                         .httpOnly(true)
                         .secure(true)
@@ -144,11 +148,12 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
     }
 
     /**
-     * 쿠키에서 프론트엔드가 전달한 redirect_uri를 읽음
+     * 쿠키에서 프론트엔드가 전달한 redirect_uri를 읽음 (URL 디코딩 적용)
      */
     public String getRedirectUriFromCookie(HttpServletRequest request) {
         return getCookie(request, REDIRECT_URI_COOKIE_NAME)
                 .map(Cookie::getValue)
+                .map(value -> URLDecoder.decode(value, StandardCharsets.UTF_8))
                 .orElse(null);
     }
 
@@ -178,6 +183,9 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
     }
 
     private List<String> getAllowedRedirectUris() {
-        return Arrays.asList(allowedRedirectUrisString.split(","));
+        return Arrays.stream(allowedRedirectUrisString.split(","))
+                .map(String::trim)
+                .filter(uri -> !uri.isEmpty())
+                .toList();
     }
 }

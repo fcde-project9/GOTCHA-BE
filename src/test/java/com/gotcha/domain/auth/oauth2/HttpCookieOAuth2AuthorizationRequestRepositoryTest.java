@@ -2,6 +2,8 @@ package com.gotcha.domain.auth.oauth2;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -23,7 +25,7 @@ class HttpCookieOAuth2AuthorizationRequestRepositoryTest {
     void setUp() {
         repository = new HttpCookieOAuth2AuthorizationRequestRepository();
         ReflectionTestUtils.setField(repository, "allowedRedirectUrisString",
-                "http://localhost:3000/oauth/callback,https://gotcha-web.com/oauth/callback");
+                "http://localhost:3000/oauth/callback,https://dev.gotcha.it.com/oauth/callback");
         request = new MockHttpServletRequest();
         response = new MockHttpServletResponse();
     }
@@ -49,7 +51,7 @@ class HttpCookieOAuth2AuthorizationRequestRepositoryTest {
         @DisplayName("화이트리스트에 포함된 두 번째 URI - 유효함")
         void validRedirectUri_secondInWhitelist() {
             // given
-            String validUri = "https://gotcha-web.com/oauth/callback";
+            String validUri = "https://dev.gotcha.it.com/oauth/callback";
 
             // when
             boolean result = repository.isValidRedirectUri(validUri);
@@ -191,12 +193,13 @@ class HttpCookieOAuth2AuthorizationRequestRepositoryTest {
     class GetRedirectUriFromCookie {
 
         @Test
-        @DisplayName("쿠키에서 redirect_uri 읽기 - 성공")
-        void getRedirectUriFromCookie_success() {
+        @DisplayName("URL 인코딩된 쿠키에서 redirect_uri 읽기 - 디코딩 성공")
+        void getRedirectUriFromCookie_urlDecoded() {
             // given
             String expectedUri = "http://localhost:3000/oauth/callback";
+            String encodedUri = URLEncoder.encode(expectedUri, StandardCharsets.UTF_8);
             request.setCookies(
-                    new jakarta.servlet.http.Cookie("oauth2_redirect_uri", expectedUri)
+                    new jakarta.servlet.http.Cookie("oauth2_redirect_uri", encodedUri)
             );
 
             // when
@@ -217,12 +220,44 @@ class HttpCookieOAuth2AuthorizationRequestRepositoryTest {
         }
     }
 
+    @Nested
+    @DisplayName("화이트리스트 trim 처리")
+    class WhitelistTrimProcessing {
+
+        @Test
+        @DisplayName("공백이 포함된 화이트리스트 - trim 처리 후 검증 성공")
+        void whitelist_withSpaces_trimmedCorrectly() {
+            // given
+            ReflectionTestUtils.setField(repository, "allowedRedirectUrisString",
+                    " http://localhost:3000/oauth/callback , https://dev.gotcha.it.com/oauth/callback ");
+
+            // when & then
+            assertThat(repository.isValidRedirectUri("http://localhost:3000/oauth/callback")).isTrue();
+            assertThat(repository.isValidRedirectUri("https://dev.gotcha.it.com/oauth/callback")).isTrue();
+        }
+
+        @Test
+        @DisplayName("빈 항목이 포함된 화이트리스트 - 빈 항목 무시됨")
+        void whitelist_withEmptyEntries_ignored() {
+            // given
+            ReflectionTestUtils.setField(repository, "allowedRedirectUrisString",
+                    "http://localhost:3000/oauth/callback,,https://dev.gotcha.it.com/oauth/callback");
+
+            // when & then
+            assertThat(repository.isValidRedirectUri("http://localhost:3000/oauth/callback")).isTrue();
+            assertThat(repository.isValidRedirectUri("https://dev.gotcha.it.com/oauth/callback")).isTrue();
+            assertThat(repository.isValidRedirectUri("")).isFalse();
+        }
+    }
+
+    private static final String FIXED_STATE = "test-state-12345";
+
     private OAuth2AuthorizationRequest createAuthorizationRequest() {
         return OAuth2AuthorizationRequest.authorizationCode()
                 .authorizationUri("https://kauth.kakao.com/oauth/authorize")
                 .clientId("test-client-id")
                 .redirectUri("http://localhost:8080/api/auth/callback/kakao")
-                .state("test-state-" + System.currentTimeMillis())
+                .state(FIXED_STATE)
                 .build();
     }
 }
