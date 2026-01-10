@@ -100,12 +100,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(
-                Arrays.stream(allowedOrigins.split(","))
-                        .map(String::trim)
-                        .filter(origin -> !origin.isEmpty())
-                        .collect(Collectors.toList())
-        );
+        configuration.setAllowedOriginPatterns(List.of(
+                "https://*.gotcha.it.com",
+                "http://localhost:*"
+        ));
+
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         // allowCredentials(true)와 함께 사용할 때는 명시적으로 헤더 지정
         configuration.setAllowedHeaders(List.of(
