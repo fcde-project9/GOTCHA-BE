@@ -185,10 +185,11 @@ public class ShopService {
 
         log.info("Found {} shops within bounds", shops.size());
 
-        // 찜 목록 조회 (로그인 사용자만)
+        // 찜 목록 조회 (로그인 사용자만, N+1 방지: JOIN FETCH 사용, 전체 조회)
         Set<Long> favoriteShopIds = Set.of();
         if (userId != null) {
-            favoriteShopIds = favoriteRepository.findAllByUserId(userId).stream()
+            favoriteShopIds = favoriteRepository.findAllByUserIdWithShop(userId)
+                    .stream()
                     .map(favorite -> favorite.getShop().getId())
                     .collect(Collectors.toSet());
             log.info("User {} has {} favorite shops", userId, favoriteShopIds.size());

@@ -4,6 +4,7 @@ import com.gotcha._global.common.ApiResponse;
 import com.gotcha._global.common.PageResponse;
 import com.gotcha.domain.favorite.dto.FavoriteShopResponse;
 import com.gotcha.domain.favorite.service.FavoriteService;
+import java.util.List;
 import com.gotcha.domain.user.dto.MyShopResponse;
 import com.gotcha.domain.user.dto.UpdateNicknameRequest;
 import com.gotcha.domain.user.dto.UpdateProfileImageRequest;
@@ -118,18 +119,63 @@ public class UserController {
 
     @Operation(
             summary = "내 찜 목록 조회",
-            description = "현재 로그인한 사용자의 찜 목록을 조회합니다. lat, lng 파라미터를 제공하면 거리가 계산됩니다.",
+            description = "현재 로그인한 사용자의 전체 찜 목록을 조회합니다.",
             security = @SecurityRequirement(name = "bearerAuth")
     )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description = "인증 실패",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "A001 - 토큰 없음",
+                                            value = """
+                                                    {
+                                                      "success": false,
+                                                      "error": {
+                                                        "code": "A001",
+                                                        "message": "로그인이 필요합니다"
+                                                      }
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "A003 - 토큰 만료",
+                                            value = """
+                                                    {
+                                                      "success": false,
+                                                      "error": {
+                                                        "code": "A003",
+                                                        "message": "토큰이 만료되었습니다"
+                                                      }
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "A004 - 유효하지 않은 토큰",
+                                            value = """
+                                                    {
+                                                      "success": false,
+                                                      "error": {
+                                                        "code": "A004",
+                                                        "message": "유효하지 않은 토큰입니다"
+                                                      }
+                                                    }
+                                                    """
+                                    )
+                            }
+                    )
+            )
+    })
     @GetMapping("/me/favorites")
-    public ApiResponse<PageResponse<FavoriteShopResponse>> getMyFavorites(
-            @RequestParam(required = false) Double lat,
-            @RequestParam(required = false) Double lng,
-            @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
-    ) {
-        Pageable pageable = PageRequest.of(page, size);
-        return ApiResponse.success(favoriteService.getMyFavorites(lat, lng, pageable));
+    public ApiResponse<List<FavoriteShopResponse>> getMyFavorites() {
+        return ApiResponse.success(favoriteService.getMyFavorites());
     }
 
     @Operation(
