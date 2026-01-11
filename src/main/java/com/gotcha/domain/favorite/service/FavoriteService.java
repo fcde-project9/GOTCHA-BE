@@ -74,7 +74,8 @@ public class FavoriteService {
     public List<FavoriteShopResponse> getMyFavorites() {
         Long userId = securityUtil.getCurrentUserId();
 
-        List<Favorite> favorites = favoriteRepository.findAllByUserId(userId);
+        // N+1 방지: JOIN FETCH를 사용하여 Shop을 함께 조회 (전체 조회)
+        List<Favorite> favorites = favoriteRepository.findAllByUserIdWithShop(userId);
 
         return favorites.stream()
                 .map(favorite -> {
