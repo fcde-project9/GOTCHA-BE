@@ -14,6 +14,8 @@ public interface FavoriteRepository extends JpaRepository<Favorite, Long> {
 
     Optional<Favorite> findByUserIdAndShopId(Long userId, Long shopId);
 
+    boolean existsByUserIdAndShopId(Long userId, Long shopId);
+
     List<Favorite> findAllByUserId(Long userId);
 
     Long countByShopId(Long shopId);

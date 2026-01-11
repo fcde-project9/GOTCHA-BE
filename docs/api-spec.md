@@ -319,10 +319,9 @@ Authorization: Bearer {accessToken}
 | shopId | Long | O | 가게 ID |
 
 **Query Parameters**
-| 파라미터 | 타입 | 필수 | 설명 |
-|---------|------|------|------|
-| lat | Double | X | 거리 계산용 위도 |
-| lng | Double | X | 거리 계산용 경도 |
+| 파라미터 | 타입 | 필수 | 기본값 | 설명 |
+|---------|------|------|--------|------|
+| sortBy | String | X | LATEST | 리뷰 정렬 방식 (LATEST: 최신순, LIKE_COUNT: 좋아요순) |
 
 **Response (200)**
 ```json
@@ -331,22 +330,38 @@ Authorization: Bearer {accessToken}
   "data": {
     "id": 1,
     "name": "가챠샵 신사점",
-    "address": "서울시 강남구 신사동 123-45",
+    "addressName": "서울시 강남구 신사동 123-45",
+    "locationHint": "신사역 4번 출구에서 도보 3분, 스타벅스 옆 건물 1층",
+    "openTime": "{\"Mon\":\"10:00~22:00\",\"Tue\":null,\"Wed\":\"10:00~22:00\",\"Thu\":\"10:00~22:00\",\"Fri\":\"10:00~22:00\",\"Sat\":\"10:00~22:00\",\"Sun\":\"10:00~22:00\"}",
+    "todayOpenTime": "10:00~22:00",
+    "isOpen": true,
     "latitude": 37.5172,
     "longitude": 127.0473,
     "mainImageUrl": "https://...",
-    "locationHint": "신사역 4번 출구에서 도보 3분, 스타벅스 옆 건물 1층",
-    "openTime": "10:00-22:00",
-    "region": "서울",
-    "district": "강남구",
-    "neighborhood": "신사동",
-    "distance": 300,
-    "isOpen": true,
     "isFavorite": false,
-    "favoriteCount": 42,
-    "commentCount": 15,
-    "reviewCount": 8,
-    "createdAt": "2025-01-01T10:00:00"
+    "reviews": [
+      {
+        "id": 1,
+        "content": "원하는 캐릭터 뽑았어요!",
+        "imageUrls": ["https://..."],
+        "author": {
+          "id": 1,
+          "nickname": "빨간캡슐#21",
+          "profileImageUrl": "https://..."
+        },
+        "isOwner": false,
+        "likeCount": 5,
+        "isLiked": false,
+        "createdAt": "2025-01-01T10:00:00"
+      }
+    ],
+    "totalReviewImageCount": 25,
+    "recentReviewImages": [
+      "https://storage.googleapis.com/.../image1.jpg",
+      "https://storage.googleapis.com/.../image2.jpg",
+      "https://storage.googleapis.com/.../image3.jpg",
+      "https://storage.googleapis.com/.../image4.jpg"
+    ]
   }
 }
 ```
@@ -355,6 +370,7 @@ Authorization: Bearer {accessToken}
 
 | 코드 | 상황 |
 |------|------|
+| C003 | 유효하지 않은 sortBy 값 |
 | S001 | 가게를 찾을 수 없음 |
 
 ---

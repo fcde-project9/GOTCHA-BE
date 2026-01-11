@@ -19,6 +19,7 @@ import com.gotcha.domain.user.entity.User;
 import com.gotcha.domain.user.repository.UserRepository;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -77,7 +78,8 @@ public class ReviewService {
         List<ReviewImage> images = reviewImageRepository
                 .findAllByReviewIdOrderByDisplayOrder(review.getId());
         Long likeCount = reviewLikeRepository.countByReviewId(review.getId());
-        return ReviewResponse.from(review, user, images, true, likeCount);
+        // 생성 직후이므로 좋아요는 false
+        return ReviewResponse.from(review, user, images, true, likeCount, false);
     }
 
     public PageResponse<ReviewResponse> getReviews(Long shopId, ReviewSortType sortBy, Pageable pageable, Long currentUserId) {
@@ -102,12 +104,24 @@ public class ReviewService {
                 .stream()
                 .collect(Collectors.groupingBy(img -> img.getReview().getId()));
 
-        // N+1 방지: 좋아요 수 일괄 조회
-        Map<Long, Long> likeCountMap = reviewIds.stream()
-                .collect(Collectors.toMap(
-                        reviewId -> reviewId,
-                        reviewId -> reviewLikeRepository.countByReviewId(reviewId)
-                ));
+        // N+1 방지: 좋아요 수 일괄 조회 (배치 쿼리)
+        Map<Long, Long> likeCountMap = reviewIds.isEmpty()
+                ? Map.of()
+                : reviewLikeRepository.countByReviewIdInGroupByReviewId(reviewIds)
+                        .stream()
+                        .collect(Collectors.toMap(
+                                ReviewLikeRepository.ReviewLikeCount::getReviewId,
+                                ReviewLikeRepository.ReviewLikeCount::getLikeCount
+                        ));
+
+        // N+1 방지: 현재 사용자가 좋아요한 리뷰 목록 조회 (배치 쿼리)
+        Set<Long> likedReviewIds = Set.of();
+        if (currentUserId != null && !reviewIds.isEmpty()) {
+            likedReviewIds = new java.util.HashSet<>(
+                    reviewLikeRepository.findLikedReviewIds(currentUserId, reviewIds)
+            );
+        }
+        final Set<Long> finalLikedReviewIds = likedReviewIds;
 
         List<ReviewResponse> responses = reviewPage.getContent().stream()
                 .map(review -> ReviewResponse.from(
@@ -115,7 +129,8 @@ public class ReviewService {
                         review.getUser(),
                         imageMap.getOrDefault(review.getId(), List.of()),
                         currentUserId != null && review.getUser().getId().equals(currentUserId),
-                        likeCountMap.getOrDefault(review.getId(), 0L)
+                        likeCountMap.getOrDefault(review.getId(), 0L),
+                        finalLikedReviewIds.contains(review.getId())
                 ))
                 .toList();
 
@@ -184,9 +199,11 @@ public class ReviewService {
         List<ReviewImage> images = reviewImageRepository
                 .findAllByReviewIdOrderByDisplayOrder(reviewId);
         Long likeCount = reviewLikeRepository.countByReviewId(reviewId);
+        // 본인이 작성한 리뷰이므로 좋아요 여부 확인
+        boolean isLiked = reviewLikeRepository.existsByUserIdAndReviewId(userId, reviewId);
 
         log.info("Review {} updated successfully", reviewId);
-        return ReviewResponse.from(review, review.getUser(), images, true, likeCount);
+        return ReviewResponse.from(review, review.getUser(), images, true, likeCount, isLiked);
     }
 
     @Transactional
