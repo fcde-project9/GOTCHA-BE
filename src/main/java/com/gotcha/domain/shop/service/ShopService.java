@@ -242,7 +242,7 @@ public class ShopService {
         double distanceM = distanceKm * 1000;  // km -> m 변환
 
         // 50m 단위로 반올림
-        double roundedM = Math.round(distanceM / 50.0) * 50.0;
+        double roundedM = Math.round(distanceM / 10.0) * 10.0;
 
         if (roundedM < 1000) {
             // 1000m 미만: "50m", "100m" 형식

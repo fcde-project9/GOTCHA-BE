@@ -92,8 +92,8 @@ public class ShopController {
                 bounds.northEastLng(),
                 bounds.southWestLat(),
                 bounds.southWestLng(),
-                bounds.centerLat(),
-                bounds.centerLng(),
+                bounds.latitude(),
+                bounds.longitude(),
                 user
         );
 
