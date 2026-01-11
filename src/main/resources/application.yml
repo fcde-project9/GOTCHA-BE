@@ -33,7 +33,7 @@ spring:
             client-secret: ${NAVER_CLIENT_SECRET}
             redirect-uri: "{baseUrl}/api/auth/callback/naver"
             authorization-grant-type: authorization_code
-            scope: profile_image, email
+            client-authentication-method: client_secret_post
             client-name: Naver
         provider:
           kakao:
@@ -69,6 +69,7 @@ jwt:
 # OAuth2 Configuration
 oauth2:
   redirect-uri: ${OAUTH2_REDIRECT_URI}
+  allowed-redirect-uris: ${OAUTH2_ALLOWED_REDIRECT_URIS:http://localhost:3000/oauth/callback}
 
 # Springdoc OpenAPI Configuration
 springdoc:
