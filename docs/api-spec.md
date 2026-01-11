@@ -319,10 +319,11 @@ Authorization: Bearer {accessToken}
 | shopId | Long | O | 가게 ID |
 
 **Query Parameters**
-| 파라미터 | 타입 | 필수 | 설명 |
-|---------|------|------|------|
-| lat | Double | X | 거리 계산용 위도 |
-| lng | Double | X | 거리 계산용 경도 |
+| 파라미터 | 타입 | 필수 | 기본값 | 설명 |
+|---------|------|------|--------|------|
+| lat | Double | X | - | 거리 계산용 위도 |
+| lng | Double | X | - | 거리 계산용 경도 |
+| sortBy | String | X | LATEST | 리뷰 정렬 방식 (LATEST: 최신순, LIKE_COUNT: 좋아요순) |
 
 **Response (200)**
 ```json
@@ -355,6 +356,7 @@ Authorization: Bearer {accessToken}
 
 | 코드 | 상황 |
 |------|------|
+| C003 | 유효하지 않은 sortBy 값 |
 | S001 | 가게를 찾을 수 없음 |
 
 ---

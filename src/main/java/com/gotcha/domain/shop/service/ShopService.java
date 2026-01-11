@@ -268,13 +268,42 @@ public class ShopService {
     }
 
     /**
+     * openTime JSON 파싱
+     *
+     * @param openTimeJson JSON 문자열 (예: {"Mon":"10:00~22:00","Tue":null})
+     * @return 파싱된 Map (파싱 실패 시 빈 Map)
+     */
+    private Map<String, String> parseOpenTime(String openTimeJson) {
+        if (openTimeJson == null || openTimeJson.isEmpty()) {
+            return Map.of();
+        }
+        try {
+            return objectMapper.readValue(openTimeJson, new TypeReference<Map<String, String>>() {});
+        } catch (Exception e) {
+            log.error("Error parsing openTime JSON: {}", openTimeJson, e);
+            return Map.of();
+        }
+    }
+
+    /**
      * 현재 한국 시간 기준으로 영업중인지 판단
      *
      * @param openTimeJson JSON 문자열 (예: {"Mon":"10:00~22:00","Tue":null,"Wed":"10:00~22:00"})
      * @return 영업중이면 true, 아니면 false
      */
     public boolean isOpenNow(String openTimeJson) {
-        if (openTimeJson == null || openTimeJson.isEmpty()) {
+        Map<String, String> timeMap = parseOpenTime(openTimeJson);
+        return isOpenNow(timeMap);
+    }
+
+    /**
+     * 현재 한국 시간 기준으로 영업중인지 판단 (파싱된 Map 사용)
+     *
+     * @param timeMap 파싱된 영업 시간 Map
+     * @return 영업중이면 true, 아니면 false
+     */
+    private boolean isOpenNow(Map<String, String> timeMap) {
+        if (timeMap.isEmpty()) {
             return false;
         }
 
@@ -286,11 +315,6 @@ public class ShopService {
 
             // 요일을 "Mon", "Tue" 형식으로 변환
             String dayKey = getDayKey(dayOfWeek);
-
-            // open_time JSON 파싱
-            Map<String, String> timeMap = objectMapper.readValue(openTimeJson,
-                    new TypeReference<Map<String, String>>() {
-                    });
 
             String daySchedule = timeMap.get(dayKey);
 
@@ -314,7 +338,7 @@ public class ShopService {
             LocalTime openTime = LocalTime.parse(times[0].trim());
             LocalTime closeTime = LocalTime.parse(times[1].trim());
 
-            // 자정을 넘어가는 경우 (예: 22:00~02:00)
+            // 익일 영업 (overnight) 처리 (예: 22:00~02:00)
             if (closeTime.isBefore(openTime)) {
                 return !currentTime.isBefore(openTime) || !currentTime.isAfter(closeTime);
             }
@@ -323,7 +347,7 @@ public class ShopService {
             return !currentTime.isBefore(openTime) && !currentTime.isAfter(closeTime);
 
         } catch (Exception e) {
-            log.error("Error checking open status for openTime JSON: {}", openTimeJson, e);
+            log.error("Error checking open status", e);
             return false;
         }
     }
@@ -369,11 +393,14 @@ public class ShopService {
             isFavorite = favoriteRepository.existsByUserIdAndShopId(user.getId(), shopId);
         }
 
+        // openTime JSON 한 번만 파싱 (중복 파싱 방지)
+        Map<String, String> openTimeMap = parseOpenTime(shop.getOpenTime());
+
         // 오늘의 영업 시간 추출
-        String todayOpenTime = getTodayOpenTime(shop.getOpenTime());
+        String todayOpenTime = getTodayOpenTime(openTimeMap);
 
         // 영업 중 여부 확인
-        boolean isOpen = isOpenNow(shop.getOpenTime());
+        boolean isOpen = isOpenNow(openTimeMap);
 
         // 리뷰 5개 조회 (정렬 적용)
         List<ReviewResponse> reviews = getTop5Reviews(shopId, sortBy, user);
@@ -420,24 +447,30 @@ public class ShopService {
                 .map(Review::getId)
                 .toList();
 
+        // 리뷰가 없으면 빈 리스트 반환
+        if (reviewIds.isEmpty()) {
+            return List.of();
+        }
+
         Map<Long, List<ReviewImage>> imageMap = reviewImageRepository
                 .findAllByReviewIdInOrderByReviewIdAscDisplayOrderAsc(reviewIds)
                 .stream()
                 .collect(Collectors.groupingBy(img -> img.getReview().getId()));
 
-        // N+1 방지: 좋아요 수 일괄 조회
-        Map<Long, Long> likeCountMap = reviewIds.stream()
+        // N+1 방지: 좋아요 수 일괄 조회 (배치 쿼리)
+        Map<Long, Long> likeCountMap = reviewLikeRepository.countByReviewIdInGroupByReviewId(reviewIds)
+                .stream()
                 .collect(Collectors.toMap(
-                        reviewId -> reviewId,
-                        reviewId -> reviewLikeRepository.countByReviewId(reviewId)
+                        ReviewLikeRepository.ReviewLikeCount::getReviewId,
+                        ReviewLikeRepository.ReviewLikeCount::getLikeCount
                 ));
 
-        // N+1 방지: 현재 사용자가 좋아요한 리뷰 목록 조회
+        // N+1 방지: 현재 사용자가 좋아요한 리뷰 목록 조회 (배치 쿼리)
         Set<Long> likedReviewIds = Set.of();
-        if (currentUserId != null && !reviewIds.isEmpty()) {
-            likedReviewIds = reviewIds.stream()
-                    .filter(reviewId -> reviewLikeRepository.existsByUserIdAndReviewId(currentUserId, reviewId))
-                    .collect(Collectors.toSet());
+        if (currentUserId != null) {
+            likedReviewIds = new HashSet<>(
+                    reviewLikeRepository.findLikedReviewIds(currentUserId, reviewIds)
+            );
         }
         final Set<Long> finalLikedReviewIds = likedReviewIds;
 
@@ -460,7 +493,18 @@ public class ShopService {
      * @return 오늘의 영업 시간 (예: "10:00~22:00") 또는 null (휴무일)
      */
     private String getTodayOpenTime(String openTimeJson) {
-        if (openTimeJson == null || openTimeJson.isEmpty()) {
+        Map<String, String> timeMap = parseOpenTime(openTimeJson);
+        return getTodayOpenTime(timeMap);
+    }
+
+    /**
+     * 오늘의 영업 시간 추출 (파싱된 Map 사용)
+     *
+     * @param timeMap 파싱된 영업 시간 Map
+     * @return 오늘의 영업 시간 (예: "10:00~22:00") 또는 null (휴무일)
+     */
+    private String getTodayOpenTime(Map<String, String> timeMap) {
+        if (timeMap.isEmpty()) {
             return null;
         }
 
@@ -472,16 +516,11 @@ public class ShopService {
             // 요일을 "Mon", "Tue" 형식으로 변환
             String dayKey = getDayKey(dayOfWeek);
 
-            // open_time JSON 파싱
-            Map<String, String> timeMap = objectMapper.readValue(openTimeJson,
-                    new TypeReference<Map<String, String>>() {
-                    });
-
             // 해당 요일의 영업 시간 반환 (null이면 휴무)
             return timeMap.get(dayKey);
 
         } catch (Exception e) {
-            log.error("Error extracting today's open time from JSON: {}", openTimeJson, e);
+            log.error("Error extracting today's open time", e);
             return null;
         }
     }

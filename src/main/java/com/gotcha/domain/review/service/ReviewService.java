@@ -104,19 +104,22 @@ public class ReviewService {
                 .stream()
                 .collect(Collectors.groupingBy(img -> img.getReview().getId()));
 
-        // N+1 방지: 좋아요 수 일괄 조회
-        Map<Long, Long> likeCountMap = reviewIds.stream()
-                .collect(Collectors.toMap(
-                        reviewId -> reviewId,
-                        reviewId -> reviewLikeRepository.countByReviewId(reviewId)
-                ));
+        // N+1 방지: 좋아요 수 일괄 조회 (배치 쿼리)
+        Map<Long, Long> likeCountMap = reviewIds.isEmpty()
+                ? Map.of()
+                : reviewLikeRepository.countByReviewIdInGroupByReviewId(reviewIds)
+                        .stream()
+                        .collect(Collectors.toMap(
+                                ReviewLikeRepository.ReviewLikeCount::getReviewId,
+                                ReviewLikeRepository.ReviewLikeCount::getLikeCount
+                        ));
 
-        // N+1 방지: 현재 사용자가 좋아요한 리뷰 목록 조회
+        // N+1 방지: 현재 사용자가 좋아요한 리뷰 목록 조회 (배치 쿼리)
         Set<Long> likedReviewIds = Set.of();
         if (currentUserId != null && !reviewIds.isEmpty()) {
-            likedReviewIds = reviewIds.stream()
-                    .filter(reviewId -> reviewLikeRepository.existsByUserIdAndReviewId(currentUserId, reviewId))
-                    .collect(Collectors.toSet());
+            likedReviewIds = new java.util.HashSet<>(
+                    reviewLikeRepository.findLikedReviewIds(currentUserId, reviewIds)
+            );
         }
         final Set<Long> finalLikedReviewIds = likedReviewIds;
 

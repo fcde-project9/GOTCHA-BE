@@ -37,6 +37,7 @@ import org.springframework.web.bind.annotation.*;
 @Validated
 public class ShopController {
 
+
     private final ShopService shopService;
     private final UserRepository userRepository;
     private final FavoriteService favoriteService;
@@ -125,6 +126,11 @@ public class ShopController {
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "잘못된 요청 (C003: 유효하지 않은 sortBy 값)",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))
+            ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음 (S001)", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
     @GetMapping("/{shopId}")
