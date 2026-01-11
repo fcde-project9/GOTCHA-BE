@@ -3,6 +3,8 @@ package com.gotcha.domain.review.repository;
 import com.gotcha.domain.review.entity.ReviewImage;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface ReviewImageRepository extends JpaRepository<ReviewImage, Long> {
 
@@ -20,4 +22,13 @@ public interface ReviewImageRepository extends JpaRepository<ReviewImage, Long> 
 
     // 여러 Review의 이미지 일괄 삭제
     void deleteAllByReviewIdIn(List<Long> reviewIds);
+
+    // 특정 가게의 전체 리뷰 이미지 개수
+    @Query("SELECT COUNT(ri) FROM ReviewImage ri WHERE ri.review.shop.id = :shopId")
+    Long countByShopId(@Param("shopId") Long shopId);
+
+    // 특정 가게의 최신 리뷰 이미지 4개 (리뷰 생성일시 기준 내림차순)
+    @Query("SELECT ri FROM ReviewImage ri WHERE ri.review.shop.id = :shopId " +
+            "ORDER BY ri.review.createdAt DESC, ri.displayOrder ASC")
+    List<ReviewImage> findTop4ByShopId(@Param("shopId") Long shopId);
 }
