@@ -43,7 +43,19 @@
   - 추가: findAllByUserIdWithShop(Long userId) - List 버전 (페이지네이션 없이 전체 조회)
 
 ### 수정
-- `src/main/java/com/gotcha/domain/shop/service/ShopService.java` - getShopsInMap() N+1 문제 수정
+- `src/main/java/com/gotcha/domain/shop/dto/MapBoundsRequest.java` - 거리 계산 기준 좌표 명확화
+  - 변경: centerLat, centerLng → latitude, longitude (파라미터명 변경)
+  - 변경: 설명을 "사용자 현재 위치 좌표 (거리 계산 기준)"으로 명확화
+  - 의미: 지도 중심이 아닌 사용자 실제 위치 기준으로 거리 계산
+- `src/main/java/com/gotcha/domain/shop/controller/ShopController.java` - getShopsInMap() 수정
+  - 변경: bounds.centerLat(), bounds.centerLng() → bounds.latitude(), bounds.longitude()
+  - 추가: latitude/longitude null 체크 로직 (BusinessException 사용)
+  - 버그 수정: null 값 입력 시 무한 로딩 문제 해결 (IllegalArgumentException → BusinessException, 400 응답 반환)
+- `src/main/java/com/gotcha/domain/shop/service/ShopService.java` - getShopsInMap() 수정
+  - 변경: 파라미터명 centerLat, centerLng → latitude, longitude
+  - 변경: JavaDoc 주석 "중심 위도/경도" → "사용자 현재 위치 위도/경도"
+  - 변경: 로그 메시지 "center" → "userLocation"
+  - 변경: 거리 계산 주석 명확화 (사용자 위치 기준)
   - 변경: findAllByUserId() → findAllByUserIdWithShop(userId) (JOIN FETCH 사용, 전체 조회)
   - 성능 개선: 찜 목록 조회 시 N+1 쿼리 제거 (N개 쿼리 → 1개 쿼리)
 - `src/main/java/com/gotcha/domain/favorite/service/FavoriteService.java` - getMyFavorites() N+1 문제 수정 및 페이지네이션 제거

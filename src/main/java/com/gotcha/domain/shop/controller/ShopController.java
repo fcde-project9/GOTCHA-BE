@@ -1,6 +1,7 @@
 package com.gotcha.domain.shop.controller;
 
 import com.gotcha._global.common.ApiResponse;
+import com.gotcha._global.exception.BusinessException;
 import com.gotcha.domain.favorite.dto.FavoriteResponse;
 import com.gotcha.domain.favorite.service.FavoriteService;
 import com.gotcha.domain.review.dto.ReviewSortType;
@@ -12,6 +13,7 @@ import com.gotcha.domain.shop.dto.ShopDetailResponse;
 import com.gotcha.domain.shop.dto.ShopMapResponse;
 import com.gotcha.domain.shop.dto.ShopResponse;
 import com.gotcha.domain.shop.entity.Shop;
+import com.gotcha.domain.shop.exception.ShopErrorCode;
 import com.gotcha.domain.shop.service.ShopService;
 import com.gotcha.domain.user.entity.User;
 import com.gotcha.domain.user.repository.UserRepository;
@@ -105,6 +107,11 @@ public class ShopController {
     public ApiResponse<List<ShopMapResponse>> getShopsInMap(
             @Valid @ModelAttribute MapBoundsRequest bounds
     ) {
+        // 사용자 위치 좌표 필수 체크 (거리 계산에 필수)
+        if (bounds.latitude() == null || bounds.longitude() == null) {
+            throw new BusinessException(ShopErrorCode.INVALID_COORDINATES, "사용자 위치 좌표(latitude, longitude)는 필수입니다");
+        }
+
         User user = getCurrentUser();
         List<ShopMapResponse> shops = shopService.getShopsInMap(
                 bounds.northEastLat(),

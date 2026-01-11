@@ -157,8 +157,8 @@ public class ShopService {
      * @param northEastLng 북동쪽 경도
      * @param southWestLat 남서쪽 위도
      * @param southWestLng 남서쪽 경도
-     * @param centerLat    중심 위도 (거리 계산용)
-     * @param centerLng    중심 경도 (거리 계산용)
+     * @param latitude     사용자 현재 위치 위도 (거리 계산 기준)
+     * @param longitude    사용자 현재 위치 경도 (거리 계산 기준)
      * @param user         현재 로그인한 사용자 (null 가능)
      * @return 지도용 가게 응답 리스트 (거리순 정렬)
      */
@@ -166,17 +166,17 @@ public class ShopService {
     public List<ShopMapResponse> getShopsInMap(
             Double northEastLat, Double northEastLng,
             Double southWestLat, Double southWestLng,
-            Double centerLat, Double centerLng,
+            Double latitude, Double longitude,
             User user) {
 
         Long userId = user != null ? user.getId() : null;
-        log.info("getShopsInMap - bounds: NE({}, {}), SW({}, {}), center: ({}, {}), userId: {}",
-                northEastLat, northEastLng, southWestLat, southWestLng, centerLat, centerLng, userId);
+        log.info("getShopsInMap - bounds: NE({}, {}), SW({}, {}), userLocation: ({}, {}), userId: {}",
+                northEastLat, northEastLng, southWestLat, southWestLng, latitude, longitude, userId);
 
         // 좌표 검증
         validateCoordinates(northEastLat, northEastLng);
         validateCoordinates(southWestLat, southWestLng);
-        validateCoordinates(centerLat, centerLng);
+        validateCoordinates(latitude, longitude);
 
         // 경계 내 가게 조회
         List<Shop> shops = shopRepository.findShopsWithinBounds(
@@ -201,8 +201,8 @@ public class ShopService {
 
         List<ShopMapResponse> responses = shops.stream()
                 .peek(shop -> {
-                    // 거리 계산 (km)
-                    double distanceKm = calculateDistance(centerLat, centerLng,
+                    // 거리 계산 (km) - 사용자 위치 기준
+                    double distanceKm = calculateDistance(latitude, longitude,
                             shop.getLatitude(), shop.getLongitude());
                     shopDistances.put(shop, distanceKm);
                 })
