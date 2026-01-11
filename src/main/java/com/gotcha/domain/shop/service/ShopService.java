@@ -314,7 +314,12 @@ public class ShopService {
             LocalTime openTime = LocalTime.parse(times[0].trim());
             LocalTime closeTime = LocalTime.parse(times[1].trim());
 
-            // 현재 시간이 영업 시간 범위 내인지 확인
+            // 자정을 넘어가는 경우 (예: 22:00~02:00)
+            if (closeTime.isBefore(openTime)) {
+                return !currentTime.isBefore(openTime) || !currentTime.isAfter(closeTime);
+            }
+
+            // 일반적인 경우 (예: 10:00~22:00)
             return !currentTime.isBefore(openTime) && !currentTime.isAfter(closeTime);
 
         } catch (Exception e) {
@@ -379,12 +384,11 @@ public class ShopService {
         // 최신 리뷰 이미지 4개 조회
         List<String> recentReviewImages = reviewImageRepository.findTop4ByShopId(shopId)
                 .stream()
-                .limit(4)
                 .map(ReviewImage::getImageUrl)
                 .toList();
 
-        log.info("Shop detail retrieved - shopId: {}, todayOpenTime: {}, isOpen: {}, isFavorite: {}, reviewCount: {}, totalImageCount: {}, recentImageCount: {}",
-                shopId, todayOpenTime, isOpen, isFavorite, reviews.size(), totalReviewImageCount, recentReviewImages.size());
+        log.info("Shop detail - id: {}, reviews: {}, images: {}/{}",
+                shopId, reviews.size(), recentReviewImages.size(), totalReviewImageCount);
 
         return ShopDetailResponse.of(shop, todayOpenTime, isOpen, isFavorite, reviews,
                 totalReviewImageCount, recentReviewImages);

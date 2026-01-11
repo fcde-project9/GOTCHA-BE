@@ -3,7 +3,9 @@ package com.gotcha.domain.shop.dto;
 import com.gotcha.domain.review.dto.ReviewResponse;
 import com.gotcha.domain.shop.entity.Shop;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @Schema(description = "가게 상세 조회 응답")
 public record ShopDetailResponse(
@@ -64,6 +66,8 @@ public record ShopDetailResponse(
     public static ShopDetailResponse of(Shop shop, String todayOpenTime, Boolean isOpen, Boolean isFavorite,
                                         List<ReviewResponse> reviews, Long totalReviewImageCount,
                                         List<String> recentReviewImages) {
+        Objects.requireNonNull(shop, "Shop must not be null");
+
         return new ShopDetailResponse(
                 shop.getId(),
                 shop.getName(),
@@ -76,9 +80,9 @@ public record ShopDetailResponse(
                 shop.getLongitude(),
                 shop.getMainImageUrl(),
                 isFavorite,
-                reviews,
+                reviews != null ? reviews : Collections.emptyList(),
                 totalReviewImageCount,
-                recentReviewImages
+                recentReviewImages != null ? recentReviewImages : Collections.emptyList()
         );
     }
 }

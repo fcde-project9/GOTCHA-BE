@@ -28,7 +28,10 @@ public interface ReviewImageRepository extends JpaRepository<ReviewImage, Long> 
     Long countByShopId(@Param("shopId") Long shopId);
 
     // 특정 가게의 최신 리뷰 이미지 4개 (리뷰 생성일시 기준 내림차순)
-    @Query("SELECT ri FROM ReviewImage ri WHERE ri.review.shop.id = :shopId " +
-            "ORDER BY ri.review.createdAt DESC, ri.displayOrder ASC")
+    @Query(value = "SELECT ri.* FROM review_images ri " +
+            "JOIN reviews r ON ri.review_id = r.id " +
+            "WHERE r.shop_id = :shopId " +
+            "ORDER BY r.created_at DESC, ri.display_order ASC " +
+            "LIMIT 4", nativeQuery = true)
     List<ReviewImage> findTop4ByShopId(@Param("shopId") Long shopId);
 }
