@@ -58,6 +58,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/shops/**").permitAll()
                         // Swagger
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/api/v3/api-docs/**", "/api/swagger-ui/**", "/api/swagger-ui.html").permitAll()
+                        // Dev API (local/dev 환경에서만 빈 등록됨)
+                        .requestMatchers("/api/dev/**").permitAll()
                         // Authenticated - 사용자
                         .requestMatchers("/api/users/**").authenticated()
                         // Public - 가게 제보 (비회원도 가능)
