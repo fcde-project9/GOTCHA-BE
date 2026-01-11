@@ -6,28 +6,35 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gotcha._global.external.kakao.KakaoMapClient;
 import com.gotcha._global.external.kakao.dto.AddressInfo;
 import com.gotcha.domain.favorite.repository.FavoriteRepository;
+import com.gotcha.domain.review.dto.ReviewResponse;
+import com.gotcha.domain.review.dto.ReviewSortType;
+import com.gotcha.domain.review.entity.Review;
+import com.gotcha.domain.review.entity.ReviewImage;
+import com.gotcha.domain.review.repository.ReviewImageRepository;
+import com.gotcha.domain.review.repository.ReviewLikeRepository;
+import com.gotcha.domain.review.repository.ReviewRepository;
 import com.gotcha.domain.shop.dto.NearbyShopResponse;
 import com.gotcha.domain.shop.dto.NearbyShopsResponse;
-import com.gotcha.domain.shop.dto.OpenTimeDto;
+import com.gotcha.domain.shop.dto.ShopDetailResponse;
 import com.gotcha.domain.shop.dto.ShopMapResponse;
 import com.gotcha.domain.shop.entity.Shop;
 import com.gotcha.domain.shop.exception.ShopException;
 import com.gotcha.domain.shop.repository.ShopRepository;
+import com.gotcha.domain.user.entity.User;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Comparator;
-import java.util.HashMap;
-import com.gotcha.domain.user.entity.User;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -39,6 +46,9 @@ public class ShopService {
     private final KakaoMapClient kakaoMapClient;
     private final ObjectMapper objectMapper;
     private final FavoriteRepository favoriteRepository;
+    private final ReviewRepository reviewRepository;
+    private final ReviewImageRepository reviewImageRepository;
+    private final ReviewLikeRepository reviewLikeRepository;
 
     @Transactional
     public Shop createShop(String name, Double latitude, Double longitude,
@@ -142,13 +152,14 @@ public class ShopService {
 
     /**
      * 지도 영역 내 가게 목록 조회
+     *
      * @param northEastLat 북동쪽 위도
      * @param northEastLng 북동쪽 경도
      * @param southWestLat 남서쪽 위도
      * @param southWestLng 남서쪽 경도
-     * @param centerLat 중심 위도 (거리 계산용)
-     * @param centerLng 중심 경도 (거리 계산용)
-     * @param user 현재 로그인한 사용자 (null 가능)
+     * @param centerLat    중심 위도 (거리 계산용)
+     * @param centerLng    중심 경도 (거리 계산용)
+     * @param user         현재 로그인한 사용자 (null 가능)
      * @return 지도용 가게 응답 리스트 (거리순 정렬)
      */
     @Transactional(readOnly = true)
@@ -211,6 +222,7 @@ public class ShopService {
 
     /**
      * Haversine 공식을 사용하여 두 좌표 간 거리 계산
+     *
      * @param lat1 위도1
      * @param lng1 경도1
      * @param lat2 위도2
@@ -236,6 +248,7 @@ public class ShopService {
      * 거리를 50m 단위로 반올림하여 문자열로 변환
      * 1000m 미만: "50m", "100m", "950m"
      * 1000m 이상: "1.0km", "1.5km", "2.0km"
+     *
      * @param distanceKm 거리 (km)
      * @return 포맷된 거리 문자열
      */
@@ -256,12 +269,42 @@ public class ShopService {
     }
 
     /**
+     * openTime JSON 파싱
+     *
+     * @param openTimeJson JSON 문자열 (예: {"Mon":"10:00~22:00","Tue":null})
+     * @return 파싱된 Map (파싱 실패 시 빈 Map)
+     */
+    private Map<String, String> parseOpenTime(String openTimeJson) {
+        if (openTimeJson == null || openTimeJson.isEmpty()) {
+            return Map.of();
+        }
+        try {
+            return objectMapper.readValue(openTimeJson, new TypeReference<Map<String, String>>() {});
+        } catch (Exception e) {
+            log.error("Error parsing openTime JSON: {}", openTimeJson, e);
+            return Map.of();
+        }
+    }
+
+    /**
      * 현재 한국 시간 기준으로 영업중인지 판단
+     *
      * @param openTimeJson JSON 문자열 (예: {"Mon":"10:00~22:00","Tue":null,"Wed":"10:00~22:00"})
      * @return 영업중이면 true, 아니면 false
      */
     public boolean isOpenNow(String openTimeJson) {
-        if (openTimeJson == null || openTimeJson.isEmpty()) {
+        Map<String, String> timeMap = parseOpenTime(openTimeJson);
+        return isOpenNow(timeMap);
+    }
+
+    /**
+     * 현재 한국 시간 기준으로 영업중인지 판단 (파싱된 Map 사용)
+     *
+     * @param timeMap 파싱된 영업 시간 Map
+     * @return 영업중이면 true, 아니면 false
+     */
+    private boolean isOpenNow(Map<String, String> timeMap) {
+        if (timeMap.isEmpty()) {
             return false;
         }
 
@@ -273,10 +316,6 @@ public class ShopService {
 
             // 요일을 "Mon", "Tue" 형식으로 변환
             String dayKey = getDayKey(dayOfWeek);
-
-            // open_time JSON 파싱
-            Map<String, String> timeMap = objectMapper.readValue(openTimeJson,
-                    new TypeReference<Map<String, String>>() {});
 
             String daySchedule = timeMap.get(dayKey);
 
@@ -300,17 +339,23 @@ public class ShopService {
             LocalTime openTime = LocalTime.parse(times[0].trim());
             LocalTime closeTime = LocalTime.parse(times[1].trim());
 
-            // 현재 시간이 영업 시간 범위 내인지 확인
+            // 익일 영업 (overnight) 처리 (예: 22:00~02:00)
+            if (closeTime.isBefore(openTime)) {
+                return !currentTime.isBefore(openTime) || !currentTime.isAfter(closeTime);
+            }
+
+            // 일반적인 경우 (예: 10:00~22:00)
             return !currentTime.isBefore(openTime) && !currentTime.isAfter(closeTime);
 
         } catch (Exception e) {
-            log.error("Error checking open status for openTime JSON: {}", openTimeJson, e);
+            log.error("Error checking open status", e);
             return false;
         }
     }
 
     /**
      * DayOfWeek를 "Mon", "Tue" 형식으로 변환
+     *
      * @param dayOfWeek DayOfWeek
      * @return "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"
      */
@@ -324,5 +369,160 @@ public class ShopService {
             case SATURDAY -> "Sat";
             case SUNDAY -> "Sun";
         };
+    }
+
+    /**
+     * 가게 상세 조회
+     *
+     * @param shopId 가게 ID
+     * @param sortBy 리뷰 정렬 방식 (LATEST 또는 LIKE_COUNT)
+     * @param user   현재 로그인한 사용자 (null 가능)
+     * @return 가게 상세 정보 (찜 여부, 리뷰 5개 포함)
+     */
+    @Transactional(readOnly = true)
+    public ShopDetailResponse getShopDetail(Long shopId, ReviewSortType sortBy, User user) {
+        log.info("getShopDetail - shopId: {}, sortBy: {}, userId: {}",
+                shopId, sortBy, user != null ? user.getId() : null);
+
+        // 가게 조회
+        Shop shop = shopRepository.findById(shopId)
+                .orElseThrow(() -> ShopException.notFound(shopId));
+
+        // 찜 여부 확인 (로그인 사용자만)
+        boolean isFavorite = false;
+        if (user != null) {
+            isFavorite = favoriteRepository.existsByUserIdAndShopId(user.getId(), shopId);
+        }
+
+        // openTime JSON 한 번만 파싱 (중복 파싱 방지)
+        Map<String, String> openTimeMap = parseOpenTime(shop.getOpenTime());
+
+        // 오늘의 영업 시간 추출
+        String todayOpenTime = getTodayOpenTime(openTimeMap);
+
+        // 영업 중 여부 확인
+        boolean isOpen = isOpenNow(openTimeMap);
+
+        // 리뷰 5개 조회 (정렬 적용)
+        List<ReviewResponse> reviews = getTop5Reviews(shopId, sortBy, user);
+
+        // 전체 리뷰 사진 개수 조회
+        Long totalReviewImageCount = reviewImageRepository.countByShopId(shopId);
+
+        // 최신 리뷰 이미지 4개 조회
+        List<String> recentReviewImages = reviewImageRepository.findTop4ByShopId(shopId)
+                .stream()
+                .map(ReviewImage::getImageUrl)
+                .toList();
+
+        log.info("Shop detail - id: {}, reviews: {}, images: {}/{}",
+                shopId, reviews.size(), recentReviewImages.size(), totalReviewImageCount);
+
+        return ShopDetailResponse.of(shop, todayOpenTime, isOpen, isFavorite, reviews,
+                totalReviewImageCount, recentReviewImages);
+    }
+
+    /**
+     * 가게의 리뷰 상위 5개 조회
+     *
+     * @param shopId      가게 ID
+     * @param sortBy      정렬 방식
+     * @param currentUser 현재 사용자 (null 가능)
+     * @return 리뷰 목록 (최대 5개)
+     */
+    private List<ReviewResponse> getTop5Reviews(Long shopId, ReviewSortType sortBy, User currentUser) {
+        Pageable pageable = PageRequest.of(0, 5);
+        Long currentUserId = currentUser != null ? currentUser.getId() : null;
+
+        // 정렬 타입에 따라 다른 쿼리 호출
+        Page<Review> reviewPage;
+        if (sortBy == ReviewSortType.LIKE_COUNT) {
+            reviewPage = reviewRepository.findAllByShopIdOrderByLikeCountDesc(shopId, pageable);
+        } else {
+            // 기본값: 최신순
+            reviewPage = reviewRepository.findAllByShopIdOrderByCreatedAtDesc(shopId, pageable);
+        }
+
+        // N+1 방지: 이미지 일괄 조회
+        List<Long> reviewIds = reviewPage.getContent().stream()
+                .map(Review::getId)
+                .toList();
+
+        // 리뷰가 없으면 빈 리스트 반환
+        if (reviewIds.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, List<ReviewImage>> imageMap = reviewImageRepository
+                .findAllByReviewIdInOrderByReviewIdAscDisplayOrderAsc(reviewIds)
+                .stream()
+                .collect(Collectors.groupingBy(img -> img.getReview().getId()));
+
+        // N+1 방지: 좋아요 수 일괄 조회 (배치 쿼리)
+        Map<Long, Long> likeCountMap = reviewLikeRepository.countByReviewIdInGroupByReviewId(reviewIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        ReviewLikeRepository.ReviewLikeCount::getReviewId,
+                        ReviewLikeRepository.ReviewLikeCount::getLikeCount
+                ));
+
+        // N+1 방지: 현재 사용자가 좋아요한 리뷰 목록 조회 (배치 쿼리)
+        Set<Long> likedReviewIds = Set.of();
+        if (currentUserId != null) {
+            likedReviewIds = new HashSet<>(
+                    reviewLikeRepository.findLikedReviewIds(currentUserId, reviewIds)
+            );
+        }
+        final Set<Long> finalLikedReviewIds = likedReviewIds;
+
+        return reviewPage.getContent().stream()
+                .map(review -> ReviewResponse.from(
+                        review,
+                        review.getUser(),
+                        imageMap.getOrDefault(review.getId(), List.of()),
+                        currentUserId != null && review.getUser().getId().equals(currentUserId),
+                        likeCountMap.getOrDefault(review.getId(), 0L),
+                        finalLikedReviewIds.contains(review.getId())
+                ))
+                .toList();
+    }
+
+    /**
+     * 오늘의 영업 시간 추출 (한국 시간 기준)
+     *
+     * @param openTimeJson JSON 문자열 (예: {"Mon":"10:00~22:00","Tue":null,"Wed":"10:00~22:00"})
+     * @return 오늘의 영업 시간 (예: "10:00~22:00") 또는 null (휴무일)
+     */
+    private String getTodayOpenTime(String openTimeJson) {
+        Map<String, String> timeMap = parseOpenTime(openTimeJson);
+        return getTodayOpenTime(timeMap);
+    }
+
+    /**
+     * 오늘의 영업 시간 추출 (파싱된 Map 사용)
+     *
+     * @param timeMap 파싱된 영업 시간 Map
+     * @return 오늘의 영업 시간 (예: "10:00~22:00") 또는 null (휴무일)
+     */
+    private String getTodayOpenTime(Map<String, String> timeMap) {
+        if (timeMap.isEmpty()) {
+            return null;
+        }
+
+        try {
+            // 현재 한국 시간 가져오기
+            ZonedDateTime nowInKorea = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
+            DayOfWeek dayOfWeek = nowInKorea.getDayOfWeek();
+
+            // 요일을 "Mon", "Tue" 형식으로 변환
+            String dayKey = getDayKey(dayOfWeek);
+
+            // 해당 요일의 영업 시간 반환 (null이면 휴무)
+            return timeMap.get(dayKey);
+
+        } catch (Exception e) {
+            log.error("Error extracting today's open time", e);
+            return null;
+        }
     }
 }

@@ -4,6 +4,38 @@
 
 ---
 
+## 2026-01-11
+
+### 추가
+- `src/test/java/com/gotcha/domain/review/repository/ReviewLikeRepositoryTest.java` - 배치 쿼리 메서드 테스트 (N+1 방지)
+
+### 수정
+- `src/main/java/com/gotcha/domain/review/repository/ReviewLikeRepository.java` - 배치 쿼리 메서드 추가
+  - 추가: countByReviewIdInGroupByReviewId() - 여러 리뷰의 좋아요 수 일괄 조회 (N+1 방지)
+  - 추가: findLikedReviewIds() - 특정 사용자가 좋아요한 리뷰 ID 목록 일괄 조회 (N+1 방지)
+  - 추가: ReviewLikeCount Projection 인터페이스
+- `src/main/java/com/gotcha/domain/review/service/ReviewService.java` - getReviews() N+1 문제 수정
+  - 변경: reviewId마다 개별 쿼리 → IN 절로 배치 쿼리 (성능 개선: 20개 조회 시 41 쿼리 → 3 쿼리)
+- `src/main/java/com/gotcha/domain/shop/service/ShopService.java` - 성능 개선 및 리팩토링
+  - 추가: parseOpenTime() private 메서드 (JSON 파싱 재사용)
+  - 추가: isOpenNow(Map<String, String>) 오버로드 (파싱된 Map 사용)
+  - 추가: getTodayOpenTime(Map<String, String>) 오버로드 (파싱된 Map 사용)
+  - 변경: getShopDetail() - openTime JSON 중복 파싱 제거 (1회만 파싱)
+  - 변경: getTop5Reviews() - N+1 문제 수정 (배치 쿼리 사용, 11 쿼리 → 4 쿼리)
+  - 변경: isOpenNow() - 익일 영업(overnight) 처리 주석 명확화
+- `src/main/java/com/gotcha/domain/shop/controller/ShopController.java` - GET /shops/{shopId} 엔드포인트 수정
+  - 추가: @ApiResponses에 400 응답 추가 (C003: 유효하지 않은 sortBy 값)
+- `docs/api-spec.md` - GET /shops/{shopId} API 명세 수정 (실제 구현과 일치)
+  - 추가: sortBy Query Parameter (LATEST: 최신순, LIKE_COUNT: 좋아요순, 기본값: LATEST)
+  - 추가: Error Responses에 C003 추가 (유효하지 않은 sortBy 값)
+  - 제거: lat, lng Query Parameters (실제 구현에 없음, 거리 계산 미지원)
+  - 변경: Response 예시를 실제 ShopDetailResponse 구조에 맞게 수정
+    - 제거: distance, region, district, neighborhood, favoriteCount, commentCount, reviewCount, createdAt
+    - 추가: todayOpenTime, isOpen, reviews (ReviewResponse 배열), totalReviewImageCount, recentReviewImages
+    - 변경: address → addressName, openTime → JSON 형식
+
+---
+
 ## 2026-01-12
 
 ### 추가
