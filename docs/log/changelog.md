@@ -25,9 +25,14 @@
   - 변경: isOpenNow() - 익일 영업(overnight) 처리 주석 명확화
 - `src/main/java/com/gotcha/domain/shop/controller/ShopController.java` - GET /shops/{shopId} 엔드포인트 수정
   - 추가: @ApiResponses에 400 응답 추가 (C003: 유효하지 않은 sortBy 값)
-- `docs/api-spec.md` - GET /shops/{shopId} API 명세 수정
+- `docs/api-spec.md` - GET /shops/{shopId} API 명세 수정 (실제 구현과 일치)
   - 추가: sortBy Query Parameter (LATEST: 최신순, LIKE_COUNT: 좋아요순, 기본값: LATEST)
   - 추가: Error Responses에 C003 추가 (유효하지 않은 sortBy 값)
+  - 제거: lat, lng Query Parameters (실제 구현에 없음, 거리 계산 미지원)
+  - 변경: Response 예시를 실제 ShopDetailResponse 구조에 맞게 수정
+    - 제거: distance, region, district, neighborhood, favoriteCount, commentCount, reviewCount, createdAt
+    - 추가: todayOpenTime, isOpen, reviews (ReviewResponse 배열), totalReviewImageCount, recentReviewImages
+    - 변경: address → addressName, openTime → JSON 형식
 
 ---
 
