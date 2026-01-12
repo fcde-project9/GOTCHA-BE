@@ -44,21 +44,17 @@ public class User extends BaseTimeEntity {
 
     private LocalDateTime lastLoginAt;
 
-    @Column(nullable = false)
-    private Boolean isAnonymous;
-
     @Column(nullable = false, columnDefinition = "boolean default false")
     private Boolean isDeleted = false;
 
     @Builder
     public User(SocialType socialType, String socialId, String nickname,
-                String email, String profileImageUrl, Boolean isAnonymous) {
+                String email, String profileImageUrl) {
         this.socialType = socialType;
         this.socialId = socialId;
         this.nickname = nickname;
         this.email = email;
         this.profileImageUrl = profileImageUrl;
-        this.isAnonymous = isAnonymous != null ? isAnonymous : false;
         this.isDeleted = false;
     }
 

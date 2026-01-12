@@ -272,7 +272,6 @@ class OAuth2AuthenticationSuccessHandlerTest {
                 .socialId("test-social-id")
                 .nickname("테스트유저#1")
                 .email(email)
-                .isAnonymous(false)
                 .build();
         ReflectionTestUtils.setField(user, "id", 1L);
         return user;

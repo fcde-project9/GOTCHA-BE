@@ -33,7 +33,7 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
 
     private static final String OAUTH2_STATE_COOKIE_NAME = "oauth2_auth_state";
     private static final String REDIRECT_URI_COOKIE_NAME = "oauth2_redirect_uri";
-    private static final int COOKIE_EXPIRE_SECONDS = 120;
+    private static final int COOKIE_EXPIRE_SECONDS = 180;
 
     @Value("${oauth2.allowed-redirect-uris:http://localhost:3000/oauth/callback}")
     private String allowedRedirectUrisString;

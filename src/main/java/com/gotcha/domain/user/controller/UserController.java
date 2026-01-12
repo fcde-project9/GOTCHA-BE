@@ -59,7 +59,7 @@ public class UserController {
                                         "id": 1,
                                         "nickname": "빨간캡슐#21",
                                         "email": "user@example.com",
-                                        "profileImageUrl": null,
+                                        "profileImageUrl": "https://storage.googleapis.com/gotcha-dev-files/profile-default-join.png",
                                         "socialType": "KAKAO"
                                       }
                                     }
@@ -259,7 +259,7 @@ public class UserController {
                                         "id": 1,
                                         "nickname": "새닉네임#99",
                                         "email": "user@example.com",
-                                        "profileImageUrl": null,
+                                        "profileImageUrl": "https://storage.googleapis.com/gotcha-dev-files/profile-default-join.png",
                                         "socialType": "KAKAO"
                                       }
                                     }
@@ -482,7 +482,7 @@ public class UserController {
                                         "id": 1,
                                         "nickname": "빨간캡슐#21",
                                         "email": "user@example.com",
-                                        "profileImageUrl": "https://storage.googleapis.com/gotcha-dev-files/defaults/profile-default-join.png",
+                                        "profileImageUrl": "https://storage.googleapis.com/gotcha-dev-files/profile-default-join.png",
                                         "socialType": "KAKAO"
                                       }
                                     }

@@ -24,7 +24,6 @@ class CustomOAuth2UserTest {
                 .nickname("테스트유저#1")
                 .email("test@kakao.com")
                 .profileImageUrl("https://example.com/img.jpg")
-                .isAnonymous(false)
                 .build();
         ReflectionTestUtils.setField(user, "id", 1L);
 
@@ -52,7 +51,6 @@ class CustomOAuth2UserTest {
                 .socialType(SocialType.GOOGLE)
                 .socialId("google-123")
                 .nickname("구글유저#1")
-                .isAnonymous(false)
                 .build();
         ReflectionTestUtils.setField(user, "id", 1L);
 
@@ -76,7 +74,6 @@ class CustomOAuth2UserTest {
                 .socialType(SocialType.NAVER)
                 .socialId("naver-123")
                 .nickname("네이버유저#1")
-                .isAnonymous(false)
                 .build();
         ReflectionTestUtils.setField(user, "id", 1L);
 
@@ -167,7 +164,6 @@ class CustomOAuth2UserTest {
                 .socialId("test-social-id")
                 .nickname("테스트유저#1")
                 .email(email)
-                .isAnonymous(false)
                 .build();
         ReflectionTestUtils.setField(user, "id", 1L);
         return user;

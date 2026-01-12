@@ -56,7 +56,6 @@ class CustomOAuth2UserServiceTest {
                 .socialId(socialId)
                 .nickname(nickname)
                 .profileImageUrl(profileImageUrl)
-                .isAnonymous(false)
                 .build();
 
         // then
@@ -64,7 +63,6 @@ class CustomOAuth2UserServiceTest {
         assertThat(user.getSocialId()).isEqualTo("12345");
         assertThat(user.getNickname()).isEqualTo("빨간캡슐#21");
         assertThat(user.getProfileImageUrl()).isEqualTo("https://example.com/img.jpg");
-        assertThat(user.getIsAnonymous()).isFalse();
     }
 
     @Test
@@ -76,7 +74,6 @@ class CustomOAuth2UserServiceTest {
                 .socialId("12345")
                 .nickname("기존유저#1")
                 .profileImageUrl("https://old-image.com/img.jpg")
-                .isAnonymous(false)
                 .build();
 
         String newProfileImageUrl = "https://new-image.com/img.jpg";
@@ -96,7 +93,6 @@ class CustomOAuth2UserServiceTest {
                 .socialType(SocialType.GOOGLE)
                 .socialId("google-123")
                 .nickname("구글유저#1")
-                .isAnonymous(false)
                 .build();
 
         assertThat(user.getLastLoginAt()).isNull();
@@ -138,7 +134,6 @@ class CustomOAuth2UserServiceTest {
                     .nickname("테스트유저#1")
                     .email("test@example.com")
                     .profileImageUrl("https://example.com/img.jpg")
-                    .isAnonymous(false)
                     .build();
             setUserId(user, 1L);
 
@@ -157,7 +152,6 @@ class CustomOAuth2UserServiceTest {
                     .socialType(SocialType.KAKAO)
                     .socialId("12345")
                     .nickname("테스트유저#1")
-                    .isAnonymous(false)
                     .build();
             setUserId(user, 42L);
 
@@ -178,7 +172,6 @@ class CustomOAuth2UserServiceTest {
                     .nickname("테스트유저#1")
                     .email("test@example.com")
                     .profileImageUrl("https://example.com/img.jpg")
-                    .isAnonymous(false)
                     .build();
             setUserId(user, 1L);
 
@@ -198,7 +191,6 @@ class CustomOAuth2UserServiceTest {
                     .socialType(SocialType.KAKAO)
                     .socialId("12345")
                     .nickname("테스트유저#1")
-                    .isAnonymous(false)
                     .build();
             setUserId(user, 1L);
 

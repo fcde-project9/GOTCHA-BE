@@ -143,7 +143,6 @@ class UserRepositoryTest {
                 .socialType(SocialType.KAKAO)
                 .socialId("kakao-rejoin-test")
                 .nickname("탈퇴예정유저#1")
-                .isAnonymous(false)
                 .build();
         userRepository.save(user);
 
@@ -165,7 +164,6 @@ class UserRepositoryTest {
                 .socialId("kakao-rejoin-123")
                 .nickname("원래유저#1")
                 .email("original@test.com")
-                .isAnonymous(false)
                 .build();
         userRepository.saveAndFlush(originalUser);
         Long originalUserId = originalUser.getId();
@@ -179,7 +177,6 @@ class UserRepositoryTest {
                 .socialId("kakao-rejoin-123")
                 .nickname("새유저#2")
                 .email("new@test.com")
-                .isAnonymous(false)
                 .build();
         userRepository.save(newUser);
 
@@ -206,7 +203,6 @@ class UserRepositoryTest {
                 .socialType(SocialType.GOOGLE)
                 .socialId("google-delete-test")
                 .nickname("삭제될유저#1")
-                .isAnonymous(false)
                 .build();
         userRepository.save(user);
         Long userId = user.getId();
