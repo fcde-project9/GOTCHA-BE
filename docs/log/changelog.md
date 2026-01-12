@@ -63,6 +63,37 @@
   - 변경: findAllByUserId() → findAllByUserIdWithShop(userId) (JOIN FETCH 사용, 전체 조회)
   - 변경: 페이지네이션 제거 (Pageable.unpaged() → List 직접 반환)
   - 성능 개선: 즐겨찾기 목록 조회 시 N+1 쿼리 제거 (N개 쿼리 → 1개 쿼리)
+- `src/main/java/com/gotcha/domain/shop/dto/MapBoundsRequest.java` - latitude, longitude 선택 사항으로 변경
+  - 제거: latitude, longitude의 @NotNull 어노테이션
+  - 변경: @Schema required = false로 설정
+  - 변경: 설명에 "선택" 명시 추가
+- `src/main/java/com/gotcha/domain/shop/controller/ShopController.java` - getShopsInMap() 파라미터 처리 개선
+  - 제거: MapBoundsRequest DTO 사용 (@ModelAttribute bounds)
+  - 변경: 개별 @RequestParam으로 변경 (latitude, longitude는 String으로 받음)
+  - 추가: parseDoubleOrNull() 헬퍼 메서드 (null, "null", 빈 문자열 모두 null 처리)
+  - 제거: latitude/longitude null 체크 예외 던지는 로직
+  - 변경: @Operation description 업데이트 (latitude, longitude 선택 파라미터 명시)
+- `src/main/java/com/gotcha/domain/shop/service/ShopService.java` - getShopsInMap() null 처리 개선
+  - 추가: latitude, longitude null 체크 로직 (validateCoordinates 호출 전)
+  - 변경: 거리 계산 시 null 처리 (null이면 distance를 null로 설정)
+  - 변경: 정렬 시 null 안전 처리 (null은 Double.MAX_VALUE로 맨 뒤 정렬)
+  - 변경: JavaDoc 업데이트 (latitude, longitude 선택 파라미터 명시)
+- `src/main/java/com/gotcha/domain/shop/dto/ShopMapResponse.java` - distance 필드 설명 업데이트
+  - 변경: @Schema description에 "사용자 위치 정보가 없으면 null" 명시
+  - 추가: @Schema nullable = true 속성
+  - 변경: JavaDoc distance 파라미터 설명 업데이트
+- `src/test/java/com/gotcha/domain/shop/service/ShopServiceTest.java` - null 처리 테스트 추가
+  - 추가: GetShopsInMap 테스트 클래스 (5개 테스트 케이스)
+  - 테스트: latitude, longitude 모두 있을 때 거리 계산
+  - 테스트: latitude가 null일 때 distance null 반환
+  - 테스트: longitude가 null일 때 distance null 반환
+  - 테스트: 둘 다 null일 때 distance null 반환
+  - 테스트: 비로그인 사용자도 정상 조회 가능
+- `docs/api-spec.md` - GET /shops/map API 명세 추가
+  - 추가: GET /shops/map 엔드포인트 문서화
+  - 추가: Query Parameters 명세 (latitude, longitude 선택 사항)
+  - 추가: Response 예시 (latitude/longitude 있을 때, 없을 때)
+  - 추가: 주의사항 섹션 (null 처리 방식 설명)
 
 ---
 

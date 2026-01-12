@@ -309,6 +309,68 @@ Authorization: Bearer {accessToken}
 
 ---
 
+### GET /shops/map
+
+지도 영역 내 가게 목록 조회
+
+**Query Parameters**
+| 파라미터 | 타입 | 필수 | 설명 |
+|---------|------|------|------|
+| northEastLat | Double | O | 북동쪽 위도 |
+| northEastLng | Double | O | 북동쪽 경도 |
+| southWestLat | Double | O | 남서쪽 위도 |
+| southWestLng | Double | O | 남서쪽 경도 |
+| latitude | Double | X | 사용자 위치 위도 (거리 계산용, null이면 distance도 null 반환) |
+| longitude | Double | X | 사용자 위치 경도 (거리 계산용, null이면 distance도 null 반환) |
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "name": "가챠샵 신사점",
+      "mainImageUrl": "https://...",
+      "latitude": 37.5172,
+      "longitude": 127.0473,
+      "openTime": "{\"Mon\":\"10:00~22:00\",\"Tue\":\"10:00~22:00\"}",
+      "isOpen": true,
+      "distance": "50m",
+      "isFavorite": false
+    }
+  ]
+}
+```
+
+**Response (200) - latitude/longitude가 null인 경우**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "name": "가챠샵 신사점",
+      "mainImageUrl": "https://...",
+      "latitude": 37.5172,
+      "longitude": 127.0473,
+      "openTime": "{\"Mon\":\"10:00~22:00\",\"Tue\":\"10:00~22:00\"}",
+      "isOpen": true,
+      "distance": null,
+      "isFavorite": false
+    }
+  ]
+}
+```
+
+**주의사항**
+- latitude, longitude는 선택 파라미터입니다
+- 사용자 위치 정보가 없는 경우(null) distance는 null로 반환됩니다
+- 거리는 사용자 위치 기준 10m 단위로 계산됩니다 (1000m 미만: "50m", 1000m 이상: "1.5km")
+- 로그인한 사용자는 찜 여부(isFavorite)를 확인할 수 있습니다
+
+---
+
 ### GET /shops/{shopId}
 
 가게 상세 조회

@@ -153,14 +153,14 @@ public class ShopService {
     /**
      * 지도 영역 내 가게 목록 조회
      *
-     * @param northEastLat 북동쪽 위도
-     * @param northEastLng 북동쪽 경도
-     * @param southWestLat 남서쪽 위도
-     * @param southWestLng 남서쪽 경도
-     * @param latitude     사용자 현재 위치 위도 (거리 계산 기준)
-     * @param longitude    사용자 현재 위치 경도 (거리 계산 기준)
+     * @param northEastLat 북동쪽 위도 (필수)
+     * @param northEastLng 북동쪽 경도 (필수)
+     * @param southWestLat 남서쪽 위도 (필수)
+     * @param southWestLng 남서쪽 경도 (필수)
+     * @param latitude     사용자 현재 위치 위도 (선택, 거리 계산용, null이면 distance도 null 반환)
+     * @param longitude    사용자 현재 위치 경도 (선택, 거리 계산용, null이면 distance도 null 반환)
      * @param user         현재 로그인한 사용자 (null 가능)
-     * @return 지도용 가게 응답 리스트 (거리순 정렬)
+     * @return 지도용 가게 응답 리스트 (거리순 정렬, latitude/longitude가 null이면 distance는 null)
      */
     @Transactional(readOnly = true)
     public List<ShopMapResponse> getShopsInMap(
@@ -176,7 +176,10 @@ public class ShopService {
         // 좌표 검증
         validateCoordinates(northEastLat, northEastLng);
         validateCoordinates(southWestLat, southWestLng);
-        validateCoordinates(latitude, longitude);
+        // latitude, longitude는 null 허용 (거리 계산용, null이면 distance를 null로 반환)
+        if (latitude != null && longitude != null) {
+            validateCoordinates(latitude, longitude);
+        }
 
         // 경계 내 가게 조회
         List<Shop> shops = shopRepository.findShopsWithinBounds(
@@ -201,15 +204,24 @@ public class ShopService {
 
         List<ShopMapResponse> responses = shops.stream()
                 .peek(shop -> {
-                    // 거리 계산 (km) - 사용자 위치 기준
-                    double distanceKm = calculateDistance(latitude, longitude,
-                            shop.getLatitude(), shop.getLongitude());
-                    shopDistances.put(shop, distanceKm);
+                    // latitude 또는 longitude가 null이면 거리 계산 스킵
+                    if (latitude != null && longitude != null) {
+                        // 거리 계산 (km) - 사용자 위치 기준
+                        double distanceKm = calculateDistance(latitude, longitude,
+                                shop.getLatitude(), shop.getLongitude());
+                        shopDistances.put(shop, distanceKm);
+                    } else {
+                        // 위치 정보가 없으면 거리를 null로 설정
+                        shopDistances.put(shop, null);
+                    }
                 })
-                .sorted(Comparator.comparing(shopDistances::get))  // 거리순 정렬
+                .sorted(Comparator.comparing(shop -> {
+                    Double distance = shopDistances.get(shop);
+                    return distance != null ? distance : Double.MAX_VALUE;  // null은 맨 뒤로
+                }))
                 .map(shop -> {
-                    double distanceKm = shopDistances.get(shop);
-                    String distanceStr = formatDistance(distanceKm);
+                    Double distanceKm = shopDistances.get(shop);
+                    String distanceStr = distanceKm != null ? formatDistance(distanceKm) : null;
                     boolean isFavorite = finalFavoriteShopIds.contains(shop.getId());
                     boolean openStatus = isOpenNow(shop.getOpenTime());
                     return ShopMapResponse.of(shop, distanceStr, openStatus, isFavorite);
