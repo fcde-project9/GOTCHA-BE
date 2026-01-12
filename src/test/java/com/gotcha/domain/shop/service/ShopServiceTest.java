@@ -40,6 +40,15 @@ class ShopServiceTest {
     @Mock
     private FavoriteRepository favoriteRepository;
 
+    @Mock
+    private com.gotcha.domain.review.repository.ReviewRepository reviewRepository;
+
+    @Mock
+    private com.gotcha.domain.review.repository.ReviewImageRepository reviewImageRepository;
+
+    @Mock
+    private com.gotcha.domain.review.repository.ReviewLikeRepository reviewLikeRepository;
+
     private User testUser;
     private Shop testShop;
 
@@ -104,7 +113,7 @@ class ShopServiceTest {
 
             given(shopRepository.findShopsWithinBounds(northEastLat, northEastLng, southWestLat, southWestLng))
                     .willReturn(List.of(testShop));
-            given(favoriteRepository.findAllByUserId(testUser.getId()))
+            given(favoriteRepository.findAllByUserIdWithShop(testUser.getId()))
                     .willReturn(Collections.emptyList());
 
             // when
@@ -131,7 +140,7 @@ class ShopServiceTest {
 
             given(shopRepository.findShopsWithinBounds(northEastLat, northEastLng, southWestLat, southWestLng))
                     .willReturn(List.of(testShop));
-            given(favoriteRepository.findAllByUserId(testUser.getId()))
+            given(favoriteRepository.findAllByUserIdWithShop(testUser.getId()))
                     .willReturn(Collections.emptyList());
 
             // when
@@ -157,7 +166,7 @@ class ShopServiceTest {
 
             given(shopRepository.findShopsWithinBounds(northEastLat, northEastLng, southWestLat, southWestLng))
                     .willReturn(List.of(testShop));
-            given(favoriteRepository.findAllByUserId(testUser.getId()))
+            given(favoriteRepository.findAllByUserIdWithShop(testUser.getId()))
                     .willReturn(Collections.emptyList());
 
             // when
@@ -183,7 +192,7 @@ class ShopServiceTest {
 
             given(shopRepository.findShopsWithinBounds(northEastLat, northEastLng, southWestLat, southWestLng))
                     .willReturn(List.of(testShop));
-            given(favoriteRepository.findAllByUserId(testUser.getId()))
+            given(favoriteRepository.findAllByUserIdWithShop(testUser.getId()))
                     .willReturn(Collections.emptyList());
 
             // when

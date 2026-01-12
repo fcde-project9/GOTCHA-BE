@@ -97,7 +97,9 @@ public class ShopController {
     @Operation(
             summary = "지도 영역 내 가게 목록 조회",
             description = "카카오맵에서 보이는 영역(bounds) 내의 가게를 거리 가까운 순서로 조회합니다. " +
-                    "거리는 50m 단위로 표시되며, 로그인한 사용자는 찜 여부를 확인할 수 있습니다."
+                    "latitude, longitude는 선택 파라미터이며, 사용자 위치 정보가 없으면 distance는 null로 반환됩니다. " +
+                    "거리는 10m 단위로 계산되며 (1000m 미만: \"50m\", 1000m 이상: \"1.5km\"), " +
+                    "로그인한 사용자는 찜 여부를 확인할 수 있습니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
@@ -105,21 +107,26 @@ public class ShopController {
     })
     @GetMapping("/map")
     public ApiResponse<List<ShopMapResponse>> getShopsInMap(
-            @Valid @ModelAttribute MapBoundsRequest bounds
+            @RequestParam Double northEastLat,
+            @RequestParam Double northEastLng,
+            @RequestParam Double southWestLat,
+            @RequestParam Double southWestLng,
+            @RequestParam(required = false) String latitude,
+            @RequestParam(required = false) String longitude
     ) {
-        // 사용자 위치 좌표 필수 체크 (거리 계산에 필수)
-        if (bounds.latitude() == null || bounds.longitude() == null) {
-            throw new BusinessException(ShopErrorCode.INVALID_COORDINATES, "사용자 위치 좌표(latitude, longitude)는 필수입니다");
-        }
-
         User user = getCurrentUser();
+
+        // String을 Double로 변환 (null, "null", 빈 문자열은 모두 null로 처리)
+        Double lat = parseDoubleOrNull(latitude);
+        Double lng = parseDoubleOrNull(longitude);
+
         List<ShopMapResponse> shops = shopService.getShopsInMap(
-                bounds.northEastLat(),
-                bounds.northEastLng(),
-                bounds.southWestLat(),
-                bounds.southWestLng(),
-                bounds.latitude(),
-                bounds.longitude(),
+                northEastLat,
+                northEastLng,
+                southWestLat,
+                southWestLng,
+                lat,
+                lng,
                 user
         );
 
@@ -181,6 +188,22 @@ public class ShopController {
     @DeleteMapping("/{shopId}/favorite")
     public ApiResponse<FavoriteResponse> removeFavorite(@PathVariable Long shopId) {
         return ApiResponse.success(favoriteService.removeFavorite(shopId));
+    }
+
+    /**
+     * String 값을 Double로 변환 (null, "null", 빈 문자열은 모두 null 반환)
+     * @param value 변환할 문자열
+     * @return 변환된 Double 값 또는 null
+     */
+    private Double parseDoubleOrNull(String value) {
+        if (value == null || value.trim().isEmpty() || "null".equalsIgnoreCase(value.trim())) {
+            return null;
+        }
+        try {
+            return Double.parseDouble(value.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     /**

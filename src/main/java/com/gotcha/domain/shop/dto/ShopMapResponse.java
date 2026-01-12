@@ -26,7 +26,7 @@ public record ShopMapResponse(
         @Schema(description = "영업중 여부 (현재 한국 시간 기준)", example = "true")
         Boolean isOpen,
 
-        @Schema(description = "중심 좌표로부터의 거리", example = "50m")
+        @Schema(description = "사용자 위치로부터의 거리 (사용자 위치 정보가 없으면 null)", example = "50m", nullable = true)
         String distance,
 
         @Schema(description = "찜 여부 (로그인 사용자만)", example = "false")
@@ -35,7 +35,7 @@ public record ShopMapResponse(
     /**
      * Shop 엔티티를 ShopMapResponse로 변환
      * @param shop Shop 엔티티
-     * @param distance 거리 문자열 (예: "50m", "1.5km")
+     * @param distance 거리 문자열 (예: "50m", "1.5km", 사용자 위치 정보가 없으면 null)
      * @param isOpen 영업중 여부
      * @param isFavorite 찜 여부
      * @return ShopMapResponse
