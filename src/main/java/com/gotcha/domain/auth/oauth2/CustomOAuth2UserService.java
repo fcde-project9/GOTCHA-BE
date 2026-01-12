@@ -104,7 +104,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .nickname(nickname)
                 .email(userInfo.getEmail())
                 .profileImageUrl(defaultProfileImageUrl)
-                .isAnonymous(false)
                 .build();
 
         user.updateLastLoginAt();
