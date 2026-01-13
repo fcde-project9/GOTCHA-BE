@@ -20,7 +20,8 @@ public enum AuthErrorCode implements ErrorCode {
     OAUTH_INVALID_RESPONSE(HttpStatus.UNAUTHORIZED, "A009", "OAuth 응답을 처리할 수 없습니다"),
     REFRESH_TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "A010", "리프레시 토큰을 찾을 수 없습니다"),
     REFRESH_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "A011", "리프레시 토큰이 만료되었습니다"),
-    USER_DELETED(HttpStatus.UNAUTHORIZED, "A012", "탈퇴한 사용자입니다");
+    USER_DELETED(HttpStatus.UNAUTHORIZED, "A012", "탈퇴한 사용자입니다"),
+    INVALID_AUTH_CODE(HttpStatus.BAD_REQUEST, "A013", "유효하지 않거나 만료된 인증 코드입니다");
 
     private final HttpStatus status;
     private final String code;
