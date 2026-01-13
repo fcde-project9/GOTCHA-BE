@@ -15,6 +15,8 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -550,7 +552,16 @@ public interface UserControllerApi {
 
     @Operation(
             summary = "회원 탈퇴",
-            description = "회원 탈퇴 및 설문 제출. 탈퇴 시 Refresh Token이 삭제되고 사용자는 soft delete됩니다.",
+            description = """
+                    회원 탈퇴 및 설문 제출.
+
+                    **처리 내역:**
+                    - Refresh Token 삭제
+                    - 인증 관련 쿠키 삭제 (Set-Cookie 헤더로 응답)
+                    - 사용자 soft delete
+
+                    **주의:** 탈퇴 후 프론트엔드에서 localStorage의 토큰도 삭제해야 합니다.
+                    """,
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses({
@@ -620,5 +631,9 @@ public interface UserControllerApi {
                     )
             )
     })
-    ApiResponse<Void> withdraw(@Valid @RequestBody WithdrawalRequest request);
+    ApiResponse<Void> withdraw(
+            @Valid @RequestBody WithdrawalRequest request,
+            HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse
+    );
 }

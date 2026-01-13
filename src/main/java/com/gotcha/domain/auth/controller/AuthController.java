@@ -8,6 +8,9 @@ import com.gotcha.domain.auth.dto.TokenExchangeResponse;
 import com.gotcha.domain.auth.dto.TokenResponse;
 import com.gotcha.domain.auth.service.AuthService;
 import com.gotcha.domain.auth.service.OAuthTokenCacheService;
+import com.gotcha.domain.auth.util.CookieUtils;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.env.Environment;
@@ -35,9 +38,13 @@ public class AuthController implements AuthControllerApi {
 
     @Override
     @PostMapping("/logout")
-    public ApiResponse<Void> logout() {
+    public ApiResponse<Void> logout(HttpServletRequest request, HttpServletResponse response) {
         Long userId = securityUtil.getCurrentUserId();
         authService.logout(userId);
+
+        // 인증 관련 쿠키 삭제 (HttpOnly 쿠키는 Set-Cookie 헤더로만 삭제 가능)
+        CookieUtils.clearAuthCookies(request, response);
+
         return ApiResponse.success(null);
     }
 
