@@ -3,6 +3,7 @@ package com.gotcha.domain.auth.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -15,8 +16,6 @@ import com.gotcha.domain.auth.repository.RefreshTokenRepository;
 import com.gotcha.domain.auth.service.OAuthTokenCookieService.TokenData;
 import com.gotcha.domain.user.entity.SocialType;
 import com.gotcha.domain.user.entity.User;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,8 +26,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -192,29 +189,21 @@ class AuthServiceTest {
     @DisplayName("exchangeToken")
     class ExchangeToken {
 
-        private MockHttpServletRequest request;
-        private MockHttpServletResponse response;
-
-        @BeforeEach
-        void setUp() {
-            request = new MockHttpServletRequest();
-            response = new MockHttpServletResponse();
-        }
-
         @Test
-        @DisplayName("유효한 쿠키로 토큰을 교환한다")
-        void shouldExchangeTokenWithValidCookie() {
+        @DisplayName("유효한 암호화 코드로 토큰을 교환한다")
+        void shouldExchangeTokenWithValidCode() {
             // given
+            String encryptedCode = "encrypted-code";
             String accessToken = "access-token";
             String refreshToken = "refresh-token";
             boolean isNewUser = true;
 
             TokenData tokenData = new TokenData(accessToken, refreshToken, isNewUser);
-            given(oAuthTokenCacheService.exchangeCode(any(HttpServletRequest.class), any(HttpServletResponse.class)))
+            given(oAuthTokenCacheService.decryptTokens(encryptedCode))
                     .willReturn(tokenData);
 
             // when
-            TokenExchangeResponse tokenResponse = authService.exchangeToken(request, response);
+            TokenExchangeResponse tokenResponse = authService.exchangeToken(encryptedCode);
 
             // then
             assertThat(tokenResponse).isNotNull();
@@ -227,39 +216,42 @@ class AuthServiceTest {
         @DisplayName("기존 사용자인 경우 isNewUser가 false")
         void shouldReturnIsNewUserFalseForExistingUser() {
             // given
+            String encryptedCode = "encrypted-code";
             TokenData tokenData = new TokenData("access", "refresh", false);
-            given(oAuthTokenCacheService.exchangeCode(any(HttpServletRequest.class), any(HttpServletResponse.class)))
+            given(oAuthTokenCacheService.decryptTokens(encryptedCode))
                     .willReturn(tokenData);
 
             // when
-            TokenExchangeResponse tokenResponse = authService.exchangeToken(request, response);
+            TokenExchangeResponse tokenResponse = authService.exchangeToken(encryptedCode);
 
             // then
             assertThat(tokenResponse.isNewUser()).isFalse();
         }
 
         @Test
-        @DisplayName("유효하지 않은 쿠키이면 예외를 던진다")
-        void shouldThrowExceptionWithInvalidCookie() {
+        @DisplayName("유효하지 않은 코드이면 예외를 던진다")
+        void shouldThrowExceptionWithInvalidCode() {
             // given
-            given(oAuthTokenCacheService.exchangeCode(any(HttpServletRequest.class), any(HttpServletResponse.class)))
+            String invalidCode = "invalid-code";
+            given(oAuthTokenCacheService.decryptTokens(invalidCode))
                     .willReturn(null);
 
             // when & then
-            assertThatThrownBy(() -> authService.exchangeToken(request, response))
+            assertThatThrownBy(() -> authService.exchangeToken(invalidCode))
                     .isInstanceOf(AuthException.class)
                     .hasMessageContaining("인증 코드");
         }
 
         @Test
-        @DisplayName("만료된 쿠키이면 예외를 던진다")
-        void shouldThrowExceptionWithExpiredCookie() {
+        @DisplayName("복호화 실패 시 예외를 던진다")
+        void shouldThrowExceptionWhenDecryptionFails() {
             // given
-            given(oAuthTokenCacheService.exchangeCode(any(HttpServletRequest.class), any(HttpServletResponse.class)))
+            String corruptedCode = "corrupted-code";
+            given(oAuthTokenCacheService.decryptTokens(corruptedCode))
                     .willReturn(null);
 
             // when & then
-            assertThatThrownBy(() -> authService.exchangeToken(request, response))
+            assertThatThrownBy(() -> authService.exchangeToken(corruptedCode))
                     .isInstanceOf(AuthException.class);
         }
     }

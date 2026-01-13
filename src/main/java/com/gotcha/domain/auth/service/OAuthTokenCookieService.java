@@ -143,17 +143,63 @@ public class OAuthTokenCookieService {
     }
 
     /**
-     * 테스트용: 토큰을 저장하고 암호화된 값 반환 (쿠키 없이)
-     * local/dev 환경의 테스트 엔드포인트용
+     * 토큰을 암호화하여 반환 (쿠키 없이, URL 파라미터용)
+     * cross-site 환경에서도 동작하도록 쿠키 대신 URL로 전달
+     *
+     * @param accessToken  액세스 토큰
+     * @param refreshToken 리프레시 토큰
+     * @param isNewUser    신규 사용자 여부
+     * @return 암호화된 토큰 문자열
      */
-    public String storeTokensForTest(String accessToken, String refreshToken, boolean isNewUser) {
+    public String encryptTokens(String accessToken, String refreshToken, boolean isNewUser) {
         TokenData tokenData = new TokenData(accessToken, refreshToken, isNewUser);
         try {
-            return encrypt(objectMapper.writeValueAsString(tokenData));
+            String encrypted = encrypt(objectMapper.writeValueAsString(tokenData));
+            if (encrypted == null) {
+                log.error("Failed to encrypt token data");
+                throw new IllegalStateException("Failed to encrypt OAuth token data");
+            }
+            return encrypted;
         } catch (JsonProcessingException e) {
-            log.error("Failed to serialize token data for test", e);
+            log.error("Failed to serialize token data", e);
+            throw new IllegalStateException("Failed to serialize OAuth token data", e);
+        }
+    }
+
+    /**
+     * 암호화된 코드를 복호화하여 토큰 데이터 반환
+     *
+     * @param encryptedCode 암호화된 토큰 문자열
+     * @return 토큰 데이터 (복호화 실패 시 null)
+     */
+    public TokenData decryptTokens(String encryptedCode) {
+        if (encryptedCode == null || encryptedCode.isBlank()) {
+            log.warn("Empty or null encrypted code");
             return null;
         }
+
+        String decrypted = decrypt(encryptedCode);
+        if (decrypted == null) {
+            log.warn("Failed to decrypt token code");
+            return null;
+        }
+
+        try {
+            return objectMapper.readValue(decrypted, TokenData.class);
+        } catch (JsonProcessingException e) {
+            log.error("Failed to deserialize token data", e);
+            return null;
+        }
+    }
+
+    /**
+     * 테스트용: 토큰을 저장하고 암호화된 값 반환 (쿠키 없이)
+     * local/dev 환경의 테스트 엔드포인트용
+     * @deprecated Use {@link #encryptTokens(String, String, boolean)} instead
+     */
+    @Deprecated
+    public String storeTokensForTest(String accessToken, String refreshToken, boolean isNewUser) {
+        return encryptTokens(accessToken, refreshToken, isNewUser);
     }
 
     private void removeTokenCookie(HttpServletResponse response) {

@@ -3,6 +3,7 @@ package com.gotcha.domain.auth.controller;
 import com.gotcha._global.common.ApiResponse;
 import com.gotcha._global.util.SecurityUtil;
 import com.gotcha.domain.auth.dto.ReissueRequest;
+import com.gotcha.domain.auth.dto.TokenExchangeRequest;
 import com.gotcha.domain.auth.dto.TokenExchangeResponse;
 import com.gotcha.domain.auth.dto.TokenResponse;
 import com.gotcha.domain.auth.service.AuthService;
@@ -50,9 +51,9 @@ public class AuthController implements AuthControllerApi {
     @Override
     @PostMapping("/token")
     public ApiResponse<TokenExchangeResponse> exchangeToken(
-            HttpServletRequest request, HttpServletResponse response) {
-        // 쿠키 기반으로 토큰 교환 (code 파라미터 불필요)
-        TokenExchangeResponse tokenResponse = authService.exchangeToken(request, response);
+            @Valid @RequestBody TokenExchangeRequest request) {
+        // body의 code를 복호화하여 토큰 반환 (쿠키 불필요 - cross-site 지원)
+        TokenExchangeResponse tokenResponse = authService.exchangeToken(request.code());
         return ApiResponse.success(tokenResponse);
     }
 
