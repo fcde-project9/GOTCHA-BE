@@ -23,6 +23,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     List<Review> findAllByUserId(Long userId);
 
+    Long countByShopId(Long shopId);
+
     @Modifying(clearAutomatically = true)
     @Query("DELETE FROM Review r WHERE r.user.id = :userId")
     void deleteByUserId(@Param("userId") Long userId);

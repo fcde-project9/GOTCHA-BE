@@ -418,6 +418,9 @@ public class ShopService {
         // 리뷰 5개 조회 (정렬 적용)
         List<ReviewResponse> reviews = getTop5Reviews(shopId, sortBy, user);
 
+        // 전체 리뷰 개수 조회
+        Long reviewCount = reviewRepository.countByShopId(shopId);
+
         // 전체 리뷰 사진 개수 조회
         Long totalReviewImageCount = reviewImageRepository.countByShopId(shopId);
 
@@ -427,10 +430,10 @@ public class ShopService {
                 .map(ReviewImage::getImageUrl)
                 .toList();
 
-        log.info("Shop detail - id: {}, reviews: {}, images: {}/{}",
-                shopId, reviews.size(), recentReviewImages.size(), totalReviewImageCount);
+        log.info("Shop detail - id: {}, reviews: {}/{}, images: {}/{}",
+                shopId, reviews.size(), reviewCount, recentReviewImages.size(), totalReviewImageCount);
 
-        return ShopDetailResponse.of(shop, todayOpenTime, isOpen, isFavorite, reviews,
+        return ShopDetailResponse.of(shop, todayOpenTime, isOpen, isFavorite, reviews, reviewCount,
                 totalReviewImageCount, recentReviewImages);
     }
 
