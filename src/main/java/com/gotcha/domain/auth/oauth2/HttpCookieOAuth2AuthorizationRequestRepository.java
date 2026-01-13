@@ -1,17 +1,15 @@
 package com.gotcha.domain.auth.oauth2;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -21,40 +19,37 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequ
 import org.springframework.stereotype.Component;
 
 /**
- * OAuth2 인가 요청을 메모리(Caffeine Cache) + 쿠키 기반으로 저장하는 Repository.
+ * OAuth2 인가 요청을 쿠키 기반으로 저장하는 Repository.
  *
- * 쿠키에는 state 값만 저장하고, 실제 OAuth2AuthorizationRequest는
- * Caffeine Cache에 저장하여 직렬화 문제를 회피하고 TTL로 메모리 누수를 방지합니다.
+ * OAuth2AuthorizationRequest를 암호화하여 쿠키에 저장합니다.
+ * 이 방식은 분산 환경(다중 인스턴스)에서도 안정적으로 동작합니다.
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class HttpCookieOAuth2AuthorizationRequestRepository
         implements AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
 
-    private static final String OAUTH2_STATE_COOKIE_NAME = "oauth2_auth_state";
+    private static final String OAUTH2_AUTH_REQUEST_COOKIE_NAME = "oauth2_auth_request";
     private static final String REDIRECT_URI_COOKIE_NAME = "oauth2_redirect_uri";
     private static final int COOKIE_EXPIRE_SECONDS = 180;
+
+    private final OAuth2AuthorizationRequestSerializer serializer;
 
     @Value("${oauth2.allowed-redirect-uris:http://localhost:3000/oauth/callback}")
     private String allowedRedirectUrisString;
 
-    // state -> OAuth2AuthorizationRequest 매핑 (TTL 기반 캐시)
-    private final Cache<String, OAuth2AuthorizationRequest> authorizationRequests = Caffeine.newBuilder()
-            .expireAfterWrite(Duration.ofSeconds(COOKIE_EXPIRE_SECONDS))
-            .maximumSize(10000)
-            .build();
-
     @Override
     public OAuth2AuthorizationRequest loadAuthorizationRequest(HttpServletRequest request) {
-        String state = getStateFromCookie(request);
-        if (state == null) {
-            log.debug("No state cookie found");
+        String serialized = getCookieValue(request, OAUTH2_AUTH_REQUEST_COOKIE_NAME);
+        if (serialized == null) {
+            log.debug("No authorization request cookie found");
             return null;
         }
 
-        OAuth2AuthorizationRequest authRequest = authorizationRequests.getIfPresent(state);
+        OAuth2AuthorizationRequest authRequest = serializer.deserialize(serialized);
         if (authRequest == null) {
-            log.debug("No authorization request found for state: {}", state);
+            log.debug("Failed to deserialize authorization request from cookie");
         }
         return authRequest;
     }
@@ -63,22 +58,28 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
     public void saveAuthorizationRequest(OAuth2AuthorizationRequest authorizationRequest,
                                          HttpServletRequest request, HttpServletResponse response) {
         if (authorizationRequest == null) {
-            removeAuthorizationRequestCookie(request, response);
+            removeAuthorizationRequestCookie(response);
+            removeRedirectUriCookie(response);
             return;
         }
 
-        String state = authorizationRequest.getState();
-        authorizationRequests.put(state, authorizationRequest);
+        String serialized = serializer.serialize(authorizationRequest);
+        if (serialized == null) {
+            log.error("Failed to serialize authorization request");
+            return;
+        }
 
         boolean isSecure = isSecureRequest(request);
-        ResponseCookie stateCookie = ResponseCookie.from(OAUTH2_STATE_COOKIE_NAME, state)
+
+        // 암호화된 OAuth2AuthorizationRequest를 쿠키에 저장
+        ResponseCookie authRequestCookie = ResponseCookie.from(OAUTH2_AUTH_REQUEST_COOKIE_NAME, serialized)
                 .path("/")
                 .httpOnly(true)
                 .secure(isSecure)
                 .sameSite("Lax")
                 .maxAge(COOKIE_EXPIRE_SECONDS)
                 .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, stateCookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, authRequestCookie.toString());
 
         // 프론트엔드에서 전달한 redirect_uri를 쿠키에 저장 (화이트리스트 검증)
         String redirectUri = request.getParameter("redirect_uri");
@@ -99,28 +100,24 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
             }
         }
 
-        log.debug("Saved authorization request with state: {}", state);
+        log.debug("Saved authorization request to cookie with state: {}", authorizationRequest.getState());
     }
 
     @Override
     public OAuth2AuthorizationRequest removeAuthorizationRequest(HttpServletRequest request,
                                                                   HttpServletResponse response) {
-        String state = getStateFromCookie(request);
-        if (state == null) {
-            return null;
-        }
-
-        OAuth2AuthorizationRequest authRequest = authorizationRequests.getIfPresent(state);
-        authorizationRequests.invalidate(state);
-        removeAuthorizationRequestCookie(request, response);
+        OAuth2AuthorizationRequest authRequest = loadAuthorizationRequest(request);
+        removeAuthorizationRequestCookie(response);
         removeRedirectUriCookie(response);
 
-        log.debug("Removed authorization request with state: {}", state);
+        if (authRequest != null) {
+            log.debug("Removed authorization request with state: {}", authRequest.getState());
+        }
         return authRequest;
     }
 
-    private String getStateFromCookie(HttpServletRequest request) {
-        return getCookie(request, OAUTH2_STATE_COOKIE_NAME)
+    private String getCookieValue(HttpServletRequest request, String name) {
+        return getCookie(request, name)
                 .map(Cookie::getValue)
                 .orElse(null);
     }
@@ -137,8 +134,8 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
         return Optional.empty();
     }
 
-    private void removeAuthorizationRequestCookie(HttpServletRequest request, HttpServletResponse response) {
-        ResponseCookie cookie = ResponseCookie.from(OAUTH2_STATE_COOKIE_NAME, "")
+    private void removeAuthorizationRequestCookie(HttpServletResponse response) {
+        ResponseCookie cookie = ResponseCookie.from(OAUTH2_AUTH_REQUEST_COOKIE_NAME, "")
                 .path("/")
                 .httpOnly(true)
                 .secure(true)

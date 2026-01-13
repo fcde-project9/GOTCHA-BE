@@ -2,6 +2,7 @@ package com.gotcha.domain.auth.oauth2;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,17 +18,82 @@ import org.springframework.test.util.ReflectionTestUtils;
 @DisplayName("HttpCookieOAuth2AuthorizationRequestRepository 테스트")
 class HttpCookieOAuth2AuthorizationRequestRepositoryTest {
 
+    private static final String TEST_ENCRYPTION_KEY = "test-oauth2-cookie-encryption-key-32chars";
+
     private HttpCookieOAuth2AuthorizationRequestRepository repository;
+    private OAuth2AuthorizationRequestSerializer serializer;
     private MockHttpServletRequest request;
     private MockHttpServletResponse response;
 
     @BeforeEach
     void setUp() {
-        repository = new HttpCookieOAuth2AuthorizationRequestRepository();
+        ObjectMapper objectMapper = new ObjectMapper();
+        serializer = new OAuth2AuthorizationRequestSerializer(objectMapper, TEST_ENCRYPTION_KEY);
+        repository = new HttpCookieOAuth2AuthorizationRequestRepository(serializer);
         ReflectionTestUtils.setField(repository, "allowedRedirectUrisString",
                 "http://localhost:3000/oauth/callback,https://dev.gotcha.it.com/oauth/callback");
         request = new MockHttpServletRequest();
         response = new MockHttpServletResponse();
+    }
+
+    @Nested
+    @DisplayName("OAuth2AuthorizationRequest 저장 및 로드")
+    class SaveAndLoadAuthorizationRequest {
+
+        @Test
+        @DisplayName("저장 후 로드 - 동일한 요청 반환")
+        void saveAndLoad_returnsIdenticalRequest() {
+            // given
+            OAuth2AuthorizationRequest authRequest = createAuthorizationRequest();
+            repository.saveAuthorizationRequest(authRequest, request, response);
+
+            // 저장된 쿠키를 새 request에 설정
+            String cookieHeader = response.getHeaders(HttpHeaders.SET_COOKIE).stream()
+                    .filter(h -> h.contains("oauth2_auth_request"))
+                    .findFirst()
+                    .orElseThrow();
+            String cookieValue = extractCookieValue(cookieHeader, "oauth2_auth_request");
+
+            MockHttpServletRequest loadRequest = new MockHttpServletRequest();
+            loadRequest.setCookies(
+                    new jakarta.servlet.http.Cookie("oauth2_auth_request", cookieValue)
+            );
+
+            // when
+            OAuth2AuthorizationRequest loadedRequest = repository.loadAuthorizationRequest(loadRequest);
+
+            // then
+            assertThat(loadedRequest).isNotNull();
+            assertThat(loadedRequest.getState()).isEqualTo(authRequest.getState());
+            assertThat(loadedRequest.getClientId()).isEqualTo(authRequest.getClientId());
+            assertThat(loadedRequest.getRedirectUri()).isEqualTo(authRequest.getRedirectUri());
+            assertThat(loadedRequest.getAuthorizationUri()).isEqualTo(authRequest.getAuthorizationUri());
+        }
+
+        @Test
+        @DisplayName("쿠키 없음 - null 반환")
+        void load_noCookie_returnsNull() {
+            // when
+            OAuth2AuthorizationRequest result = repository.loadAuthorizationRequest(request);
+
+            // then
+            assertThat(result).isNull();
+        }
+
+        @Test
+        @DisplayName("잘못된 쿠키 값 - null 반환")
+        void load_invalidCookie_returnsNull() {
+            // given
+            request.setCookies(
+                    new jakarta.servlet.http.Cookie("oauth2_auth_request", "invalid-encrypted-data")
+            );
+
+            // when
+            OAuth2AuthorizationRequest result = repository.loadAuthorizationRequest(request);
+
+            // then
+            assertThat(result).isNull();
+        }
     }
 
     @Nested
@@ -164,24 +230,38 @@ class HttpCookieOAuth2AuthorizationRequestRepositoryTest {
     class RemoveAuthorizationRequest {
 
         @Test
-        @DisplayName("removeAuthorizationRequest 호출 시 redirect_uri 쿠키도 삭제됨")
-        void removeAuthorizationRequest_removesRedirectUriCookie() {
+        @DisplayName("removeAuthorizationRequest 호출 시 모든 OAuth2 쿠키 삭제됨")
+        void removeAuthorizationRequest_removesAllOAuth2Cookies() {
             // given
             OAuth2AuthorizationRequest authRequest = createAuthorizationRequest();
             request.setParameter("redirect_uri", "http://localhost:3000/oauth/callback");
             repository.saveAuthorizationRequest(authRequest, request, response);
 
-            // state 쿠키를 request에 설정
-            request.setCookies(
-                    new jakarta.servlet.http.Cookie("oauth2_auth_state", authRequest.getState())
+            // 저장된 쿠키를 request에 설정
+            String cookieHeader = response.getHeaders(HttpHeaders.SET_COOKIE).stream()
+                    .filter(h -> h.contains("oauth2_auth_request"))
+                    .findFirst()
+                    .orElseThrow();
+            String cookieValue = extractCookieValue(cookieHeader, "oauth2_auth_request");
+
+            MockHttpServletRequest removeRequest = new MockHttpServletRequest();
+            removeRequest.setCookies(
+                    new jakarta.servlet.http.Cookie("oauth2_auth_request", cookieValue)
             );
 
             MockHttpServletResponse removeResponse = new MockHttpServletResponse();
 
             // when
-            repository.removeAuthorizationRequest(request, removeResponse);
+            OAuth2AuthorizationRequest removed = repository.removeAuthorizationRequest(removeRequest, removeResponse);
 
             // then
+            assertThat(removed).isNotNull();
+            assertThat(removed.getState()).isEqualTo(authRequest.getState());
+
+            boolean hasAuthRequestDeleteCookie = removeResponse.getHeaders(HttpHeaders.SET_COOKIE).stream()
+                    .anyMatch(h -> h.contains("oauth2_auth_request") && h.contains("Max-Age=0"));
+            assertThat(hasAuthRequestDeleteCookie).isTrue();
+
             boolean hasRedirectUriDeleteCookie = removeResponse.getHeaders(HttpHeaders.SET_COOKIE).stream()
                     .anyMatch(h -> h.contains("oauth2_redirect_uri") && h.contains("Max-Age=0"));
             assertThat(hasRedirectUriDeleteCookie).isTrue();
@@ -250,6 +330,61 @@ class HttpCookieOAuth2AuthorizationRequestRepositoryTest {
         }
     }
 
+    @Nested
+    @DisplayName("쿠키 보안 설정")
+    class CookieSecuritySettings {
+
+        @Test
+        @DisplayName("HTTPS 요청 시 Secure 쿠키 설정")
+        void httpsRequest_secureCoookieSet() {
+            // given
+            OAuth2AuthorizationRequest authRequest = createAuthorizationRequest();
+            request.setSecure(true);
+
+            // when
+            repository.saveAuthorizationRequest(authRequest, request, response);
+
+            // then
+            boolean hasSecureCookie = response.getHeaders(HttpHeaders.SET_COOKIE).stream()
+                    .filter(h -> h.contains("oauth2_auth_request"))
+                    .anyMatch(h -> h.contains("Secure"));
+            assertThat(hasSecureCookie).isTrue();
+        }
+
+        @Test
+        @DisplayName("X-Forwarded-Proto: https 헤더 시 Secure 쿠키 설정")
+        void forwardedProtoHttps_secureCookieSet() {
+            // given
+            OAuth2AuthorizationRequest authRequest = createAuthorizationRequest();
+            request.addHeader("X-Forwarded-Proto", "https");
+
+            // when
+            repository.saveAuthorizationRequest(authRequest, request, response);
+
+            // then
+            boolean hasSecureCookie = response.getHeaders(HttpHeaders.SET_COOKIE).stream()
+                    .filter(h -> h.contains("oauth2_auth_request"))
+                    .anyMatch(h -> h.contains("Secure"));
+            assertThat(hasSecureCookie).isTrue();
+        }
+
+        @Test
+        @DisplayName("SameSite=Lax 설정 확인")
+        void sameSiteLax_set() {
+            // given
+            OAuth2AuthorizationRequest authRequest = createAuthorizationRequest();
+
+            // when
+            repository.saveAuthorizationRequest(authRequest, request, response);
+
+            // then
+            boolean hasSameSiteLax = response.getHeaders(HttpHeaders.SET_COOKIE).stream()
+                    .filter(h -> h.contains("oauth2_auth_request"))
+                    .anyMatch(h -> h.contains("SameSite=Lax"));
+            assertThat(hasSameSiteLax).isTrue();
+        }
+    }
+
     private static final String FIXED_STATE = "test-state-12345";
 
     private OAuth2AuthorizationRequest createAuthorizationRequest() {
@@ -259,5 +394,16 @@ class HttpCookieOAuth2AuthorizationRequestRepositoryTest {
                 .redirectUri("http://localhost:8080/api/auth/callback/kakao")
                 .state(FIXED_STATE)
                 .build();
+    }
+
+    private String extractCookieValue(String cookieHeader, String cookieName) {
+        // "oauth2_auth_request=value; Path=/; ..." 형태에서 value 추출
+        String prefix = cookieName + "=";
+        int startIndex = cookieHeader.indexOf(prefix) + prefix.length();
+        int endIndex = cookieHeader.indexOf(";", startIndex);
+        if (endIndex == -1) {
+            endIndex = cookieHeader.length();
+        }
+        return cookieHeader.substring(startIndex, endIndex);
     }
 }

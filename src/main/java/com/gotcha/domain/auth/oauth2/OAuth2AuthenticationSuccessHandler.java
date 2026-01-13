@@ -2,7 +2,7 @@ package com.gotcha.domain.auth.oauth2;
 
 import com.gotcha.domain.auth.jwt.JwtTokenProvider;
 import com.gotcha.domain.auth.service.AuthService;
-import com.gotcha.domain.auth.service.OAuthTokenCacheService;
+import com.gotcha.domain.auth.service.OAuthTokenCookieService;
 import com.gotcha.domain.user.entity.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -20,7 +20,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthService authService;
-    private final OAuthTokenCacheService oAuthTokenCacheService;
+    private final OAuthTokenCookieService oAuthTokenCacheService;
     private final HttpCookieOAuth2AuthorizationRequestRepository cookieRepository;
 
     // TODO: 프로덕션 배포 전 리다이렉트 URI 화이트리스트 검증 추가 필요
@@ -40,8 +40,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         // Refresh Token을 DB에 저장
         authService.saveRefreshToken(user, refreshToken);
 
-        // 토큰을 캐시에 저장하고 임시 코드 발급 (보안 강화: URL에 토큰 노출 방지)
-        String tempCode = oAuthTokenCacheService.storeTokens(accessToken, refreshToken, isNewUser);
+        // 토큰을 쿠키에 암호화 저장하고 임시 코드 발급 (분산 환경 지원)
+        String tempCode = oAuthTokenCacheService.storeTokens(accessToken, refreshToken, isNewUser, request, response);
 
         // 프론트엔드에서 전달한 redirect_uri 사용, 없으면 기본값 사용
         String redirectUri = cookieRepository.getRedirectUriFromCookie(request);
