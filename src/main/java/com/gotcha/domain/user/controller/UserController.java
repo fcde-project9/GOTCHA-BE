@@ -2,6 +2,7 @@ package com.gotcha.domain.user.controller;
 
 import com.gotcha._global.common.ApiResponse;
 import com.gotcha._global.common.PageResponse;
+import com.gotcha.domain.auth.util.CookieUtils;
 import com.gotcha.domain.favorite.dto.FavoriteShopResponse;
 import com.gotcha.domain.favorite.service.FavoriteService;
 import com.gotcha.domain.user.dto.MyShopResponse;
@@ -11,6 +12,8 @@ import com.gotcha.domain.user.dto.UserNicknameResponse;
 import com.gotcha.domain.user.dto.UserResponse;
 import com.gotcha.domain.user.dto.WithdrawalRequest;
 import com.gotcha.domain.user.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -84,8 +87,16 @@ public class UserController implements UserControllerApi {
 
     @Override
     @DeleteMapping("/me")
-    public ApiResponse<Void> withdraw(@Valid @RequestBody WithdrawalRequest request) {
+    public ApiResponse<Void> withdraw(
+            @Valid @RequestBody WithdrawalRequest request,
+            HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse
+    ) {
         userService.withdraw(request);
+
+        // 인증 관련 쿠키 삭제 (HttpOnly 쿠키는 Set-Cookie 헤더로만 삭제 가능)
+        CookieUtils.clearAuthCookies(httpRequest, httpResponse);
+
         return ApiResponse.success(null);
     }
 }

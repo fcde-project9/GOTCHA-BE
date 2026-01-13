@@ -11,6 +11,8 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -83,7 +85,15 @@ public interface AuthControllerApi {
 
     @Operation(
             summary = "로그아웃",
-            description = "리프레시 토큰을 무효화하여 로그아웃합니다",
+            description = """
+                    리프레시 토큰을 무효화하고 인증 관련 쿠키를 삭제합니다.
+
+                    **처리 내역:**
+                    - DB에서 Refresh Token 삭제
+                    - 인증 관련 쿠키 삭제 (Set-Cookie 헤더로 응답)
+
+                    **주의:** 프론트엔드에서 localStorage의 토큰도 삭제해야 합니다.
+                    """,
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses({
@@ -120,7 +130,7 @@ public interface AuthControllerApi {
                     )
             )
     })
-    ApiResponse<Void> logout();
+    ApiResponse<Void> logout(HttpServletRequest request, HttpServletResponse response);
 
     @Operation(
             summary = "임시 코드로 토큰 교환",
