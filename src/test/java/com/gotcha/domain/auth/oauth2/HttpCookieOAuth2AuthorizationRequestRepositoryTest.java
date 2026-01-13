@@ -336,7 +336,7 @@ class HttpCookieOAuth2AuthorizationRequestRepositoryTest {
 
         @Test
         @DisplayName("HTTPS 요청 시 Secure 쿠키 설정")
-        void httpsRequest_secureCoookieSet() {
+        void httpsRequest_secureCookieSet() {
             // given
             OAuth2AuthorizationRequest authRequest = createAuthorizationRequest();
             request.setSecure(true);

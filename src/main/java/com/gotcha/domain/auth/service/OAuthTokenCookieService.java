@@ -87,7 +87,7 @@ public class OAuthTokenCookieService {
             String encrypted = encrypt(objectMapper.writeValueAsString(tokenData));
             if (encrypted == null) {
                 log.error("Failed to encrypt token data");
-                return code;
+                throw new IllegalStateException("Failed to encrypt OAuth token data");
             }
 
             boolean isSecure = isSecureRequest(request);
@@ -212,6 +212,10 @@ public class OAuthTokenCookieService {
     private String decrypt(String encryptedText) {
         try {
             byte[] combined = Base64.getUrlDecoder().decode(encryptedText);
+            if (combined.length < GCM_IV_LENGTH) {
+                log.error("Invalid encrypted data: too short");
+                return null;
+            }
 
             byte[] iv = new byte[GCM_IV_LENGTH];
             byte[] cipherText = new byte[combined.length - GCM_IV_LENGTH];

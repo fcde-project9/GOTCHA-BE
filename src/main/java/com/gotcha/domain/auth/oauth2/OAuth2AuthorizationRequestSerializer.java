@@ -155,6 +155,10 @@ public class OAuth2AuthorizationRequestSerializer {
     private String decrypt(String encryptedText) {
         try {
             byte[] combined = Base64.getUrlDecoder().decode(encryptedText);
+            if (combined.length < GCM_IV_LENGTH) {
+                log.error("Invalid encrypted data: too short");
+                return null;
+            }
 
             byte[] iv = new byte[GCM_IV_LENGTH];
             byte[] cipherText = new byte[combined.length - GCM_IV_LENGTH];
