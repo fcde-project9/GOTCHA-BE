@@ -62,8 +62,8 @@ class OAuth2AuthenticationSuccessHandlerTest {
     class NewUserLogin {
 
         @Test
-        @DisplayName("신규 사용자 로그인 - isNewUser=true 파라미터 포함, 임시 코드 사용")
-        void newUserLogin_redirectWithIsNewUserTrue() throws Exception {
+        @DisplayName("신규 사용자 로그인 - 임시 코드만 전달 (isNewUser는 토큰 교환 응답에 포함)")
+        void newUserLogin_redirectWithTempCodeOnly() throws Exception {
             // given
             User user = createTestUser(SocialType.KAKAO, "test@kakao.com");
             CustomOAuth2User oAuth2User = new CustomOAuth2User(user, new HashMap<>(), true);
@@ -81,8 +81,8 @@ class OAuth2AuthenticationSuccessHandlerTest {
             // then
             String redirectUrl = response.getRedirectedUrl();
             assertThat(redirectUrl).isNotNull();
-            assertThat(redirectUrl).contains("isNewUser=true");
             assertThat(redirectUrl).contains("code=" + tempCode);
+            assertThat(redirectUrl).doesNotContain("isNewUser=");
             assertThat(redirectUrl).doesNotContain("accessToken=");
             assertThat(redirectUrl).doesNotContain("refreshToken=");
             verify(authService).saveRefreshToken(any(User.class), eq("refresh-token"));
@@ -95,8 +95,8 @@ class OAuth2AuthenticationSuccessHandlerTest {
     class ExistingUserLogin {
 
         @Test
-        @DisplayName("기존 사용자 로그인 - isNewUser=false 파라미터 포함, 임시 코드 사용")
-        void existingUserLogin_redirectWithIsNewUserFalse() throws Exception {
+        @DisplayName("기존 사용자 로그인 - 임시 코드만 전달 (isNewUser는 토큰 교환 응답에 포함)")
+        void existingUserLogin_redirectWithTempCodeOnly() throws Exception {
             // given
             User user = createTestUser(SocialType.GOOGLE, "test@gmail.com");
             CustomOAuth2User oAuth2User = new CustomOAuth2User(user, new HashMap<>(), false);
@@ -114,8 +114,10 @@ class OAuth2AuthenticationSuccessHandlerTest {
             // then
             String redirectUrl = response.getRedirectedUrl();
             assertThat(redirectUrl).isNotNull();
-            assertThat(redirectUrl).contains("isNewUser=false");
             assertThat(redirectUrl).contains("code=" + tempCode);
+            assertThat(redirectUrl).doesNotContain("isNewUser=");
+            assertThat(redirectUrl).doesNotContain("accessToken=");
+            assertThat(redirectUrl).doesNotContain("refreshToken=");
             verify(authService).saveRefreshToken(any(User.class), eq("refresh-token"));
             verify(oAuthTokenCacheService).storeTokens("access-token", "refresh-token", false);
         }

@@ -50,10 +50,9 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         }
         cookieRepository.removeRedirectUriCookie(response);
 
-        // 임시 코드만 전달 (토큰은 POST /api/auth/token으로 교환)
+        // 임시 코드만 전달 (토큰은 POST /api/auth/token으로 교환, isNewUser는 응답에 포함)
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
                 .queryParam("code", tempCode)
-                .queryParam("isNewUser", isNewUser)
                 .build()
                 .toUriString();
 
