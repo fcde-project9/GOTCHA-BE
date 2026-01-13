@@ -29,8 +29,8 @@ public interface AuthControllerApi {
                                     {
                                       "success": true,
                                       "data": {
-                                        "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-                                        "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                                        "accessToken": "ACCESS_TOKEN_EXAMPLE",
+                                        "refreshToken": "REFRESH_TOKEN_EXAMPLE",
                                         "user": {
                                           "id": 1,
                                           "nickname": "빨간캡슐#21",

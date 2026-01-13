@@ -105,7 +105,7 @@
 
 | Method | Endpoint | 설명 |
 |--------|----------|------|
-| GET | /users/permissions/{type} | 권한 동의 여부 확인 |
+| GET | /users/permissions/{permissionType} | 권한 동의 여부 확인 |
 | POST | /users/permissions | 권한 동의 상태 업데이트 |
 
 ---
