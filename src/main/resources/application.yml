@@ -53,6 +53,7 @@ spring:
 
 server:
   port: ${PORT:8080}
+  forward-headers-strategy: framework
   servlet:
     encoding:
       charset: UTF-8
