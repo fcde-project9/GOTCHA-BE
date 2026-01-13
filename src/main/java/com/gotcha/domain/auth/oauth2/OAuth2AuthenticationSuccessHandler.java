@@ -40,8 +40,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         // Refresh Token을 DB에 저장
         authService.saveRefreshToken(user, refreshToken);
 
-        // 토큰을 쿠키에 암호화 저장하고 임시 코드 발급 (분산 환경 지원)
-        String tempCode = oAuthTokenCacheService.storeTokens(accessToken, refreshToken, isNewUser, request, response);
+        // 토큰을 암호화하여 URL 파라미터로 전달 (쿠키 미사용 - cross-site 지원)
+        String encryptedCode = oAuthTokenCacheService.encryptTokens(accessToken, refreshToken, isNewUser);
 
         // 프론트엔드에서 전달한 redirect_uri 사용, 없으면 기본값 사용
         String redirectUri = cookieRepository.getRedirectUriFromCookie(request);
@@ -50,9 +50,9 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         }
         cookieRepository.removeRedirectUriCookie(response);
 
-        // 임시 코드만 전달 (토큰은 POST /api/auth/token으로 교환, isNewUser는 응답에 포함)
+        // 암호화된 토큰을 URL 파라미터로 전달 (프론트엔드가 POST /api/auth/token body에 포함)
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
-                .queryParam("code", tempCode)
+                .queryParam("code", encryptedCode)
                 .build()
                 .toUriString();
 

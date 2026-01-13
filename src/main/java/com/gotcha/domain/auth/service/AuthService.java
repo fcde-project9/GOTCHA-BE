@@ -8,8 +8,6 @@ import com.gotcha.domain.auth.jwt.JwtTokenProvider;
 import com.gotcha.domain.auth.repository.RefreshTokenRepository;
 import com.gotcha.domain.auth.service.OAuthTokenCookieService.TokenData;
 import com.gotcha.domain.user.entity.User;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -72,15 +70,14 @@ public class AuthService {
     }
 
     /**
-     * OAuth 임시 코드를 토큰으로 교환 (쿠키 기반)
+     * OAuth 암호화된 코드를 토큰으로 교환
      *
-     * @param request  HTTP 요청 (쿠키에서 토큰 읽기)
-     * @param response HTTP 응답 (쿠키 삭제)
+     * @param encryptedCode 암호화된 토큰 코드 (URL 파라미터로 전달받은 값)
      * @return 토큰 응답
-     * @throws AuthException 유효하지 않거나 만료된 코드인 경우
+     * @throws AuthException 유효하지 않거나 복호화 실패한 코드인 경우
      */
-    public TokenExchangeResponse exchangeToken(HttpServletRequest request, HttpServletResponse response) {
-        TokenData tokenData = oAuthTokenCacheService.exchangeCode(request, response);
+    public TokenExchangeResponse exchangeToken(String encryptedCode) {
+        TokenData tokenData = oAuthTokenCacheService.decryptTokens(encryptedCode);
         if (tokenData == null) {
             throw AuthException.invalidAuthCode();
         }

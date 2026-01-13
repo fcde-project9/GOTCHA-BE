@@ -2,6 +2,7 @@ package com.gotcha.domain.auth.controller;
 
 import com.gotcha._global.common.ApiResponse;
 import com.gotcha.domain.auth.dto.ReissueRequest;
+import com.gotcha.domain.auth.dto.TokenExchangeRequest;
 import com.gotcha.domain.auth.dto.TokenExchangeResponse;
 import com.gotcha.domain.auth.dto.TokenResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -132,22 +133,21 @@ public interface AuthControllerApi {
     ApiResponse<Void> logout(HttpServletRequest request, HttpServletResponse response);
 
     @Operation(
-            summary = "쿠키 기반 토큰 교환",
+            summary = "토큰 교환",
             description = """
-                    OAuth 로그인 완료 후 쿠키에 저장된 토큰 데이터를 실제 토큰으로 교환합니다.
+                    OAuth 로그인 완료 후 URL 파라미터로 받은 암호화된 코드를 실제 토큰으로 교환합니다.
 
                     **플로우:**
-                    1. 소셜 로그인 완료 → 토큰이 암호화된 쿠키에 저장됨
-                    2. 프론트엔드가 이 API를 호출하면 쿠키에서 토큰 추출
-                    3. 쿠키 자동 삭제 후 토큰 반환
+                    1. 소셜 로그인 완료 → 암호화된 토큰이 URL 파라미터(code)로 전달됨
+                    2. 프론트엔드가 code를 body에 담아 이 API 호출
+                    3. 서버가 code를 복호화하여 토큰 반환
 
                     **보안:**
-                    - 쿠키는 30초 후 자동 만료됩니다
-                    - 1회 사용 후 즉시 삭제됩니다
-                    - HttpOnly, Secure, SameSite=Lax 설정
+                    - 토큰은 AES-GCM으로 암호화되어 있습니다
+                    - 서버의 암호화 키 없이는 복호화 불가능합니다
 
-                    **분산 환경 지원:**
-                    - 쿠키 기반으로 동작하여 다중 인스턴스에서도 안정적
+                    **Cross-site 지원:**
+                    - 쿠키를 사용하지 않아 cross-origin 환경에서도 동작합니다
                     """
     )
     @ApiResponses({
@@ -174,7 +174,7 @@ public interface AuthControllerApi {
                     content = @Content(
                             mediaType = "application/json",
                             examples = @ExampleObject(
-                                    name = "A013 - 유효하지 않은 토큰 쿠키",
+                                    name = "A013 - 유효하지 않은 코드",
                                     value = """
                                             {
                                               "success": false,
@@ -188,7 +188,7 @@ public interface AuthControllerApi {
                     )
             )
     })
-    ApiResponse<TokenExchangeResponse> exchangeToken(HttpServletRequest request, HttpServletResponse response);
+    ApiResponse<TokenExchangeResponse> exchangeToken(@Valid @RequestBody TokenExchangeRequest request);
 
     @Operation(
             summary = "[테스트용] 임시 코드 생성",
