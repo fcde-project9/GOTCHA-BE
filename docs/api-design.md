@@ -24,11 +24,11 @@
 
 | Method | Endpoint | 설명 |
 |--------|----------|------|
-| GET | /shops | 주변 가챠샵 목록 |
+| GET | /shops/map | 지도 영역 내 가게 목록 |
 | GET | /shops/search | 가게 이름 검색 |
 | GET | /shops/nearby | 50m 내 가게 목록 (제보 전 중복 체크) |
 | GET | /shops/{id} | 가게 상세 |
-| POST | /shops/report | 가게 제보 |
+| POST | /shops/save | 가게 제보 |
 
 ### GET /shops 파라미터
 
@@ -80,6 +80,10 @@
 | POST | /shops/{id}/comments | 댓글 작성 |
 | GET | /shops/{id}/reviews | 리뷰 목록 |
 | POST | /shops/{id}/reviews | 리뷰 작성 |
+| PUT | /shops/{id}/reviews/{reviewId} | 리뷰 수정 |
+| DELETE | /shops/{id}/reviews/{reviewId} | 리뷰 삭제 |
+| POST | /shops/reviews/{reviewId}/like | 리뷰 좋아요 |
+| DELETE | /shops/reviews/{reviewId}/like | 리뷰 좋아요 취소 |
 
 ---
 
@@ -88,15 +92,26 @@
 | Method | Endpoint | 설명 |
 |--------|----------|------|
 | GET | /users/me | 내 정보 |
+| GET | /users/me/nickname | 닉네임 조회 |
 | PATCH | /users/me/nickname | 닉네임 수정 |
+| PATCH | /users/me/profile-image | 프로필 이미지 변경 |
+| DELETE | /users/me/profile-image | 프로필 이미지 삭제 |
 | GET | /users/me/shops | 내가 제보한 가게 목록 |
-| DELETE | /users/me | 회원 탈퇴 |
-| POST | /users/me/withdrawal-survey | 탈퇴 설문 저장 |
+| DELETE | /users/me | 회원 탈퇴 (설문 포함) |
 
 ---
 
-## 이미지
+## 권한 (Permission)
 
 | Method | Endpoint | 설명 |
 |--------|----------|------|
-| POST | /images | 이미지 업로드 |
+| GET | /users/permissions/{permissionType} | 권한 동의 여부 확인 |
+| POST | /users/permissions | 권한 동의 상태 업데이트 |
+
+---
+
+## 파일
+
+| Method | Endpoint | 설명 |
+|--------|----------|------|
+| POST | /files/upload | 이미지 업로드 (GCS) |
