@@ -51,9 +51,9 @@ public class OAuthTokenCacheService {
      * @return 토큰 데이터 (없거나 만료된 경우 null)
      */
     public TokenData exchangeCode(String code) {
-        TokenData tokenData = tokenCache.getIfPresent(code);
+        // asMap().remove()를 사용하여 원자적으로 조회 + 삭제 수행 (Race Condition 방지)
+        TokenData tokenData = tokenCache.asMap().remove(code);
         if (tokenData != null) {
-            tokenCache.invalidate(code);
             log.debug("Exchanged and invalidated temp code: {}", code);
         } else {
             log.warn("Invalid or expired temp code: {}", code);

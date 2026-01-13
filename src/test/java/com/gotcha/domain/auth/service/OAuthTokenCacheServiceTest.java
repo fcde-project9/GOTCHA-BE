@@ -3,7 +3,13 @@ package com.gotcha.domain.auth.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.gotcha.domain.auth.service.OAuthTokenCacheService.TokenData;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -166,6 +172,90 @@ class OAuthTokenCacheServiceTest {
             assertThat(data1.getAccessToken()).isEqualTo("access1");
             assertThat(data2.getAccessToken()).isEqualTo("access2");
             assertThat(data3.getAccessToken()).isEqualTo("access3");
+        }
+
+        @Test
+        @DisplayName("동일한 코드에 대한 동시 호출 시 단 하나의 스레드만 토큰을 획득한다")
+        void shouldAllowOnlyOneThreadToExchangeSameCode() throws InterruptedException {
+            // given
+            String code = cacheService.storeTokens("access", "refresh", true);
+            int threadCount = 10;
+            ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+            CountDownLatch startLatch = new CountDownLatch(1);
+            CountDownLatch endLatch = new CountDownLatch(threadCount);
+            AtomicInteger successCount = new AtomicInteger(0);
+            AtomicInteger nullCount = new AtomicInteger(0);
+            List<TokenData> results = new ArrayList<>();
+
+            // when - 모든 스레드가 동시에 동일한 코드로 exchangeCode 호출
+            for (int i = 0; i < threadCount; i++) {
+                executor.submit(() -> {
+                    try {
+                        startLatch.await(); // 모든 스레드가 동시에 시작하도록 대기
+                        TokenData result = cacheService.exchangeCode(code);
+                        synchronized (results) {
+                            results.add(result);
+                        }
+                        if (result != null) {
+                            successCount.incrementAndGet();
+                        } else {
+                            nullCount.incrementAndGet();
+                        }
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    } finally {
+                        endLatch.countDown();
+                    }
+                });
+            }
+
+            startLatch.countDown(); // 모든 스레드 동시 시작
+            endLatch.await(5, TimeUnit.SECONDS); // 모든 스레드 완료 대기
+            executor.shutdown();
+
+            // then - 정확히 1개의 스레드만 토큰을 획득해야 함 (원자적 연산 검증)
+            assertThat(successCount.get()).isEqualTo(1);
+            assertThat(nullCount.get()).isEqualTo(threadCount - 1);
+        }
+
+        @Test
+        @DisplayName("여러 다른 코드에 대한 동시 호출이 정상 동작한다")
+        void shouldHandleConcurrentExchangeOfDifferentCodes() throws InterruptedException {
+            // given
+            int codeCount = 100;
+            List<String> codes = new ArrayList<>();
+            for (int i = 0; i < codeCount; i++) {
+                codes.add(cacheService.storeTokens("access" + i, "refresh" + i, i % 2 == 0));
+            }
+
+            ExecutorService executor = Executors.newFixedThreadPool(20);
+            CountDownLatch startLatch = new CountDownLatch(1);
+            CountDownLatch endLatch = new CountDownLatch(codeCount);
+            AtomicInteger successCount = new AtomicInteger(0);
+
+            // when - 여러 스레드가 서로 다른 코드를 동시에 교환
+            for (String code : codes) {
+                executor.submit(() -> {
+                    try {
+                        startLatch.await();
+                        TokenData result = cacheService.exchangeCode(code);
+                        if (result != null) {
+                            successCount.incrementAndGet();
+                        }
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    } finally {
+                        endLatch.countDown();
+                    }
+                });
+            }
+
+            startLatch.countDown();
+            endLatch.await(10, TimeUnit.SECONDS);
+            executor.shutdown();
+
+            // then - 모든 코드가 정확히 1번씩 교환되어야 함
+            assertThat(successCount.get()).isEqualTo(codeCount);
         }
     }
 }

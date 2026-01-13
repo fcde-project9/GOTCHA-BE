@@ -214,7 +214,7 @@ public interface AuthControllerApi {
                                     {
                                       "success": false,
                                       "error": {
-                                        "code": "G001",
+                                        "code": "C004",
                                         "message": "서버 내부 오류가 발생했습니다"
                                       }
                                     }
