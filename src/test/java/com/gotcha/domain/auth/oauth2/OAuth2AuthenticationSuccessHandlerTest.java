@@ -2,13 +2,18 @@ package com.gotcha.domain.auth.oauth2;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 import com.gotcha.domain.auth.jwt.JwtTokenProvider;
 import com.gotcha.domain.auth.service.AuthService;
-import com.gotcha.domain.auth.service.OAuthTokenCacheService;
+import com.gotcha.domain.auth.service.OAuthTokenCookieService;
 import com.gotcha.domain.user.entity.SocialType;
 import com.gotcha.domain.user.entity.User;
 import java.util.HashMap;
@@ -39,7 +44,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
     private AuthService authService;
 
     @Mock
-    private OAuthTokenCacheService oAuthTokenCacheService;
+    private OAuthTokenCookieService oAuthTokenCacheService;
 
     @Mock
     private HttpCookieOAuth2AuthorizationRequestRepository cookieRepository;
@@ -72,7 +77,8 @@ class OAuth2AuthenticationSuccessHandlerTest {
             given(authentication.getPrincipal()).willReturn(oAuth2User);
             given(jwtTokenProvider.generateAccessToken(any(User.class))).willReturn("access-token");
             given(jwtTokenProvider.generateRefreshToken(any(User.class))).willReturn("refresh-token");
-            given(oAuthTokenCacheService.storeTokens("access-token", "refresh-token", true))
+            given(oAuthTokenCacheService.storeTokens(anyString(), anyString(), anyBoolean(),
+                    any(HttpServletRequest.class), any(HttpServletResponse.class)))
                     .willReturn(tempCode);
 
             // when
@@ -86,7 +92,8 @@ class OAuth2AuthenticationSuccessHandlerTest {
             assertThat(redirectUrl).doesNotContain("accessToken=");
             assertThat(redirectUrl).doesNotContain("refreshToken=");
             verify(authService).saveRefreshToken(any(User.class), eq("refresh-token"));
-            verify(oAuthTokenCacheService).storeTokens("access-token", "refresh-token", true);
+            verify(oAuthTokenCacheService).storeTokens(eq("access-token"), eq("refresh-token"), eq(true),
+                    any(HttpServletRequest.class), any(HttpServletResponse.class));
         }
     }
 
@@ -105,7 +112,8 @@ class OAuth2AuthenticationSuccessHandlerTest {
             given(authentication.getPrincipal()).willReturn(oAuth2User);
             given(jwtTokenProvider.generateAccessToken(any(User.class))).willReturn("access-token");
             given(jwtTokenProvider.generateRefreshToken(any(User.class))).willReturn("refresh-token");
-            given(oAuthTokenCacheService.storeTokens("access-token", "refresh-token", false))
+            given(oAuthTokenCacheService.storeTokens(anyString(), anyString(), anyBoolean(),
+                    any(HttpServletRequest.class), any(HttpServletResponse.class)))
                     .willReturn(tempCode);
 
             // when
@@ -119,7 +127,8 @@ class OAuth2AuthenticationSuccessHandlerTest {
             assertThat(redirectUrl).doesNotContain("accessToken=");
             assertThat(redirectUrl).doesNotContain("refreshToken=");
             verify(authService).saveRefreshToken(any(User.class), eq("refresh-token"));
-            verify(oAuthTokenCacheService).storeTokens("access-token", "refresh-token", false);
+            verify(oAuthTokenCacheService).storeTokens(eq("access-token"), eq("refresh-token"), eq(false),
+                    any(HttpServletRequest.class), any(HttpServletResponse.class));
         }
     }
 
@@ -138,7 +147,8 @@ class OAuth2AuthenticationSuccessHandlerTest {
             given(authentication.getPrincipal()).willReturn(oAuth2User);
             given(jwtTokenProvider.generateAccessToken(any(User.class))).willReturn("kakao-access-token");
             given(jwtTokenProvider.generateRefreshToken(any(User.class))).willReturn("kakao-refresh-token");
-            given(oAuthTokenCacheService.storeTokens("kakao-access-token", "kakao-refresh-token", true))
+            given(oAuthTokenCacheService.storeTokens(eq("kakao-access-token"), eq("kakao-refresh-token"), eq(true),
+                    any(HttpServletRequest.class), any(HttpServletResponse.class)))
                     .willReturn(tempCode);
 
             // when
@@ -162,7 +172,8 @@ class OAuth2AuthenticationSuccessHandlerTest {
             given(authentication.getPrincipal()).willReturn(oAuth2User);
             given(jwtTokenProvider.generateAccessToken(any(User.class))).willReturn("google-access-token");
             given(jwtTokenProvider.generateRefreshToken(any(User.class))).willReturn("google-refresh-token");
-            given(oAuthTokenCacheService.storeTokens("google-access-token", "google-refresh-token", true))
+            given(oAuthTokenCacheService.storeTokens(eq("google-access-token"), eq("google-refresh-token"), eq(true),
+                    any(HttpServletRequest.class), any(HttpServletResponse.class)))
                     .willReturn(tempCode);
 
             // when
@@ -186,7 +197,8 @@ class OAuth2AuthenticationSuccessHandlerTest {
             given(authentication.getPrincipal()).willReturn(oAuth2User);
             given(jwtTokenProvider.generateAccessToken(any(User.class))).willReturn("naver-access-token");
             given(jwtTokenProvider.generateRefreshToken(any(User.class))).willReturn("naver-refresh-token");
-            given(oAuthTokenCacheService.storeTokens("naver-access-token", "naver-refresh-token", true))
+            given(oAuthTokenCacheService.storeTokens(eq("naver-access-token"), eq("naver-refresh-token"), eq(true),
+                    any(HttpServletRequest.class), any(HttpServletResponse.class)))
                     .willReturn(tempCode);
 
             // when
@@ -215,7 +227,8 @@ class OAuth2AuthenticationSuccessHandlerTest {
             given(authentication.getPrincipal()).willReturn(oAuth2User);
             given(jwtTokenProvider.generateAccessToken(any(User.class))).willReturn("access-token");
             given(jwtTokenProvider.generateRefreshToken(any(User.class))).willReturn("refresh-token");
-            given(oAuthTokenCacheService.storeTokens("access-token", "refresh-token", true))
+            given(oAuthTokenCacheService.storeTokens(eq("access-token"), eq("refresh-token"), eq(true),
+                    any(HttpServletRequest.class), any(HttpServletResponse.class)))
                     .willReturn(tempCode);
 
             // when
@@ -245,7 +258,8 @@ class OAuth2AuthenticationSuccessHandlerTest {
             given(authentication.getPrincipal()).willReturn(oAuth2User);
             given(jwtTokenProvider.generateAccessToken(any(User.class))).willReturn("access-token");
             given(jwtTokenProvider.generateRefreshToken(any(User.class))).willReturn("refresh-token");
-            given(oAuthTokenCacheService.storeTokens("access-token", "refresh-token", true))
+            given(oAuthTokenCacheService.storeTokens(eq("access-token"), eq("refresh-token"), eq(true),
+                    any(HttpServletRequest.class), any(HttpServletResponse.class)))
                     .willReturn(tempCode);
             given(cookieRepository.getRedirectUriFromCookie(request)).willReturn(customRedirectUri);
 
@@ -271,7 +285,8 @@ class OAuth2AuthenticationSuccessHandlerTest {
             given(authentication.getPrincipal()).willReturn(oAuth2User);
             given(jwtTokenProvider.generateAccessToken(any(User.class))).willReturn("access-token");
             given(jwtTokenProvider.generateRefreshToken(any(User.class))).willReturn("refresh-token");
-            given(oAuthTokenCacheService.storeTokens("access-token", "refresh-token", true))
+            given(oAuthTokenCacheService.storeTokens(eq("access-token"), eq("refresh-token"), eq(true),
+                    any(HttpServletRequest.class), any(HttpServletResponse.class)))
                     .willReturn(tempCode);
             given(cookieRepository.getRedirectUriFromCookie(request)).willReturn(null);
 
@@ -296,7 +311,8 @@ class OAuth2AuthenticationSuccessHandlerTest {
             given(authentication.getPrincipal()).willReturn(oAuth2User);
             given(jwtTokenProvider.generateAccessToken(any(User.class))).willReturn("access-token");
             given(jwtTokenProvider.generateRefreshToken(any(User.class))).willReturn("refresh-token");
-            given(oAuthTokenCacheService.storeTokens("access-token", "refresh-token", true))
+            given(oAuthTokenCacheService.storeTokens(eq("access-token"), eq("refresh-token"), eq(true),
+                    any(HttpServletRequest.class), any(HttpServletResponse.class)))
                     .willReturn(tempCode);
             given(cookieRepository.getRedirectUriFromCookie(request)).willReturn("   ");
 

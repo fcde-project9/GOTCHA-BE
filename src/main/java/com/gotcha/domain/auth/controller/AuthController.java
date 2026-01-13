@@ -3,11 +3,10 @@ package com.gotcha.domain.auth.controller;
 import com.gotcha._global.common.ApiResponse;
 import com.gotcha._global.util.SecurityUtil;
 import com.gotcha.domain.auth.dto.ReissueRequest;
-import com.gotcha.domain.auth.dto.TokenExchangeRequest;
 import com.gotcha.domain.auth.dto.TokenExchangeResponse;
 import com.gotcha.domain.auth.dto.TokenResponse;
 import com.gotcha.domain.auth.service.AuthService;
-import com.gotcha.domain.auth.service.OAuthTokenCacheService;
+import com.gotcha.domain.auth.service.OAuthTokenCookieService;
 import com.gotcha.domain.auth.util.CookieUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -26,7 +25,7 @@ public class AuthController implements AuthControllerApi {
 
     private final AuthService authService;
     private final SecurityUtil securityUtil;
-    private final OAuthTokenCacheService oAuthTokenCacheService;
+    private final OAuthTokenCookieService oAuthTokenCacheService;
     private final Environment environment;
 
     @Override
@@ -51,9 +50,10 @@ public class AuthController implements AuthControllerApi {
     @Override
     @PostMapping("/token")
     public ApiResponse<TokenExchangeResponse> exchangeToken(
-            @Valid @RequestBody TokenExchangeRequest request) {
-        TokenExchangeResponse response = authService.exchangeToken(request.code());
-        return ApiResponse.success(response);
+            HttpServletRequest request, HttpServletResponse response) {
+        // 쿠키 기반으로 토큰 교환 (code 파라미터 불필요)
+        TokenExchangeResponse tokenResponse = authService.exchangeToken(request, response);
+        return ApiResponse.success(tokenResponse);
     }
 
     @Override
@@ -73,11 +73,11 @@ public class AuthController implements AuthControllerApi {
             throw new IllegalStateException("This endpoint is only available in local/dev environment");
         }
 
-        String code = oAuthTokenCacheService.storeTokens(
+        String encryptedToken = oAuthTokenCacheService.storeTokensForTest(
                 "test-access-token-for-swagger",
                 "test-refresh-token-for-swagger",
                 false
         );
-        return ApiResponse.success(code);
+        return ApiResponse.success(encryptedToken);
     }
 }

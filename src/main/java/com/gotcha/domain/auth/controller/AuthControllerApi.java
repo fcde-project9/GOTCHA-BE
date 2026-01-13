@@ -2,7 +2,6 @@ package com.gotcha.domain.auth.controller;
 
 import com.gotcha._global.common.ApiResponse;
 import com.gotcha.domain.auth.dto.ReissueRequest;
-import com.gotcha.domain.auth.dto.TokenExchangeRequest;
 import com.gotcha.domain.auth.dto.TokenExchangeResponse;
 import com.gotcha.domain.auth.dto.TokenResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -133,17 +132,22 @@ public interface AuthControllerApi {
     ApiResponse<Void> logout(HttpServletRequest request, HttpServletResponse response);
 
     @Operation(
-            summary = "임시 코드로 토큰 교환",
+            summary = "쿠키 기반 토큰 교환",
             description = """
-                    OAuth 로그인 완료 후 발급된 임시 코드를 실제 토큰으로 교환합니다.
+                    OAuth 로그인 완료 후 쿠키에 저장된 토큰 데이터를 실제 토큰으로 교환합니다.
 
                     **플로우:**
-                    1. 소셜 로그인 완료 → 프론트엔드로 임시 코드(code) 전달
-                    2. 프론트엔드가 이 API를 호출하여 실제 토큰 획득
+                    1. 소셜 로그인 완료 → 토큰이 암호화된 쿠키에 저장됨
+                    2. 프론트엔드가 이 API를 호출하면 쿠키에서 토큰 추출
+                    3. 쿠키 자동 삭제 후 토큰 반환
 
                     **보안:**
-                    - 임시 코드는 30초 후 만료됩니다
-                    - 1회 사용 후 즉시 무효화됩니다
+                    - 쿠키는 30초 후 자동 만료됩니다
+                    - 1회 사용 후 즉시 삭제됩니다
+                    - HttpOnly, Secure, SameSite=Lax 설정
+
+                    **분산 환경 지원:**
+                    - 쿠키 기반으로 동작하여 다중 인스턴스에서도 안정적
                     """
     )
     @ApiResponses({
@@ -170,7 +174,7 @@ public interface AuthControllerApi {
                     content = @Content(
                             mediaType = "application/json",
                             examples = @ExampleObject(
-                                    name = "A013 - 유효하지 않은 코드",
+                                    name = "A013 - 유효하지 않은 토큰 쿠키",
                                     value = """
                                             {
                                               "success": false,
@@ -184,7 +188,7 @@ public interface AuthControllerApi {
                     )
             )
     })
-    ApiResponse<TokenExchangeResponse> exchangeToken(@Valid @RequestBody TokenExchangeRequest request);
+    ApiResponse<TokenExchangeResponse> exchangeToken(HttpServletRequest request, HttpServletResponse response);
 
     @Operation(
             summary = "[테스트용] 임시 코드 생성",

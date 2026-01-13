@@ -1,5 +1,6 @@
 package com.gotcha.domain.auth.controller;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
@@ -13,12 +14,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gotcha._global.exception.GlobalExceptionHandler;
 import com.gotcha._global.util.SecurityUtil;
 import com.gotcha.domain.auth.dto.ReissueRequest;
-import com.gotcha.domain.auth.dto.TokenExchangeRequest;
 import com.gotcha.domain.auth.dto.TokenExchangeResponse;
 import com.gotcha.domain.auth.dto.TokenResponse;
 import com.gotcha.domain.auth.exception.AuthException;
 import com.gotcha.domain.auth.service.AuthService;
 import com.gotcha.domain.user.entity.SocialType;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -169,22 +171,21 @@ class AuthControllerTest {
     class ExchangeToken {
 
         @Test
-        @DisplayName("유효한 임시 코드로 토큰을 교환한다")
-        void shouldExchangeTokenWithValidCode() throws Exception {
+        @DisplayName("유효한 쿠키로 토큰을 교환한다")
+        void shouldExchangeTokenWithValidCookie() throws Exception {
             // given
-            TokenExchangeRequest request = new TokenExchangeRequest("valid-temp-code");
             TokenExchangeResponse response = TokenExchangeResponse.of(
                     "new-access-token",
                     "new-refresh-token",
                     true
             );
 
-            given(authService.exchangeToken(anyString())).willReturn(response);
+            given(authService.exchangeToken(any(HttpServletRequest.class), any(HttpServletResponse.class)))
+                    .willReturn(response);
 
             // when & then
             mockMvc.perform(post("/api/auth/token")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
+                            .contentType(MediaType.APPLICATION_JSON))
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success").value(true))
@@ -197,68 +198,37 @@ class AuthControllerTest {
         @DisplayName("기존 사용자인 경우 isNewUser가 false")
         void shouldReturnIsNewUserFalseForExistingUser() throws Exception {
             // given
-            TokenExchangeRequest request = new TokenExchangeRequest("valid-temp-code");
             TokenExchangeResponse response = TokenExchangeResponse.of(
                     "access-token",
                     "refresh-token",
                     false
             );
 
-            given(authService.exchangeToken(anyString())).willReturn(response);
+            given(authService.exchangeToken(any(HttpServletRequest.class), any(HttpServletResponse.class)))
+                    .willReturn(response);
 
             // when & then
             mockMvc.perform(post("/api/auth/token")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
+                            .contentType(MediaType.APPLICATION_JSON))
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.isNewUser").value(false));
         }
 
         @Test
-        @DisplayName("유효하지 않은 코드이면 400 에러를 반환한다")
-        void shouldReturn400WithInvalidCode() throws Exception {
+        @DisplayName("유효하지 않은 쿠키이면 400 에러를 반환한다")
+        void shouldReturn400WithInvalidCookie() throws Exception {
             // given
-            TokenExchangeRequest request = new TokenExchangeRequest("invalid-code");
-            given(authService.exchangeToken(anyString()))
+            given(authService.exchangeToken(any(HttpServletRequest.class), any(HttpServletResponse.class)))
                     .willThrow(AuthException.invalidAuthCode());
 
             // when & then
             mockMvc.perform(post("/api/auth/token")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
+                            .contentType(MediaType.APPLICATION_JSON))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.success").value(false))
                     .andExpect(jsonPath("$.error.code").value("A013"));
-        }
-
-        @Test
-        @DisplayName("code가 빈 문자열이면 400 에러를 반환한다")
-        void shouldReturn400WithEmptyCode() throws Exception {
-            // given
-            TokenExchangeRequest request = new TokenExchangeRequest("");
-
-            // when & then
-            mockMvc.perform(post("/api/auth/token")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andDo(print())
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        @DisplayName("code가 null이면 400 에러를 반환한다")
-        void shouldReturn400WithNullCode() throws Exception {
-            // given - code 필드가 없는 JSON
-            String requestBody = "{}";
-
-            // when & then
-            mockMvc.perform(post("/api/auth/token")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(requestBody))
-                    .andDo(print())
-                    .andExpect(status().isBadRequest());
         }
     }
 }

@@ -6,8 +6,10 @@ import com.gotcha.domain.auth.entity.RefreshToken;
 import com.gotcha.domain.auth.exception.AuthException;
 import com.gotcha.domain.auth.jwt.JwtTokenProvider;
 import com.gotcha.domain.auth.repository.RefreshTokenRepository;
-import com.gotcha.domain.auth.service.OAuthTokenCacheService.TokenData;
+import com.gotcha.domain.auth.service.OAuthTokenCookieService.TokenData;
 import com.gotcha.domain.user.entity.User;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,7 +23,7 @@ public class AuthService {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final OAuthTokenCacheService oAuthTokenCacheService;
+    private final OAuthTokenCookieService oAuthTokenCacheService;
 
     @Value("${jwt.refresh-token-validity}")
     private long refreshTokenValidity;
@@ -70,14 +72,15 @@ public class AuthService {
     }
 
     /**
-     * OAuth 임시 코드를 토큰으로 교환
+     * OAuth 임시 코드를 토큰으로 교환 (쿠키 기반)
      *
-     * @param code 임시 코드
+     * @param request  HTTP 요청 (쿠키에서 토큰 읽기)
+     * @param response HTTP 응답 (쿠키 삭제)
      * @return 토큰 응답
      * @throws AuthException 유효하지 않거나 만료된 코드인 경우
      */
-    public TokenExchangeResponse exchangeToken(String code) {
-        TokenData tokenData = oAuthTokenCacheService.exchangeCode(code);
+    public TokenExchangeResponse exchangeToken(HttpServletRequest request, HttpServletResponse response) {
+        TokenData tokenData = oAuthTokenCacheService.exchangeCode(request, response);
         if (tokenData == null) {
             throw AuthException.invalidAuthCode();
         }
