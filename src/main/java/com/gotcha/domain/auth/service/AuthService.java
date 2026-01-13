@@ -1,10 +1,12 @@
 package com.gotcha.domain.auth.service;
 
+import com.gotcha.domain.auth.dto.TokenExchangeResponse;
 import com.gotcha.domain.auth.dto.TokenResponse;
 import com.gotcha.domain.auth.entity.RefreshToken;
 import com.gotcha.domain.auth.exception.AuthException;
 import com.gotcha.domain.auth.jwt.JwtTokenProvider;
 import com.gotcha.domain.auth.repository.RefreshTokenRepository;
+import com.gotcha.domain.auth.service.OAuthTokenCacheService.TokenData;
 import com.gotcha.domain.user.entity.User;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ public class AuthService {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final OAuthTokenCacheService oAuthTokenCacheService;
 
     @Value("${jwt.refresh-token-validity}")
     private long refreshTokenValidity;
@@ -64,5 +67,24 @@ public class AuthService {
                                         .build()
                         )
                 );
+    }
+
+    /**
+     * OAuth 임시 코드를 토큰으로 교환
+     *
+     * @param code 임시 코드
+     * @return 토큰 응답
+     * @throws AuthException 유효하지 않거나 만료된 코드인 경우
+     */
+    public TokenExchangeResponse exchangeToken(String code) {
+        TokenData tokenData = oAuthTokenCacheService.exchangeCode(code);
+        if (tokenData == null) {
+            throw AuthException.invalidAuthCode();
+        }
+        return TokenExchangeResponse.of(
+                tokenData.getAccessToken(),
+                tokenData.getRefreshToken(),
+                tokenData.isNewUser()
+        );
     }
 }
