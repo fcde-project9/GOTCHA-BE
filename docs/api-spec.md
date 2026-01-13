@@ -417,6 +417,7 @@ Authorization: Bearer {accessToken}
         "createdAt": "2025-01-01T10:00:00"
       }
     ],
+    "reviewCount": 42,
     "totalReviewImageCount": 25,
     "recentReviewImages": [
       "https://storage.googleapis.com/.../image1.jpg",
