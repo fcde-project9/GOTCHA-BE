@@ -10,3 +10,16 @@ spring:
 
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS}
+
+# AWS S3 Configuration (Production)
+aws:
+  s3:
+    bucket-name: ${AWS_S3_BUCKET_NAME}
+    region: ${AWS_REGION}
+  credentials:
+    access-key: ${AWS_ACCESS_KEY_ID}
+    secret-key: ${AWS_SECRET_ACCESS_KEY}
+
+# User Configuration
+user:
+  default-profile-image-url: ${USER_DEFAULT_PROFILE_IMAGE_URL}

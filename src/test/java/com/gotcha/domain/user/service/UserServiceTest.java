@@ -11,7 +11,7 @@ import com.gotcha._global.util.SecurityUtil;
 import com.gotcha.domain.auth.repository.RefreshTokenRepository;
 import com.gotcha.domain.comment.repository.CommentRepository;
 import com.gotcha.domain.favorite.repository.FavoriteRepository;
-import com.gotcha.domain.file.service.FileUploadService;
+import com.gotcha.domain.file.service.FileStorageService;
 import com.gotcha.domain.review.entity.Review;
 import com.gotcha.domain.review.entity.ReviewImage;
 import com.gotcha.domain.review.repository.ReviewImageRepository;
@@ -65,7 +65,7 @@ class UserServiceTest {
     private CommentRepository commentRepository;
 
     @Mock
-    private FileUploadService fileUploadService;
+    private FileStorageService fileStorageService;
     @InjectMocks
     private UserService userService;
 
@@ -305,8 +305,8 @@ class UserServiceTest {
             userService.withdraw(request);
 
             // then - GCS 이미지 삭제 검증
-            verify(fileUploadService).deleteFile("https://storage.googleapis.com/bucket/image1.jpg");
-            verify(fileUploadService).deleteFile("https://storage.googleapis.com/bucket/image2.jpg");
+            verify(fileStorageService).deleteFile("https://storage.googleapis.com/bucket/image1.jpg");
+            verify(fileStorageService).deleteFile("https://storage.googleapis.com/bucket/image2.jpg");
 
             // then - DB 이미지 삭제 검증
             verify(reviewImageRepository).deleteAllByReviewIdIn(List.of(100L));
