@@ -15,6 +15,7 @@ import com.gotcha.domain.file.service.FileStorageService;
 import com.gotcha.domain.review.entity.Review;
 import com.gotcha.domain.review.entity.ReviewImage;
 import com.gotcha.domain.review.repository.ReviewImageRepository;
+import com.gotcha.domain.review.repository.ReviewLikeRepository;
 import com.gotcha.domain.review.repository.ReviewRepository;
 import com.gotcha.domain.shop.entity.Shop;
 import com.gotcha.domain.user.dto.UserResponse;
@@ -24,6 +25,7 @@ import com.gotcha.domain.user.entity.User;
 import com.gotcha.domain.user.entity.WithdrawalReason;
 import com.gotcha.domain.user.entity.WithdrawalSurvey;
 import com.gotcha.domain.user.exception.UserException;
+import com.gotcha.domain.user.repository.UserPermissionRepository;
 import com.gotcha.domain.user.repository.UserRepository;
 import com.gotcha.domain.user.repository.WithdrawalSurveyRepository;
 import java.util.Collections;
@@ -47,6 +49,9 @@ class UserServiceTest {
     private UserRepository userRepository;
 
     @Mock
+    private UserPermissionRepository userPermissionRepository;
+
+    @Mock
     private WithdrawalSurveyRepository withdrawalSurveyRepository;
 
     @Mock
@@ -60,6 +65,9 @@ class UserServiceTest {
 
     @Mock
     private ReviewImageRepository reviewImageRepository;
+
+    @Mock
+    private ReviewLikeRepository reviewLikeRepository;
 
     @Mock
     private CommentRepository commentRepository;
@@ -217,8 +225,10 @@ class UserServiceTest {
 
             // then - 데이터 삭제 검증
             verify(favoriteRepository).deleteByUserId(testUser.getId());
+            verify(reviewLikeRepository).deleteByUserId(testUser.getId());
             verify(reviewRepository).deleteByUserId(testUser.getId());
             verify(commentRepository).deleteByUserId(testUser.getId());
+            verify(userPermissionRepository).deleteByUserId(testUser.getId());
             verify(refreshTokenRepository).deleteByUserId(testUser.getId());
 
             // then - soft delete 및 마스킹 검증
@@ -310,6 +320,9 @@ class UserServiceTest {
 
             // then - DB 이미지 삭제 검증
             verify(reviewImageRepository).deleteAllByReviewIdIn(List.of(100L));
+
+            // then - 리뷰 좋아요 삭제 검증
+            verify(reviewLikeRepository).deleteAllByReviewIdIn(List.of(100L));
 
             // then - 리뷰 삭제 검증
             verify(reviewRepository).deleteByUserId(testUser.getId());
