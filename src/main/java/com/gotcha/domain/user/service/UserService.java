@@ -55,7 +55,7 @@ public class UserService {
 
     public UserResponse getMyInfo() {
         User user = securityUtil.getCurrentUser();
-        return UserResponse.from(user);
+        return UserResponse.from(user, defaultProfileImageUrl);
     }
 
     /**
@@ -106,7 +106,7 @@ public class UserService {
         // 현재 닉네임과 동일한 경우 그대로 반환 (중복 체크 불필요)
         if (currentUser.getNickname().equals(nickname)) {
             log.info("Same nickname as current, skipping duplicate check");
-            return UserResponse.from(currentUser);
+            return UserResponse.from(currentUser, defaultProfileImageUrl);
         }
 
         // 닉네임 중복 체크
@@ -119,7 +119,7 @@ public class UserService {
         currentUser.updateNickname(nickname);
         log.info("Nickname updated successfully: {} -> {}", currentUser.getId(), nickname);
 
-        return UserResponse.from(currentUser);
+        return UserResponse.from(currentUser, defaultProfileImageUrl);
     }
 
     /**
@@ -151,7 +151,7 @@ public class UserService {
         currentUser.updateProfileImage(profileImageUrl);
         log.info("Profile image updated successfully: {} -> {}", currentUser.getId(), profileImageUrl);
 
-        return UserResponse.from(currentUser);
+        return UserResponse.from(currentUser, defaultProfileImageUrl);
     }
 
     /**
@@ -182,7 +182,7 @@ public class UserService {
         currentUser.updateProfileImage(defaultProfileImageUrl);
         log.info("Profile image reset to default: {} -> {}", currentUser.getId(), defaultProfileImageUrl);
 
-        return UserResponse.from(currentUser);
+        return UserResponse.from(currentUser, defaultProfileImageUrl);
     }
 
     /**

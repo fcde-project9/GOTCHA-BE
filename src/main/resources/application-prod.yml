@@ -19,3 +19,7 @@ aws:
   credentials:
     access-key: ${AWS_ACCESS_KEY_ID}
     secret-key: ${AWS_SECRET_ACCESS_KEY}
+
+# User Configuration
+user:
+  default-profile-image-url: ${USER_DEFAULT_PROFILE_IMAGE_URL}

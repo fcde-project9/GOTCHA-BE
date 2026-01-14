@@ -149,6 +149,49 @@ aws s3api create-bucket \
 }
 ```
 
+#### 3.4. Default 이미지 업로드 (필수)
+
+애플리케이션에서 사용할 기본 프로필 이미지를 S3에 업로드해야 합니다.
+
+**⚠️ 중요:** `defaults` 폴더는 애플리케이션 API를 통한 업로드가 차단되어 있습니다. 보안상의 이유로 **관리자가 AWS Console 또는 AWS CLI를 통해서만** 업로드할 수 있습니다.
+
+**업로드할 파일:**
+- `defaults/profile-default-join.png` - 회원가입 시 기본 프로필 이미지
+
+**AWS Console에서 업로드:**
+1. S3 Console > gotcha-prod-files 버킷 선택
+2. "폴더 생성" 클릭 → 이름: `defaults`
+3. `defaults` 폴더 들어가기
+4. "업로드" 클릭 → 기본 프로필 이미지 파일 업로드
+5. 업로드 완료 후 파일 선택 → 객체 URL 복사
+   - 예: `https://gotcha-prod-files.s3.ap-northeast-2.amazonaws.com/defaults/profile-default-join.png`
+6. 이 URL을 GitHub Secrets에 `USER_DEFAULT_PROFILE_IMAGE_URL_PROD`로 등록
+
+**AWS CLI로 업로드:**
+```bash
+# 기본 프로필 이미지 업로드
+aws s3 cp profile-default-join.png s3://gotcha-prod-files/defaults/profile-default-join.png \
+  --acl public-read \
+  --region ap-northeast-2
+
+# 업로드된 파일 URL
+echo "https://gotcha-prod-files.s3.ap-northeast-2.amazonaws.com/defaults/profile-default-join.png"
+```
+
+**S3 폴더 구조:**
+```
+gotcha-prod-files/
+├── defaults/
+│   └── profile-default-join.png   (관리자만 AWS Console/CLI로 수동 업로드)
+├── profiles/      (사용자가 API를 통해 업로드, 자동 생성)
+├── reviews/       (사용자가 API를 통해 업로드, 자동 생성)
+└── shops/         (사용자가 API를 통해 업로드, 자동 생성)
+```
+
+**허용된 업로드 폴더 (API):**
+- `profiles`, `reviews`, `shops`만 애플리케이션 API(`/api/files/upload`)를 통해 업로드 가능
+- `defaults`는 보안상 API 접근 차단됨
+
 ### 4. EC2 인스턴스
 
 #### 4.1. EC2 인스턴스 생성
