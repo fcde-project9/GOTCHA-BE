@@ -3,12 +3,14 @@ package com.gotcha.domain.review.controller;
 import com.gotcha._global.common.ApiResponse;
 import com.gotcha.domain.review.dto.CreateReviewRequest;
 import com.gotcha.domain.review.dto.PageResponse;
+import com.gotcha.domain.review.dto.ReviewImageListResponse;
 import com.gotcha.domain.review.dto.ReviewLikeResponse;
 import com.gotcha.domain.review.dto.ReviewResponse;
 import com.gotcha.domain.review.dto.ReviewSortType;
 import com.gotcha.domain.review.dto.UpdateReviewRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -177,4 +179,52 @@ public interface ReviewControllerApi {
             )
     })
     ApiResponse<ReviewLikeResponse> removeLike(@PathVariable Long reviewId);
+
+    @Operation(
+            summary = "가게 리뷰 이미지 전체 조회",
+            description = "특정 가게의 모든 리뷰 이미지를 최신순(리뷰 생성일시 기준)으로 조회합니다"
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ApiResponse.class),
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "success": true,
+                                      "data": {
+                                        "totalCount": 25,
+                                        "imageUrls": [
+                                          "https://storage.googleapis.com/gotcha-bucket/reviews/image1.jpg",
+                                          "https://storage.googleapis.com/gotcha-bucket/reviews/image2.jpg",
+                                          "https://storage.googleapis.com/gotcha-bucket/reviews/image3.jpg"
+                                        ]
+                                      },
+                                      "error": null
+                                    }
+                                    """)
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "가게를 찾을 수 없음 (S001)",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ApiResponse.class),
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "success": false,
+                                      "data": null,
+                                      "error": {
+                                        "code": "S001",
+                                        "message": "가게를 찾을 수 없습니다"
+                                      }
+                                    }
+                                    """)
+                    )
+            )
+    })
+    ApiResponse<ReviewImageListResponse> getShopReviewImages(@PathVariable Long shopId);
 }

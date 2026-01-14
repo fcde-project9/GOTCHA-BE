@@ -29,6 +29,7 @@ jwt:
 
 oauth2:
   redirect-uri: ${OAUTH2_REDIRECT_URI:http://localhost:3000/oauth/callback}
+  cookie-encryption-key: ${OAUTH2_COOKIE_ENCRYPTION_KEY:local-dev-cookie-encryption-key-32chars-minimum-required}
 
 gcs:
   bucket-name: ${GCS_BUCKET_NAME:gotcha-dev-files}
