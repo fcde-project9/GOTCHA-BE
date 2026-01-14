@@ -62,6 +62,11 @@ public class SocialUnlinkService {
     private void unlinkKakao(Long userId, String kakaoUserId) {
         log.info("Unlinking Kakao account - userId: {}, kakaoUserId: {}", userId, kakaoUserId);
 
+        if (kakaoAdminKey == null || kakaoAdminKey.isBlank()) {
+            log.warn("Kakao Admin Key is not configured - skipping unlink for userId: {}", userId);
+            return;
+        }
+
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "KakaoAK " + kakaoAdminKey);
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);

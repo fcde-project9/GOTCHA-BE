@@ -170,5 +170,33 @@ class SocialUnlinkServiceTest {
             // then - RestTemplate 호출 없음
             verify(restTemplate, never()).postForEntity(anyString(), any(), any());
         }
+
+        @Test
+        @DisplayName("Admin Key가 비어있는 경우 카카오 연결 끊기 스킵")
+        void unlinkKakao_EmptyAdminKey_Skip() {
+            // given
+            ReflectionTestUtils.setField(socialUnlinkService, "kakaoAdminKey", "");
+            User kakaoUser = createUser(SocialType.KAKAO, "123456789");
+
+            // when
+            socialUnlinkService.unlinkSocialAccount(kakaoUser);
+
+            // then - RestTemplate 호출 없음
+            verify(restTemplate, never()).postForEntity(anyString(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Admin Key가 null인 경우 카카오 연결 끊기 스킵")
+        void unlinkKakao_NullAdminKey_Skip() {
+            // given
+            ReflectionTestUtils.setField(socialUnlinkService, "kakaoAdminKey", null);
+            User kakaoUser = createUser(SocialType.KAKAO, "123456789");
+
+            // when
+            socialUnlinkService.unlinkSocialAccount(kakaoUser);
+
+            // then - RestTemplate 호출 없음
+            verify(restTemplate, never()).postForEntity(anyString(), any(), any());
+        }
     }
 }
