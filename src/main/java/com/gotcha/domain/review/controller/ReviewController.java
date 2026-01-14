@@ -3,6 +3,7 @@ package com.gotcha.domain.review.controller;
 import com.gotcha._global.common.ApiResponse;
 import com.gotcha.domain.review.dto.CreateReviewRequest;
 import com.gotcha.domain.review.dto.PageResponse;
+import com.gotcha.domain.review.dto.ReviewImageListResponse;
 import com.gotcha.domain.review.dto.ReviewLikeResponse;
 import com.gotcha.domain.review.dto.ReviewResponse;
 import com.gotcha.domain.review.dto.ReviewSortType;
@@ -101,6 +102,13 @@ public class ReviewController implements ReviewControllerApi {
     @DeleteMapping("/reviews/{reviewId}/like")
     public ApiResponse<ReviewLikeResponse> removeLike(@PathVariable Long reviewId) {
         return ApiResponse.success(reviewLikeService.removeLike(reviewId));
+    }
+
+    @Override
+    @GetMapping("/{shopId}/reviews/images")
+    public ApiResponse<ReviewImageListResponse> getShopReviewImages(@PathVariable Long shopId) {
+        ReviewImageListResponse response = reviewService.getShopReviewImages(shopId);
+        return ApiResponse.success(response);
     }
 
     private User getCurrentUser() {

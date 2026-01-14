@@ -3,6 +3,7 @@ package com.gotcha.domain.review.service;
 import com.gotcha.domain.file.service.FileStorageService;
 import com.gotcha.domain.review.dto.CreateReviewRequest;
 import com.gotcha.domain.review.dto.PageResponse;
+import com.gotcha.domain.review.dto.ReviewImageListResponse;
 import com.gotcha.domain.review.dto.ReviewResponse;
 import com.gotcha.domain.review.dto.ReviewSortType;
 import com.gotcha.domain.review.dto.UpdateReviewRequest;
@@ -234,6 +235,22 @@ public class ReviewService {
         reviewRepository.delete(review);
 
         log.info("Review {} deleted successfully", reviewId);
+    }
+
+    public ReviewImageListResponse getShopReviewImages(Long shopId) {
+        log.info("Getting all review images for shop {}", shopId);
+
+        // 1. Shop 존재 확인
+        if (!shopRepository.existsById(shopId)) {
+            throw ShopException.notFound(shopId);
+        }
+
+        // 2. 해당 가게의 모든 리뷰 이미지 조회 (최신순)
+        List<ReviewImage> images = reviewImageRepository
+                .findAllByShopIdOrderByCreatedAtDesc(shopId);
+
+        log.info("Found {} review images for shop {}", images.size(), shopId);
+        return ReviewImageListResponse.from(images);
     }
 
     private void deleteReviewImages(Long reviewId) {

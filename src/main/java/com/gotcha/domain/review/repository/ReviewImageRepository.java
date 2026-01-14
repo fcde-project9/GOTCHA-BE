@@ -34,4 +34,11 @@ public interface ReviewImageRepository extends JpaRepository<ReviewImage, Long> 
             "ORDER BY r.created_at DESC, ri.display_order ASC " +
             "LIMIT 4", nativeQuery = true)
     List<ReviewImage> findTop4ByShopId(@Param("shopId") Long shopId);
+
+    // 특정 가게의 전체 리뷰 이미지 조회 (리뷰 생성일시 기준 내림차순)
+    @Query("SELECT ri FROM ReviewImage ri " +
+            "JOIN ri.review r " +
+            "WHERE r.shop.id = :shopId " +
+            "ORDER BY r.createdAt DESC, ri.displayOrder ASC")
+    List<ReviewImage> findAllByShopIdOrderByCreatedAtDesc(@Param("shopId") Long shopId);
 }

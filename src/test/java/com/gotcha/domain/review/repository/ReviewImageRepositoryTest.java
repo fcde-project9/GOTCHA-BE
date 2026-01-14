@@ -238,4 +238,93 @@ class ReviewImageRepositoryTest {
         // then
         assertThat(images).isEmpty();
     }
+
+    @Test
+    @DisplayName("특정 가게의 전체 리뷰 이미지 조회 - 최신순 정렬")
+    void findAllByShopIdOrderByCreatedAtDesc() throws Exception {
+        // given
+        // 첫 번째 리뷰 (더 오래된 리뷰)
+        Review oldReview = reviewRepository.save(Review.builder()
+                .shop(shop)
+                .user(user)
+                .content("오래된 리뷰")
+                .build());
+
+        Thread.sleep(10); // 생성 시간 차이를 두기 위해
+
+        // 두 번째 리뷰 (더 최신 리뷰)
+        Review newReview = reviewRepository.save(Review.builder()
+                .shop(shop)
+                .user(user)
+                .content("새로운 리뷰")
+                .build());
+
+        // 오래된 리뷰에 이미지 2개
+        reviewImageRepository.save(ReviewImage.builder()
+                .review(oldReview)
+                .imageUrl("https://example.com/old-img0.jpg")
+                .displayOrder(0)
+                .build());
+
+        reviewImageRepository.save(ReviewImage.builder()
+                .review(oldReview)
+                .imageUrl("https://example.com/old-img1.jpg")
+                .displayOrder(1)
+                .build());
+
+        // 새로운 리뷰에 이미지 3개
+        reviewImageRepository.save(ReviewImage.builder()
+                .review(newReview)
+                .imageUrl("https://example.com/new-img0.jpg")
+                .displayOrder(0)
+                .build());
+
+        reviewImageRepository.save(ReviewImage.builder()
+                .review(newReview)
+                .imageUrl("https://example.com/new-img1.jpg")
+                .displayOrder(1)
+                .build());
+
+        reviewImageRepository.save(ReviewImage.builder()
+                .review(newReview)
+                .imageUrl("https://example.com/new-img2.jpg")
+                .displayOrder(2)
+                .build());
+
+        // when
+        List<ReviewImage> images = reviewImageRepository
+                .findAllByShopIdOrderByCreatedAtDesc(shop.getId());
+
+        // then
+        assertThat(images).hasSize(5);
+        // 최신 리뷰의 이미지가 먼저 와야 함 (displayOrder 순서대로)
+        assertThat(images.get(0).getImageUrl()).isEqualTo("https://example.com/new-img0.jpg");
+        assertThat(images.get(1).getImageUrl()).isEqualTo("https://example.com/new-img1.jpg");
+        assertThat(images.get(2).getImageUrl()).isEqualTo("https://example.com/new-img2.jpg");
+        // 오래된 리뷰의 이미지가 나중에 와야 함
+        assertThat(images.get(3).getImageUrl()).isEqualTo("https://example.com/old-img0.jpg");
+        assertThat(images.get(4).getImageUrl()).isEqualTo("https://example.com/old-img1.jpg");
+    }
+
+    @Test
+    @DisplayName("가게에 리뷰 이미지가 없는 경우 빈 리스트 반환")
+    void findAllByShopIdOrderByCreatedAtDesc_Empty() {
+        // when
+        List<ReviewImage> images = reviewImageRepository
+                .findAllByShopIdOrderByCreatedAtDesc(shop.getId());
+
+        // then
+        assertThat(images).isEmpty();
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 가게 ID로 조회 시 빈 리스트 반환")
+    void findAllByShopIdOrderByCreatedAtDesc_NonExistentShop() {
+        // when
+        List<ReviewImage> images = reviewImageRepository
+                .findAllByShopIdOrderByCreatedAtDesc(999999L);
+
+        // then
+        assertThat(images).isEmpty();
+    }
 }
