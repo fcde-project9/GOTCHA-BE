@@ -1,24 +1,31 @@
 package com.gotcha.domain.file.service;
 
-import com.google.cloud.storage.BlobId;
-import com.google.cloud.storage.BlobInfo;
-import com.google.cloud.storage.Storage;
 import com.gotcha.domain.file.dto.FileUploadResponse;
 import com.gotcha.domain.file.exception.FileException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import java.io.IOException;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * AWS S3 파일 업로드 서비스 (prod 환경 전용)
+ */
 @Slf4j
 @Service
+@Profile("prod")
 @RequiredArgsConstructor
-public class FileUploadService {
+public class S3FileUploadService implements FileStorageService {
 
     private static final long MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
@@ -35,36 +42,35 @@ public class FileUploadService {
             "profiles"
     );
 
-    private final Storage storage;
+    private final S3Client s3Client;
 
-    @Value("${gcs.bucket-name}")
+    @Value("${aws.s3.bucket-name}")
     private String bucketName;
 
-    /**
-     * 이미지 파일을 GCS에 업로드
-     *
-     * @param file   업로드할 파일
-     * @param folder 저장할 폴더 (예: "reviews", "shops")
-     * @return 업로드된 파일 정보
-     */
+    @Value("${aws.s3.region}")
+    private String region;
+
+    @Override
     public FileUploadResponse uploadImage(MultipartFile file, String folder) {
         validateFile(file);
         validateFolder(folder);
 
         String filename = generateFilename(file.getOriginalFilename());
-        String objectName = folder + "/" + filename;
+        String key = folder + "/" + filename;
 
         try {
-            BlobId blobId = BlobId.of(bucketName, objectName);
-            BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
-                    .setContentType(file.getContentType())
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(key)
+                    .contentType(file.getContentType())
                     .build();
 
-            storage.create(blobInfo, file.getBytes());
+            s3Client.putObject(putObjectRequest, RequestBody.fromBytes(file.getBytes()));
 
-            String publicUrl = String.format("https://storage.googleapis.com/%s/%s", bucketName, objectName);
+            String publicUrl = String.format("https://%s.s3.%s.amazonaws.com/%s",
+                    bucketName, region, key);
 
-            log.info("File uploaded successfully: {}", publicUrl);
+            log.info("File uploaded successfully to S3: {}", publicUrl);
 
             return FileUploadResponse.of(
                     publicUrl,
@@ -76,30 +82,36 @@ public class FileUploadService {
         } catch (IOException e) {
             log.error("File upload failed: {}", e.getMessage(), e);
             throw FileException.uploadFailed(e.getMessage());
+        } catch (S3Exception e) {
+            log.error("S3 upload failed: {}", e.awsErrorDetails().errorMessage(), e);
+            throw FileException.uploadFailed(e.awsErrorDetails().errorMessage());
         } catch (Exception e) {
             log.error("Unexpected error during file upload: {}", e.getMessage(), e);
             throw FileException.uploadFailed(e.getMessage());
         }
     }
 
-    /**
-     * GCS에서 파일 삭제
-     *
-     * @param fileUrl 삭제할 파일의 공개 URL
-     */
+    @Override
     public void deleteFile(String fileUrl) {
         try {
-            String objectName = extractObjectName(fileUrl);
-            BlobId blobId = BlobId.of(bucketName, objectName);
+            String key = extractKey(fileUrl);
 
-            boolean deleted = storage.delete(blobId);
+            DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(key)
+                    .build();
 
-            if (!deleted) {
+            s3Client.deleteObject(deleteObjectRequest);
+
+            log.info("File deleted successfully from S3: {}", fileUrl);
+
+        } catch (S3Exception e) {
+            if (e.statusCode() == 404) {
                 log.warn("File not found or already deleted: {}", fileUrl);
             } else {
-                log.info("File deleted successfully: {}", fileUrl);
+                log.error("S3 delete failed: {}", e.awsErrorDetails().errorMessage(), e);
+                throw FileException.deleteFailed(e.awsErrorDetails().errorMessage());
             }
-
         } catch (Exception e) {
             log.error("File delete failed: {}", e.getMessage(), e);
             throw FileException.deleteFailed(e.getMessage());
@@ -155,11 +167,11 @@ public class FileUploadService {
     }
 
     /**
-     * file URL 에서 GCS 오브젝트명 추출
-     * (예: https://storage.googleapis.com/bucket/folder/file.jpg -> folder/file.jpg)
+     * S3 URL에서 key 추출
+     * (예: https://bucket.s3.region.amazonaws.com/folder/file.jpg -> folder/file.jpg)
      */
-    private String extractObjectName(String fileUrl) {
-        String prefix = String.format("https://storage.googleapis.com/%s/", bucketName);
+    private String extractKey(String fileUrl) {
+        String prefix = String.format("https://%s.s3.%s.amazonaws.com/", bucketName, region);
         if (fileUrl.startsWith(prefix)) {
             return fileUrl.substring(prefix.length());
         }

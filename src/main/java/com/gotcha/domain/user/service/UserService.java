@@ -5,7 +5,7 @@ import com.gotcha._global.util.SecurityUtil;
 import com.gotcha.domain.auth.repository.RefreshTokenRepository;
 import com.gotcha.domain.comment.repository.CommentRepository;
 import com.gotcha.domain.favorite.repository.FavoriteRepository;
-import com.gotcha.domain.file.service.FileUploadService;
+import com.gotcha.domain.file.service.FileStorageService;
 import com.gotcha.domain.review.entity.Review;
 import com.gotcha.domain.review.entity.ReviewImage;
 import com.gotcha.domain.review.repository.ReviewImageRepository;
@@ -46,7 +46,7 @@ public class UserService {
     private final ReviewRepository reviewRepository;
     private final ReviewImageRepository reviewImageRepository;
     private final CommentRepository commentRepository;
-    private final FileUploadService fileUploadService;
+    private final FileStorageService fileStorageService;
     private final ShopRepository shopRepository;
     private final ShopService shopService;
 
@@ -139,7 +139,7 @@ public class UserService {
         // 기존 이미지가 있고 기본 이미지가 아닌 경우 GCS에서 삭제
         if (oldImageUrl != null && !oldImageUrl.contains("/defaults/")) {
             try {
-                fileUploadService.deleteFile(oldImageUrl);
+                fileStorageService.deleteFile(oldImageUrl);
                 log.info("Deleted old profile image: {}", oldImageUrl);
             } catch (Exception e) {
                 log.warn("Failed to delete old profile image: {} - {}", oldImageUrl, e.getMessage());
@@ -170,7 +170,7 @@ public class UserService {
         // 기존 커스텀 이미지 GCS에서 삭제 (기본 이미지는 제외)
         if (oldImageUrl != null && !oldImageUrl.contains("/defaults/")) {
             try {
-                fileUploadService.deleteFile(oldImageUrl);
+                fileStorageService.deleteFile(oldImageUrl);
                 log.info("Deleted custom profile image: {}", oldImageUrl);
             } catch (Exception e) {
                 log.warn("Failed to delete old profile image: {} - {}", oldImageUrl, e.getMessage());
@@ -266,7 +266,7 @@ public class UserService {
         // GCS에서 이미지 파일 삭제
         for (ReviewImage image : reviewImages) {
             try {
-                fileUploadService.deleteFile(image.getImageUrl());
+                fileStorageService.deleteFile(image.getImageUrl());
             } catch (Exception e) {
                 log.warn("Failed to delete image from GCS: {} - {}", image.getImageUrl(), e.getMessage());
             }
