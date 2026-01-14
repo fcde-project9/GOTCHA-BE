@@ -3,6 +3,7 @@ package com.gotcha.domain.review.repository;
 import com.gotcha.domain.review.entity.ReviewImage;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -15,13 +16,17 @@ public interface ReviewImageRepository extends JpaRepository<ReviewImage, Long> 
     List<ReviewImage> findAllByReviewIdInOrderByReviewIdAscDisplayOrderAsc(List<Long> reviewIds);
 
     // Review 삭제 시 연관 이미지 삭제
-    void deleteAllByReviewId(Long reviewId);
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM ReviewImage ri WHERE ri.review.id = :reviewId")
+    void deleteAllByReviewId(@Param("reviewId") Long reviewId);
 
     // 이미지 개수 카운트
     int countByReviewId(Long reviewId);
 
     // 여러 Review의 이미지 일괄 삭제
-    void deleteAllByReviewIdIn(List<Long> reviewIds);
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM ReviewImage ri WHERE ri.review.id IN :reviewIds")
+    void deleteAllByReviewIdIn(@Param("reviewIds") List<Long> reviewIds);
 
     // 특정 가게의 전체 리뷰 이미지 개수
     @Query("SELECT COUNT(ri) FROM ReviewImage ri WHERE ri.review.shop.id = :shopId")
