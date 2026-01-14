@@ -3,6 +3,7 @@ package com.gotcha.domain.user.service;
 import com.gotcha._global.common.PageResponse;
 import com.gotcha._global.util.SecurityUtil;
 import com.gotcha.domain.auth.repository.RefreshTokenRepository;
+import com.gotcha.domain.auth.service.SocialUnlinkService;
 import com.gotcha.domain.comment.repository.CommentRepository;
 import com.gotcha.domain.favorite.repository.FavoriteRepository;
 import com.gotcha.domain.file.service.FileStorageService;
@@ -49,6 +50,7 @@ public class UserService {
     private final FileStorageService fileStorageService;
     private final ShopRepository shopRepository;
     private final ShopService shopService;
+    private final SocialUnlinkService socialUnlinkService;
 
     @Value("${user.default-profile-image-url}")
     private String defaultProfileImageUrl;
@@ -187,13 +189,14 @@ public class UserService {
 
     /**
      * 회원 탈퇴
-     * 1. 탈퇴 설문 저장
-     * 2. 찜 목록 삭제
-     * 3. 리뷰 이미지 GCS 삭제 및 DB 삭제
-     * 4. 리뷰 삭제
-     * 5. 댓글 삭제
-     * 6. RefreshToken 삭제
-     * 7. 사용자 soft delete (개인정보 마스킹)
+     * 1. 소셜 계정 연결 끊기 (카카오)
+     * 2. 탈퇴 설문 저장
+     * 3. 찜 목록 삭제
+     * 4. 리뷰 이미지 GCS 삭제 및 DB 삭제
+     * 5. 리뷰 삭제
+     * 6. 댓글 삭제
+     * 7. RefreshToken 삭제
+     * 8. 사용자 soft delete (개인정보 마스킹)
      *
      * @param request 탈퇴 설문 정보 (reason 필수, detail 선택)
      * @throws UserException 이미 탈퇴한 사용자인 경우 (U005)
@@ -212,7 +215,11 @@ public class UserService {
             throw UserException.alreadyDeleted(userId);
         }
 
-        // 1. 탈퇴 설문 저장
+        // 1. 소셜 계정 연결 끊기 (user.delete() 전에 호출해야 socialType/socialId 접근 가능)
+        socialUnlinkService.unlinkSocialAccount(user);
+        log.info("Social account unlinked - userId: {}", userId);
+
+        // 2. 탈퇴 설문 저장
         WithdrawalSurvey survey = WithdrawalSurvey.builder()
                 .user(user)
                 .reasons(request.reasons())
@@ -221,26 +228,26 @@ public class UserService {
         withdrawalSurveyRepository.save(survey);
         log.info("Withdrawal survey saved - surveyId: {}, userId: {}", survey.getId(), userId);
 
-        // 2. 찜 목록 삭제
+        // 3. 찜 목록 삭제
         favoriteRepository.deleteByUserId(userId);
         log.info("Favorites deleted - userId: {}", userId);
 
-        // 3. 리뷰 이미지 삭제 (GCS + DB)
+        // 4. 리뷰 이미지 삭제 (GCS + DB)
         deleteUserReviewImages(userId);
 
-        // 4. 리뷰 삭제
+        // 5. 리뷰 삭제
         reviewRepository.deleteByUserId(userId);
         log.info("Reviews deleted - userId: {}", userId);
 
-        // 5. 댓글 삭제
+        // 6. 댓글 삭제
         commentRepository.deleteByUserId(userId);
         log.info("Comments deleted - userId: {}", userId);
 
-        // 6. RefreshToken 삭제
+        // 7. RefreshToken 삭제
         refreshTokenRepository.deleteByUserId(userId);
         log.info("RefreshToken deleted - userId: {}", userId);
 
-        // 7. 사용자 soft delete (개인정보 마스킹 포함)
+        // 8. 사용자 soft delete (개인정보 마스킹 포함)
         user.delete();
         userRepository.save(user);
         log.info("User soft deleted with masked info - userId: {}", userId);

@@ -61,6 +61,7 @@ cors:
 kakao:
   api:
     rest-api-key: test-kakao-rest-api-key
+    admin-key: test-kakao-admin-key
     base-url: https://dapi.kakao.com
 
 # GCS Configuration for tests
