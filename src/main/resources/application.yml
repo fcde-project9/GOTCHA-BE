@@ -5,6 +5,10 @@ spring:
     import: optional:file:.env[.properties]
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:local}
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
   datasource:
     driver-class-name: org.postgresql.Driver
   jpa:
@@ -49,6 +53,7 @@ spring:
 
 server:
   port: ${PORT:8080}
+  forward-headers-strategy: framework
   servlet:
     encoding:
       charset: UTF-8
@@ -70,6 +75,7 @@ jwt:
 oauth2:
   redirect-uri: ${OAUTH2_REDIRECT_URI}
   allowed-redirect-uris: ${OAUTH2_ALLOWED_REDIRECT_URIS:http://localhost:3000/oauth/callback}
+  cookie-encryption-key: ${OAUTH2_COOKIE_ENCRYPTION_KEY}
 
 # Springdoc OpenAPI Configuration
 springdoc:

@@ -45,6 +45,9 @@ public record ShopDetailResponse(
         @Schema(description = "리뷰 목록 (최대 5개)")
         List<ReviewResponse> reviews,
 
+        @Schema(description = "전체 리뷰 개수", example = "42")
+        Long reviewCount,
+
         @Schema(description = "전체 리뷰 사진 개수", example = "25")
         Long totalReviewImageCount,
 
@@ -59,12 +62,13 @@ public record ShopDetailResponse(
      * @param isOpen                 영업 중 여부
      * @param isFavorite             찜 여부
      * @param reviews                리뷰 목록
+     * @param reviewCount            전체 리뷰 개수
      * @param totalReviewImageCount  전체 리뷰 사진 개수
      * @param recentReviewImages     최신 리뷰 이미지 4개
      * @return ShopDetailResponse
      */
     public static ShopDetailResponse of(Shop shop, String todayOpenTime, Boolean isOpen, Boolean isFavorite,
-                                        List<ReviewResponse> reviews, Long totalReviewImageCount,
+                                        List<ReviewResponse> reviews, Long reviewCount, Long totalReviewImageCount,
                                         List<String> recentReviewImages) {
         Objects.requireNonNull(shop, "Shop must not be null");
 
@@ -81,6 +85,7 @@ public record ShopDetailResponse(
                 shop.getMainImageUrl(),
                 isFavorite,
                 reviews != null ? reviews : Collections.emptyList(),
+                reviewCount,
                 totalReviewImageCount,
                 recentReviewImages != null ? recentReviewImages : Collections.emptyList()
         );

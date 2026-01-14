@@ -2,12 +2,15 @@ package com.gotcha.domain.auth.oauth2;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
 import com.gotcha.domain.auth.jwt.JwtTokenProvider;
 import com.gotcha.domain.auth.service.AuthService;
+import com.gotcha.domain.auth.service.OAuthTokenCookieService;
 import com.gotcha.domain.user.entity.SocialType;
 import com.gotcha.domain.user.entity.User;
 import java.util.HashMap;
@@ -38,6 +41,9 @@ class OAuth2AuthenticationSuccessHandlerTest {
     private AuthService authService;
 
     @Mock
+    private OAuthTokenCookieService oAuthTokenCacheService;
+
+    @Mock
     private HttpCookieOAuth2AuthorizationRequestRepository cookieRepository;
 
     @Mock
@@ -58,15 +64,18 @@ class OAuth2AuthenticationSuccessHandlerTest {
     class NewUserLogin {
 
         @Test
-        @DisplayName("신규 사용자 로그인 - isNewUser=true 파라미터 포함")
-        void newUserLogin_redirectWithIsNewUserTrue() throws Exception {
+        @DisplayName("신규 사용자 로그인 - 임시 코드만 전달 (isNewUser는 토큰 교환 응답에 포함)")
+        void newUserLogin_redirectWithTempCodeOnly() throws Exception {
             // given
             User user = createTestUser(SocialType.KAKAO, "test@kakao.com");
             CustomOAuth2User oAuth2User = new CustomOAuth2User(user, new HashMap<>(), true);
+            String tempCode = "temp-code-uuid";
 
             given(authentication.getPrincipal()).willReturn(oAuth2User);
             given(jwtTokenProvider.generateAccessToken(any(User.class))).willReturn("access-token");
             given(jwtTokenProvider.generateRefreshToken(any(User.class))).willReturn("refresh-token");
+            given(oAuthTokenCacheService.encryptTokens(anyString(), anyString(), anyBoolean()))
+                    .willReturn(tempCode);
 
             // when
             successHandler.onAuthenticationSuccess(request, response, authentication);
@@ -74,10 +83,12 @@ class OAuth2AuthenticationSuccessHandlerTest {
             // then
             String redirectUrl = response.getRedirectedUrl();
             assertThat(redirectUrl).isNotNull();
-            assertThat(redirectUrl).contains("isNewUser=true");
-            assertThat(redirectUrl).contains("accessToken=access-token");
-            assertThat(redirectUrl).contains("refreshToken=refresh-token");
+            assertThat(redirectUrl).contains("code=" + tempCode);
+            assertThat(redirectUrl).doesNotContain("isNewUser=");
+            assertThat(redirectUrl).doesNotContain("accessToken=");
+            assertThat(redirectUrl).doesNotContain("refreshToken=");
             verify(authService).saveRefreshToken(any(User.class), eq("refresh-token"));
+            verify(oAuthTokenCacheService).encryptTokens(eq("access-token"), eq("refresh-token"), eq(true));
         }
     }
 
@@ -86,15 +97,18 @@ class OAuth2AuthenticationSuccessHandlerTest {
     class ExistingUserLogin {
 
         @Test
-        @DisplayName("기존 사용자 로그인 - isNewUser=false 파라미터 포함")
-        void existingUserLogin_redirectWithIsNewUserFalse() throws Exception {
+        @DisplayName("기존 사용자 로그인 - 임시 코드만 전달 (isNewUser는 토큰 교환 응답에 포함)")
+        void existingUserLogin_redirectWithTempCodeOnly() throws Exception {
             // given
             User user = createTestUser(SocialType.GOOGLE, "test@gmail.com");
             CustomOAuth2User oAuth2User = new CustomOAuth2User(user, new HashMap<>(), false);
+            String tempCode = "temp-code-existing-user";
 
             given(authentication.getPrincipal()).willReturn(oAuth2User);
             given(jwtTokenProvider.generateAccessToken(any(User.class))).willReturn("access-token");
             given(jwtTokenProvider.generateRefreshToken(any(User.class))).willReturn("refresh-token");
+            given(oAuthTokenCacheService.encryptTokens(anyString(), anyString(), anyBoolean()))
+                    .willReturn(tempCode);
 
             // when
             successHandler.onAuthenticationSuccess(request, response, authentication);
@@ -102,8 +116,12 @@ class OAuth2AuthenticationSuccessHandlerTest {
             // then
             String redirectUrl = response.getRedirectedUrl();
             assertThat(redirectUrl).isNotNull();
-            assertThat(redirectUrl).contains("isNewUser=false");
+            assertThat(redirectUrl).contains("code=" + tempCode);
+            assertThat(redirectUrl).doesNotContain("isNewUser=");
+            assertThat(redirectUrl).doesNotContain("accessToken=");
+            assertThat(redirectUrl).doesNotContain("refreshToken=");
             verify(authService).saveRefreshToken(any(User.class), eq("refresh-token"));
+            verify(oAuthTokenCacheService).encryptTokens(eq("access-token"), eq("refresh-token"), eq(false));
         }
     }
 
@@ -112,15 +130,18 @@ class OAuth2AuthenticationSuccessHandlerTest {
     class SocialTypeLogin {
 
         @Test
-        @DisplayName("카카오 로그인 - 정상 리다이렉트")
+        @DisplayName("카카오 로그인 - 정상 리다이렉트 (임시 코드 사용)")
         void kakaoLogin_redirectSuccess() throws Exception {
             // given
             User user = createTestUser(SocialType.KAKAO, "test@kakao.com");
             CustomOAuth2User oAuth2User = new CustomOAuth2User(user, createKakaoAttributes(), true);
+            String tempCode = "kakao-temp-code";
 
             given(authentication.getPrincipal()).willReturn(oAuth2User);
             given(jwtTokenProvider.generateAccessToken(any(User.class))).willReturn("kakao-access-token");
             given(jwtTokenProvider.generateRefreshToken(any(User.class))).willReturn("kakao-refresh-token");
+            given(oAuthTokenCacheService.encryptTokens(eq("kakao-access-token"), eq("kakao-refresh-token"), eq(true)))
+                    .willReturn(tempCode);
 
             // when
             successHandler.onAuthenticationSuccess(request, response, authentication);
@@ -128,46 +149,55 @@ class OAuth2AuthenticationSuccessHandlerTest {
             // then
             assertThat(response.getStatus()).isEqualTo(302);
             assertThat(response.getRedirectedUrl()).contains("http://localhost:3000/oauth/callback");
+            assertThat(response.getRedirectedUrl()).contains("code=" + tempCode);
             verify(authService).saveRefreshToken(any(User.class), eq("kakao-refresh-token"));
         }
 
         @Test
-        @DisplayName("구글 로그인 - 정상 리다이렉트")
+        @DisplayName("구글 로그인 - 정상 리다이렉트 (임시 코드 사용)")
         void googleLogin_redirectSuccess() throws Exception {
             // given
             User user = createTestUser(SocialType.GOOGLE, "test@gmail.com");
             CustomOAuth2User oAuth2User = new CustomOAuth2User(user, createGoogleAttributes(), true);
+            String tempCode = "google-temp-code";
 
             given(authentication.getPrincipal()).willReturn(oAuth2User);
             given(jwtTokenProvider.generateAccessToken(any(User.class))).willReturn("google-access-token");
             given(jwtTokenProvider.generateRefreshToken(any(User.class))).willReturn("google-refresh-token");
+            given(oAuthTokenCacheService.encryptTokens(eq("google-access-token"), eq("google-refresh-token"), eq(true)))
+                    .willReturn(tempCode);
 
             // when
             successHandler.onAuthenticationSuccess(request, response, authentication);
 
             // then
             assertThat(response.getStatus()).isEqualTo(302);
-            assertThat(response.getRedirectedUrl()).contains("accessToken=google-access-token");
+            assertThat(response.getRedirectedUrl()).contains("code=" + tempCode);
+            assertThat(response.getRedirectedUrl()).doesNotContain("accessToken=");
             verify(authService).saveRefreshToken(any(User.class), eq("google-refresh-token"));
         }
 
         @Test
-        @DisplayName("네이버 로그인 - 정상 리다이렉트")
+        @DisplayName("네이버 로그인 - 정상 리다이렉트 (임시 코드 사용)")
         void naverLogin_redirectSuccess() throws Exception {
             // given
             User user = createTestUser(SocialType.NAVER, "test@naver.com");
             CustomOAuth2User oAuth2User = new CustomOAuth2User(user, createNaverAttributes(), true);
+            String tempCode = "naver-temp-code";
 
             given(authentication.getPrincipal()).willReturn(oAuth2User);
             given(jwtTokenProvider.generateAccessToken(any(User.class))).willReturn("naver-access-token");
             given(jwtTokenProvider.generateRefreshToken(any(User.class))).willReturn("naver-refresh-token");
+            given(oAuthTokenCacheService.encryptTokens(eq("naver-access-token"), eq("naver-refresh-token"), eq(true)))
+                    .willReturn(tempCode);
 
             // when
             successHandler.onAuthenticationSuccess(request, response, authentication);
 
             // then
             assertThat(response.getStatus()).isEqualTo(302);
-            assertThat(response.getRedirectedUrl()).contains("accessToken=naver-access-token");
+            assertThat(response.getRedirectedUrl()).contains("code=" + tempCode);
+            assertThat(response.getRedirectedUrl()).doesNotContain("accessToken=");
             verify(authService).saveRefreshToken(any(User.class), eq("naver-refresh-token"));
         }
     }
@@ -177,15 +207,18 @@ class OAuth2AuthenticationSuccessHandlerTest {
     class EmailNullCase {
 
         @Test
-        @DisplayName("email 미제공 시 - 정상 리다이렉트")
+        @DisplayName("email 미제공 시 - 정상 리다이렉트 (임시 코드 사용)")
         void emailNull_redirectSuccess() throws Exception {
             // given
             User user = createTestUser(SocialType.KAKAO, null);
             CustomOAuth2User oAuth2User = new CustomOAuth2User(user, new HashMap<>(), true);
+            String tempCode = "temp-code-no-email";
 
             given(authentication.getPrincipal()).willReturn(oAuth2User);
             given(jwtTokenProvider.generateAccessToken(any(User.class))).willReturn("access-token");
             given(jwtTokenProvider.generateRefreshToken(any(User.class))).willReturn("refresh-token");
+            given(oAuthTokenCacheService.encryptTokens(eq("access-token"), eq("refresh-token"), eq(true)))
+                    .willReturn(tempCode);
 
             // when
             successHandler.onAuthenticationSuccess(request, response, authentication);
@@ -193,6 +226,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
             // then
             assertThat(response.getStatus()).isEqualTo(302);
             assertThat(response.getRedirectedUrl()).isNotNull();
+            assertThat(response.getRedirectedUrl()).contains("code=" + tempCode);
             verify(authService).saveRefreshToken(any(User.class), eq("refresh-token"));
         }
     }
@@ -202,16 +236,19 @@ class OAuth2AuthenticationSuccessHandlerTest {
     class RedirectUriCookie {
 
         @Test
-        @DisplayName("쿠키에 redirect_uri 있으면 해당 URI로 리다이렉트")
+        @DisplayName("쿠키에 redirect_uri 있으면 해당 URI로 리다이렉트 (임시 코드 사용)")
         void redirectUri_fromCookie() throws Exception {
             // given
             User user = createTestUser(SocialType.KAKAO, "test@kakao.com");
             CustomOAuth2User oAuth2User = new CustomOAuth2User(user, new HashMap<>(), true);
             String customRedirectUri = "https://custom.gotcha.com/oauth/callback";
+            String tempCode = "temp-code-custom-uri";
 
             given(authentication.getPrincipal()).willReturn(oAuth2User);
             given(jwtTokenProvider.generateAccessToken(any(User.class))).willReturn("access-token");
             given(jwtTokenProvider.generateRefreshToken(any(User.class))).willReturn("refresh-token");
+            given(oAuthTokenCacheService.encryptTokens(eq("access-token"), eq("refresh-token"), eq(true)))
+                    .willReturn(tempCode);
             given(cookieRepository.getRedirectUriFromCookie(request)).willReturn(customRedirectUri);
 
             // when
@@ -220,7 +257,8 @@ class OAuth2AuthenticationSuccessHandlerTest {
             // then
             String redirectUrl = response.getRedirectedUrl();
             assertThat(redirectUrl).startsWith(customRedirectUri);
-            assertThat(redirectUrl).contains("accessToken=access-token");
+            assertThat(redirectUrl).contains("code=" + tempCode);
+            assertThat(redirectUrl).doesNotContain("accessToken=");
             verify(cookieRepository).removeRedirectUriCookie(response);
         }
 
@@ -230,10 +268,13 @@ class OAuth2AuthenticationSuccessHandlerTest {
             // given
             User user = createTestUser(SocialType.KAKAO, "test@kakao.com");
             CustomOAuth2User oAuth2User = new CustomOAuth2User(user, new HashMap<>(), true);
+            String tempCode = "temp-code-default-uri";
 
             given(authentication.getPrincipal()).willReturn(oAuth2User);
             given(jwtTokenProvider.generateAccessToken(any(User.class))).willReturn("access-token");
             given(jwtTokenProvider.generateRefreshToken(any(User.class))).willReturn("refresh-token");
+            given(oAuthTokenCacheService.encryptTokens(eq("access-token"), eq("refresh-token"), eq(true)))
+                    .willReturn(tempCode);
             given(cookieRepository.getRedirectUriFromCookie(request)).willReturn(null);
 
             // when
@@ -242,6 +283,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
             // then
             String redirectUrl = response.getRedirectedUrl();
             assertThat(redirectUrl).startsWith("http://localhost:3000/oauth/callback");
+            assertThat(redirectUrl).contains("code=" + tempCode);
             verify(cookieRepository).removeRedirectUriCookie(response);
         }
 
@@ -251,10 +293,13 @@ class OAuth2AuthenticationSuccessHandlerTest {
             // given
             User user = createTestUser(SocialType.KAKAO, "test@kakao.com");
             CustomOAuth2User oAuth2User = new CustomOAuth2User(user, new HashMap<>(), true);
+            String tempCode = "temp-code-blank-uri";
 
             given(authentication.getPrincipal()).willReturn(oAuth2User);
             given(jwtTokenProvider.generateAccessToken(any(User.class))).willReturn("access-token");
             given(jwtTokenProvider.generateRefreshToken(any(User.class))).willReturn("refresh-token");
+            given(oAuthTokenCacheService.encryptTokens(eq("access-token"), eq("refresh-token"), eq(true)))
+                    .willReturn(tempCode);
             given(cookieRepository.getRedirectUriFromCookie(request)).willReturn("   ");
 
             // when
@@ -263,6 +308,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
             // then
             String redirectUrl = response.getRedirectedUrl();
             assertThat(redirectUrl).startsWith("http://localhost:3000/oauth/callback");
+            assertThat(redirectUrl).contains("code=" + tempCode);
         }
     }
 

@@ -4,11 +4,7 @@ import com.gotcha.domain.auth.exception.AuthErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.AuthenticationException;
@@ -41,10 +37,8 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
         }
         cookieRepository.removeRedirectUriCookie(response);
 
-        String encodedMessage = URLEncoder.encode(errorCode.getMessage(), StandardCharsets.UTF_8);
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
-                .queryParam("code", errorCode.getCode())
-                .queryParam("message", encodedMessage)
+                .queryParam("error", errorCode.getCode())
                 .build()
                 .toUriString();
 

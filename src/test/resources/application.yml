@@ -51,6 +51,7 @@ jwt:
 # OAuth2 Configuration for tests
 oauth2:
   redirect-uri: http://localhost:3000/oauth/callback
+  cookie-encryption-key: test-oauth2-cookie-encryption-key-32chars
 
 # CORS Configuration for tests
 cors:

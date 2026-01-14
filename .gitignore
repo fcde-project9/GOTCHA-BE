@@ -56,3 +56,7 @@ docs/chan/
 ### Logs and system files ###
 *.log
 .DS_Store
+
+### Claude Code temporary files ###
+tmpclaude-*
+

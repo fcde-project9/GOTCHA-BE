@@ -44,4 +44,8 @@ public class AuthException extends BusinessException {
     public static AuthException userDeleted() {
         return new AuthException(AuthErrorCode.USER_DELETED);
     }
+
+    public static AuthException invalidAuthCode() {
+        return new AuthException(AuthErrorCode.INVALID_AUTH_CODE);
+    }
 }

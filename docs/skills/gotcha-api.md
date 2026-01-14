@@ -9,18 +9,21 @@ API 개발 전 반드시 읽을 것:
 
 ## Controller 작성 규칙
 
-### 기본 구조
+### 기본 구조 (인터페이스 분리 패턴)
+
+Controller는 `*ControllerApi` 인터페이스를 implements 합니다.
+Swagger 어노테이션은 인터페이스에만 작성합니다.
+
 ```java
 @RestController
 @RequestMapping("/api/shops")
 @RequiredArgsConstructor
-@Tag(name = "Shop", description = "가게 API")
-public class ShopController {
+public class ShopController implements ShopControllerApi {
 
     private final ShopService shopService;
 
+    @Override
     @GetMapping("/{shopId}")
-    @Operation(summary = "가게 상세 조회")
     public ApiResponse<ShopDetailResponse> getShop(@PathVariable Long shopId) {
         return ApiResponse.success(shopService.getShop(shopId));
     }
@@ -146,20 +149,77 @@ public enum ShopErrorCode implements ErrorCode {
 }
 ```
 
-## Swagger 어노테이션
+## Swagger 인터페이스 분리 패턴
 
+### 왜 인터페이스로 분리하는가?
+- Controller 가독성 향상 (Swagger 어노테이션이 많아지면 코드가 복잡해짐)
+- 문서화와 구현의 관심사 분리
+- SpringDoc이 리플렉션으로 인터페이스 어노테이션을 자동 추출
+
+### Api 인터페이스 작성
 ```java
-@Operation(summary = "가게 목록 조회", description = "주변 가게 목록을 조회합니다")
-@ApiResponses({
-    @ApiResponse(responseCode = "200", description = "조회 성공"),
-    @ApiResponse(responseCode = "400", description = "잘못된 요청")
-})
-@GetMapping
-public ApiResponse<List<ShopResponse>> getShops(...) { }
+@Tag(name = "Shop", description = "가게 API")
+public interface ShopControllerApi {
+
+    @Operation(summary = "가게 상세 조회", description = "가게 상세 정보를 조회합니다")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "가게를 찾을 수 없음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "success": false,
+                                      "error": {
+                                        "code": "S001",
+                                        "message": "가게를 찾을 수 없습니다"
+                                      }
+                                    }
+                                    """)
+                    )
+            )
+    })
+    ApiResponse<ShopDetailResponse> getShop(@PathVariable Long shopId);
+}
 ```
 
+### Controller 구현
+```java
+@RestController
+@RequestMapping("/api/shops")
+@RequiredArgsConstructor
+public class ShopController implements ShopControllerApi {
+
+    private final ShopService shopService;
+
+    @Override
+    @GetMapping("/{shopId}")
+    public ApiResponse<ShopDetailResponse> getShop(@PathVariable Long shopId) {
+        return ApiResponse.success(shopService.getShop(shopId));
+    }
+}
+```
+
+### 파일 구조
+```
+domain/shop/controller/
+├── ShopController.java      # 구현 (Spring 어노테이션만)
+└── ShopControllerApi.java   # 인터페이스 (Swagger 어노테이션)
+```
+
+### 필수 에러 응답
+인증이 필요한 API는 다음 에러 응답을 포함해야 합니다:
+- `401 (A001)`: 로그인이 필요합니다
+- `401 (A012)`: 탈퇴한 사용자입니다 (getCurrentUser 사용 시)
+
 ## 완료 체크리스트
-- [ ] Controller 작성 (Swagger 어노테이션 포함)
+- [ ] ControllerApi 인터페이스 작성 (Swagger 어노테이션, 에러 응답 포함)
+- [ ] Controller 작성 (인터페이스 implements)
 - [ ] Service 작성 (@Transactional 적용)
 - [ ] Request/Response DTO 작성
 - [ ] ErrorCode 추가 (없는 경우)

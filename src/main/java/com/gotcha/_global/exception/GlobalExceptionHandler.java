@@ -2,11 +2,13 @@ package com.gotcha._global.exception;
 
 import com.gotcha._global.common.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
+import com.gotcha.domain.file.exception.FileErrorCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @Slf4j
 @RestControllerAdvice
@@ -44,6 +46,15 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .badRequest()
                 .body(ApiResponse.error(CommonErrorCode.INVALID_INPUT, message));
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    protected ResponseEntity<ApiResponse<Void>> handleMaxUploadSizeExceededException(
+            MaxUploadSizeExceededException e) {
+        log.warn("File size exceeded: {}", e.getMessage());
+        return ResponseEntity
+                .status(FileErrorCode.FILE_TOO_LARGE.getStatus())
+                .body(ApiResponse.error(FileErrorCode.FILE_TOO_LARGE));
     }
 
     @ExceptionHandler(Exception.class)

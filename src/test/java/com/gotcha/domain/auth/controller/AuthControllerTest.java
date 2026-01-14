@@ -13,6 +13,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gotcha._global.exception.GlobalExceptionHandler;
 import com.gotcha._global.util.SecurityUtil;
 import com.gotcha.domain.auth.dto.ReissueRequest;
+import com.gotcha.domain.auth.dto.TokenExchangeRequest;
+import com.gotcha.domain.auth.dto.TokenExchangeResponse;
 import com.gotcha.domain.auth.dto.TokenResponse;
 import com.gotcha.domain.auth.exception.AuthException;
 import com.gotcha.domain.auth.service.AuthService;
@@ -159,6 +161,90 @@ class AuthControllerTest {
                     .andExpect(status().isUnauthorized())
                     .andExpect(jsonPath("$.success").value(false))
                     .andExpect(jsonPath("$.error.code").value("A001"));
+        }
+    }
+
+    @Nested
+    @DisplayName("POST /api/auth/token")
+    class ExchangeToken {
+
+        @Test
+        @DisplayName("유효한 코드로 토큰을 교환한다")
+        void shouldExchangeTokenWithValidCode() throws Exception {
+            // given
+            TokenExchangeRequest request = new TokenExchangeRequest("valid-encrypted-code");
+            TokenExchangeResponse response = TokenExchangeResponse.of(
+                    "new-access-token",
+                    "new-refresh-token",
+                    true
+            );
+
+            given(authService.exchangeToken(anyString())).willReturn(response);
+
+            // when & then
+            mockMvc.perform(post("/api/auth/token")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.accessToken").value("new-access-token"))
+                    .andExpect(jsonPath("$.data.refreshToken").value("new-refresh-token"))
+                    .andExpect(jsonPath("$.data.isNewUser").value(true));
+        }
+
+        @Test
+        @DisplayName("기존 사용자인 경우 isNewUser가 false")
+        void shouldReturnIsNewUserFalseForExistingUser() throws Exception {
+            // given
+            TokenExchangeRequest request = new TokenExchangeRequest("valid-encrypted-code");
+            TokenExchangeResponse response = TokenExchangeResponse.of(
+                    "access-token",
+                    "refresh-token",
+                    false
+            );
+
+            given(authService.exchangeToken(anyString())).willReturn(response);
+
+            // when & then
+            mockMvc.perform(post("/api/auth/token")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.isNewUser").value(false));
+        }
+
+        @Test
+        @DisplayName("유효하지 않은 코드이면 400 에러를 반환한다")
+        void shouldReturn400WithInvalidCode() throws Exception {
+            // given
+            TokenExchangeRequest request = new TokenExchangeRequest("invalid-code");
+            given(authService.exchangeToken(anyString()))
+                    .willThrow(AuthException.invalidAuthCode());
+
+            // when & then
+            mockMvc.perform(post("/api/auth/token")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andDo(print())
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.error.code").value("A013"));
+        }
+
+        @Test
+        @DisplayName("code가 없으면 400 에러를 반환한다")
+        void shouldReturn400WhenCodeIsMissing() throws Exception {
+            // given
+            String emptyRequest = "{}";
+
+            // when & then
+            mockMvc.perform(post("/api/auth/token")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(emptyRequest))
+                    .andDo(print())
+                    .andExpect(status().isBadRequest());
         }
     }
 }
