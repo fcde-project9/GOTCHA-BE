@@ -8,6 +8,7 @@ import com.gotcha.domain.file.exception.FileException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -15,10 +16,14 @@ import java.io.IOException;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Google Cloud Storage 파일 업로드 서비스 (dev, local 환경 전용)
+ */
 @Slf4j
 @Service
+@Profile({"local", "dev"})
 @RequiredArgsConstructor
-public class FileUploadService {
+public class GcsFileUploadService implements FileStorageService {
 
     private static final long MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
@@ -40,13 +45,7 @@ public class FileUploadService {
     @Value("${gcs.bucket-name}")
     private String bucketName;
 
-    /**
-     * 이미지 파일을 GCS에 업로드
-     *
-     * @param file   업로드할 파일
-     * @param folder 저장할 폴더 (예: "reviews", "shops")
-     * @return 업로드된 파일 정보
-     */
+    @Override
     public FileUploadResponse uploadImage(MultipartFile file, String folder) {
         validateFile(file);
         validateFolder(folder);
@@ -64,7 +63,7 @@ public class FileUploadService {
 
             String publicUrl = String.format("https://storage.googleapis.com/%s/%s", bucketName, objectName);
 
-            log.info("File uploaded successfully: {}", publicUrl);
+            log.info("File uploaded successfully to GCS: {}", publicUrl);
 
             return FileUploadResponse.of(
                     publicUrl,
@@ -82,11 +81,7 @@ public class FileUploadService {
         }
     }
 
-    /**
-     * GCS에서 파일 삭제
-     *
-     * @param fileUrl 삭제할 파일의 공개 URL
-     */
+    @Override
     public void deleteFile(String fileUrl) {
         try {
             String objectName = extractObjectName(fileUrl);
@@ -97,7 +92,7 @@ public class FileUploadService {
             if (!deleted) {
                 log.warn("File not found or already deleted: {}", fileUrl);
             } else {
-                log.info("File deleted successfully: {}", fileUrl);
+                log.info("File deleted successfully from GCS: {}", fileUrl);
             }
 
         } catch (Exception e) {

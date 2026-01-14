@@ -15,23 +15,20 @@ public record UserResponse(
         @Schema(description = "이메일", example = "user@example.com")
         String email,
 
-        @Schema(description = "프로필 이미지 URL", example = "https://storage.googleapis.com/gotcha-dev-files/profile-default-join.png")
+        @Schema(description = "프로필 이미지 URL")
         String profileImageUrl,
 
         @Schema(description = "소셜 로그인 타입", example = "KAKAO")
         SocialType socialType
 ) {
-    private static final String DEFAULT_PROFILE_IMAGE_URL =
-            "https://storage.googleapis.com/gotcha-dev-files/profile-default-join.png";
-
-    public static UserResponse from(User user) {
+    public static UserResponse from(User user, String defaultProfileImageUrl) {
         return new UserResponse(
                 user.getId(),
                 user.getNickname(),
                 user.getEmail(),
                 user.getProfileImageUrl() != null && !user.getProfileImageUrl().isBlank()
                         ? user.getProfileImageUrl()
-                        : DEFAULT_PROFILE_IMAGE_URL,
+                        : defaultProfileImageUrl,
                 user.getSocialType()
         );
     }

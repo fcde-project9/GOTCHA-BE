@@ -2,7 +2,7 @@ package com.gotcha.domain.file.controller;
 
 import com.gotcha._global.common.ApiResponse;
 import com.gotcha.domain.file.dto.FileUploadResponse;
-import com.gotcha.domain.file.service.FileUploadService;
+import com.gotcha.domain.file.service.FileStorageService;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Validated
 public class FileUploadController implements FileUploadControllerApi {
 
-    private final FileUploadService fileUploadService;
+    private final FileStorageService fileStorageService;
 
     @Override
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -36,7 +36,7 @@ public class FileUploadController implements FileUploadControllerApi {
             @NotBlank(message = "폴더명은 필수입니다")
             String folder
     ) {
-        FileUploadResponse response = fileUploadService.uploadImage(file, folder);
+        FileUploadResponse response = fileStorageService.uploadImage(file, folder);
         return ApiResponse.success(response);
     }
 }

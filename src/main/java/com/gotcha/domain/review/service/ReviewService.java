@@ -1,6 +1,6 @@
 package com.gotcha.domain.review.service;
 
-import com.gotcha.domain.file.service.FileUploadService;
+import com.gotcha.domain.file.service.FileStorageService;
 import com.gotcha.domain.review.dto.CreateReviewRequest;
 import com.gotcha.domain.review.dto.PageResponse;
 import com.gotcha.domain.review.dto.ReviewImageListResponse;
@@ -40,7 +40,7 @@ public class ReviewService {
     private final ReviewLikeRepository reviewLikeRepository;
     private final ShopRepository shopRepository;
     private final UserRepository userRepository;
-    private final FileUploadService fileUploadService;
+    private final FileStorageService fileStorageService;
 
     private static final int MAX_IMAGES = 10;
 
@@ -178,7 +178,7 @@ public class ReviewService {
             if (!newImageUrls.contains(existingImage.getImageUrl())) {
                 // 새 요청에 없는 이미지만 GCS에서 삭제
                 try {
-                    fileUploadService.deleteFile(existingImage.getImageUrl());
+                    fileStorageService.deleteFile(existingImage.getImageUrl());
                     log.info("Deleted removed image from GCS: {}", existingImage.getImageUrl());
                 } catch (Exception e) {
                     log.error("Failed to delete image file: {}", existingImage.getImageUrl(), e);
@@ -259,7 +259,7 @@ public class ReviewService {
 
         for (ReviewImage image : images) {
             try {
-                fileUploadService.deleteFile(image.getImageUrl());
+                fileStorageService.deleteFile(image.getImageUrl());
                 log.info("Deleted image file: {}", image.getImageUrl());
             } catch (Exception e) {
                 log.error("Failed to delete image file: {}", image.getImageUrl(), e);
