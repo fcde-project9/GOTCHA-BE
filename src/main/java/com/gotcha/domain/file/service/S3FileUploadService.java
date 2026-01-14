@@ -103,15 +103,12 @@ public class S3FileUploadService implements FileStorageService {
 
             s3Client.deleteObject(deleteObjectRequest);
 
+            // S3 deleteObject는 멱등성(idempotent) 연산: 객체가 없어도 성공 처리됨
             log.info("File deleted successfully from S3: {}", fileUrl);
 
         } catch (S3Exception e) {
-            if (e.statusCode() == 404) {
-                log.warn("File not found or already deleted: {}", fileUrl);
-            } else {
-                log.error("S3 delete failed: {}", e.awsErrorDetails().errorMessage(), e);
-                throw FileException.deleteFailed(e.awsErrorDetails().errorMessage());
-            }
+            log.error("S3 delete failed: {}", e.awsErrorDetails().errorMessage(), e);
+            throw FileException.deleteFailed(e.awsErrorDetails().errorMessage());
         } catch (Exception e) {
             log.error("File delete failed: {}", e.getMessage(), e);
             throw FileException.deleteFailed(e.getMessage());

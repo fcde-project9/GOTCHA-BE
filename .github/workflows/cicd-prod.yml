@@ -91,8 +91,20 @@ jobs:
               -e OAUTH2_COOKIE_ENCRYPTION_KEY="${{ secrets.OAUTH2_COOKIE_ENCRYPTION_KEY_PROD }}" \
               ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:latest
 
+            # 컨테이너 상태 확인 (10초 대기 후 확인)
+            sleep 10
+            if ! docker ps | grep -q gotcha-be-prod; then
+              echo "Container failed to start ❌"
+              docker logs gotcha-be-prod
+              exit 1
+            fi
+            echo "Container started successfully ✅"
+
             # 이전 이미지 정리
             docker image prune -f
           EOF
 
-          rm -f private_key.pem
+      # 6. SSH 키 정리 (항상 실행)
+      - name: Cleanup SSH key
+        if: always()
+        run: rm -f private_key.pem
