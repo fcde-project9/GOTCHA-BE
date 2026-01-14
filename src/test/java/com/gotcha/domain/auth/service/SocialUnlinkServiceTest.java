@@ -27,7 +27,8 @@ import org.springframework.web.client.RestTemplate;
 @ExtendWith(MockitoExtension.class)
 class SocialUnlinkServiceTest {
 
-    private static final String KAKAO_UNLINK_URL = "https://kapi.kakao.com/v1/user/unlink";
+    private static final String TEST_KAKAO_USER_API_BASE_URL = "https://kapi.kakao.com";
+    private static final String KAKAO_UNLINK_URL = TEST_KAKAO_USER_API_BASE_URL + "/v1/user/unlink";
     private static final String TEST_ADMIN_KEY = "test-admin-key";
 
     @Mock
@@ -39,6 +40,7 @@ class SocialUnlinkServiceTest {
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(socialUnlinkService, "kakaoAdminKey", TEST_ADMIN_KEY);
+        ReflectionTestUtils.setField(socialUnlinkService, "kakaoUserApiBaseUrl", TEST_KAKAO_USER_API_BASE_URL);
     }
 
     private User createUser(SocialType socialType, String socialId) {

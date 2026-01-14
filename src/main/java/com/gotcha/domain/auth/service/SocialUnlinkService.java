@@ -27,12 +27,15 @@ import org.springframework.web.client.RestTemplate;
 @RequiredArgsConstructor
 public class SocialUnlinkService {
 
-    private static final String KAKAO_UNLINK_URL = "https://kapi.kakao.com/v1/user/unlink";
+    private static final String KAKAO_UNLINK_PATH = "/v1/user/unlink";
 
     private final RestTemplate restTemplate;
 
     @Value("${kakao.api.admin-key}")
     private String kakaoAdminKey;
+
+    @Value("${kakao.api.user-api-base-url}")
+    private String kakaoUserApiBaseUrl;
 
     /**
      * 사용자의 소셜 연결 끊기
@@ -78,8 +81,9 @@ public class SocialUnlinkService {
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
 
         try {
+            String unlinkUrl = kakaoUserApiBaseUrl + KAKAO_UNLINK_PATH;
             ResponseEntity<String> response = restTemplate.postForEntity(
-                    KAKAO_UNLINK_URL,
+                    unlinkUrl,
                     request,
                     String.class
             );

@@ -65,6 +65,7 @@ kakao:
     rest-api-key: ${KAKAO_REST_API_KEY}
     admin-key: ${KAKAO_ADMIN_KEY}
     base-url: ${KAKAO_API_BASE_URL}
+    user-api-base-url: https://kapi.kakao.com
 
 # JWT Configuration
 jwt:
