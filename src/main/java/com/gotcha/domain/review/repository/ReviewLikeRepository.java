@@ -19,6 +19,14 @@ public interface ReviewLikeRepository extends JpaRepository<ReviewLike, Long> {
     @Query("DELETE FROM ReviewLike rl WHERE rl.user.id = :userId")
     void deleteByUserId(@Param("userId") Long userId);
 
+    /**
+     * 특정 리뷰들에 대한 모든 좋아요 삭제 (회원 탈퇴 시 사용)
+     * @param reviewIds 삭제할 리뷰 ID 목록
+     */
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM ReviewLike rl WHERE rl.review.id IN :reviewIds")
+    void deleteAllByReviewIdIn(@Param("reviewIds") List<Long> reviewIds);
+
     boolean existsByUserIdAndReviewId(Long currentUserId, Long reviewId);
 
     /**
