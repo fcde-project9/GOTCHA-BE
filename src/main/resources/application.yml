@@ -85,12 +85,3 @@ springdoc:
     path: /api/swagger-ui.html
     operationsSorter: method
     tagsSorter: alpha
-
-# Google Cloud Storage Configuration
-gcs:
-  bucket-name: ${GCS_BUCKET_NAME}
-  project-id: ${GCS_PROJECT_ID}
-
-# User Configuration
-user:
-  default-profile-image-url: ${USER_DEFAULT_PROFILE_IMAGE_URL}
