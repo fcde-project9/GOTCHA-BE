@@ -47,6 +47,13 @@ public class User extends BaseTimeEntity {
     @Column(nullable = false, columnDefinition = "boolean default false")
     private Boolean isDeleted = false;
 
+    /**
+     * OAuth2 Access Token (구글 연동 해제용)
+     * 로그인 시 저장, 탈퇴 시 revoke API 호출에 사용
+     */
+    @Column(name = "oauth_access_token", columnDefinition = "TEXT")
+    private String oauthAccessToken;
+
     @Builder
     public User(SocialType socialType, String socialId, String nickname,
                 String email, String profileImageUrl) {
@@ -74,10 +81,15 @@ public class User extends BaseTimeEntity {
         this.lastLoginAt = LocalDateTime.now();
     }
 
+    public void updateOAuthAccessToken(String oauthAccessToken) {
+        this.oauthAccessToken = oauthAccessToken;
+    }
+
     /**
      * 회원 탈퇴 처리
      * - 소셜 연동 정보 제거 (재가입 허용)
      * - 개인정보 마스킹 (닉네임, 이메일, 프로필 이미지)
+     * - OAuth 토큰 제거
      * - soft delete 플래그 설정
      */
     public void delete() {
@@ -86,6 +98,7 @@ public class User extends BaseTimeEntity {
         this.nickname = "탈퇴한 사용자_" + this.id;
         this.email = null;
         this.profileImageUrl = null;
+        this.oauthAccessToken = null;
         this.isDeleted = true;
     }
 }
