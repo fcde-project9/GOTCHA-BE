@@ -80,8 +80,8 @@ public class FavoriteService {
         return favorites.stream()
                 .map(favorite -> {
                     Shop shop = favorite.getShop();
-                    Boolean isOpen = shopService.isOpenNow(shop.getOpenTime());
-                    return FavoriteShopResponse.from(favorite, isOpen);
+                    String openStatus = shopService.getOpenStatus(shop.getOpenTime());
+                    return FavoriteShopResponse.from(favorite, openStatus);
                 })
                 .collect(Collectors.toList());
     }

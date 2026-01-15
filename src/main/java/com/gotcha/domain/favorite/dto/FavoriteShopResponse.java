@@ -20,20 +20,20 @@ public record FavoriteShopResponse(
     @Schema(description = "대표 이미지 URL")
     String mainImageUrl,
 
-    @Schema(description = "영업 중 여부", example = "true")
-    Boolean isOpen,
+    @Schema(description = "영업 상태", example = "영업 중", allowableValues = {"영업 중", "영업 종료", "휴무", ""})
+    String openStatus,
 
     @Schema(description = "찜한 일시")
     LocalDateTime favoritedAt
 ) {
-    public static FavoriteShopResponse from(Favorite favorite, Boolean isOpen) {
+    public static FavoriteShopResponse from(Favorite favorite, String openStatus) {
         Shop shop = favorite.getShop();
         return new FavoriteShopResponse(
             shop.getId(),
             shop.getName(),
             shop.getAddressName(),
             shop.getMainImageUrl(),
-            isOpen,
+            openStatus,
             favorite.getCreatedAt()
         );
     }

@@ -55,7 +55,7 @@
 | longitude | Double | 경도 |
 | main_image_url | String | 대표 이미지 (필수) |
 | location_hint | String | 찾아가는 힌트 |
-| open_time | String | 영업시간 `"HH:mm-HH:mm"` (예: "10:00-22:00") |
+| open_time | String | 영업시간 JSON 형식 (예: `{"Mon":"10:00-22:00","Tue":null,"Wed":"10:00-22:00"}`) 휴무일은 null |
 | region_1depth_name | String | 시/도 (예: 서울) |
 | region_2depth_name | String | 구/군 (예: 강남구) |
 | region_3depth_name | String | 동 (예: 신사동) |

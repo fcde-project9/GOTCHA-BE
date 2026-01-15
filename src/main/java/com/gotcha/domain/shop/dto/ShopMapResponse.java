@@ -20,11 +20,11 @@ public record ShopMapResponse(
         @Schema(description = "경도")
         Double longitude,
 
-        @Schema(description = "운영 시간 (JSON 형식)", example = "{\"Mon\":\"10:00~22:00\",\"Tue\":null,\"Wed\":\"10:00~22:00\"}")
+        @Schema(description = "운영 시간 (JSON 형식)", example = "{\"Mon\":\"10:00-22:00\",\"Tue\":null,\"Wed\":\"10:00-22:00\"}")
         String openTime,
 
-        @Schema(description = "영업중 여부 (현재 한국 시간 기준)", example = "true")
-        Boolean isOpen,
+        @Schema(description = "영업 상태 (한국 시간 기준)", example = "영업 중", allowableValues = {"영업 중", "영업 종료", "휴무", ""})
+        String openStatus,
 
         @Schema(description = "사용자 위치로부터의 거리 (사용자 위치 정보가 없으면 null)", example = "50m", nullable = true)
         String distance,
@@ -36,11 +36,11 @@ public record ShopMapResponse(
      * Shop 엔티티를 ShopMapResponse로 변환
      * @param shop Shop 엔티티
      * @param distance 거리 문자열 (예: "50m", "1.5km", 사용자 위치 정보가 없으면 null)
-     * @param isOpen 영업중 여부
+     * @param openStatus 영업 상태 ("영업 중", "영업 종료", "휴무", "")
      * @param isFavorite 찜 여부
      * @return ShopMapResponse
      */
-    public static ShopMapResponse of(Shop shop, String distance, Boolean isOpen, Boolean isFavorite) {
+    public static ShopMapResponse of(Shop shop, String distance, String openStatus, Boolean isFavorite) {
         return new ShopMapResponse(
                 shop.getId(),
                 shop.getName(),
@@ -48,7 +48,7 @@ public record ShopMapResponse(
                 shop.getLatitude(),
                 shop.getLongitude(),
                 shop.getOpenTime(),
-                isOpen,
+                openStatus,
                 distance,
                 isFavorite
         );

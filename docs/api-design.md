@@ -52,7 +52,7 @@
         "name": "가챠샵",
         "address": "서울시 강남구...",
         "distance": 300,
-        "isOpen": true,
+        "openStatus": "영업 중",
         "isFavorite": false
       }
     ]
@@ -82,6 +82,7 @@
 | POST | /shops/{id}/reviews | 리뷰 작성 |
 | PUT | /shops/{id}/reviews/{reviewId} | 리뷰 수정 |
 | DELETE | /shops/{id}/reviews/{reviewId} | 리뷰 삭제 |
+| GET | /shops/{id}/reviews/images | 가게 리뷰 이미지 전체 조회 (최신순) |
 | POST | /shops/reviews/{reviewId}/like | 리뷰 좋아요 |
 | DELETE | /shops/reviews/{reviewId}/like | 리뷰 좋아요 취소 |
 

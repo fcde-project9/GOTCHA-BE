@@ -19,19 +19,19 @@ public record MyShopResponse(
     @Schema(description = "주소")
     String addressName,
 
-    @Schema(description = "영업 중 여부", example = "true", nullable = true)
-    Boolean isOpen,
+    @Schema(description = "영업 상태", example = "영업 중", allowableValues = {"영업 중", "영업 종료", "휴무", ""})
+    String openStatus,
 
     @Schema(description = "제보한 날짜", example = "2025-01-01")
     LocalDate createdAt
 ) {
-    public static MyShopResponse from(Shop shop, Boolean isOpen) {
+    public static MyShopResponse from(Shop shop, String openStatus) {
         return new MyShopResponse(
             shop.getId(),
             shop.getName(),
             shop.getMainImageUrl(),
             shop.getAddressName(),
-            isOpen,
+            openStatus,
             shop.getCreatedAt().toLocalDate()
         );
     }

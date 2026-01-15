@@ -22,13 +22,13 @@ public record ShopDetailResponse(
         String locationHint,
 
         @Schema(description = "운영 시간 (JSON 형식)", example =
-                "{\"Mon\":\"10:00~22:00\",\"Tue\":null,\"Wed\":\"10:00~22:00\"}")
+                "{\"Mon\":\"10:00-22:00\",\"Tue\":null,\"Wed\":\"10:00-22:00\"}")
         String openTime,
-        @Schema(description = "오늘 영업 시간 (한국 시간 기준)", example = "10:00~22:00", nullable = true)
+        @Schema(description = "오늘 영업 시간 (한국 시간 기준)", example = "10:00-22:00", nullable = true)
         String todayOpenTime,
 
-        @Schema(description = "영업 중 여부 (한국 시간 기준)", example = "true")
-        Boolean isOpen,
+        @Schema(description = "영업 상태 (한국 시간 기준)", example = "영업 중", allowableValues = {"영업 중", "영업 종료", "휴무", ""})
+        String openStatus,
 
         @Schema(description = "위도", example = "37.517305")
         Double latitude,
@@ -59,7 +59,7 @@ public record ShopDetailResponse(
      *
      * @param shop                   Shop 엔티티
      * @param todayOpenTime          오늘의 영업 시간
-     * @param isOpen                 영업 중 여부
+     * @param openStatus             영업 상태 ("영업 중", "영업 종료", "휴무", "")
      * @param isFavorite             찜 여부
      * @param reviews                리뷰 목록
      * @param reviewCount            전체 리뷰 개수
@@ -67,7 +67,7 @@ public record ShopDetailResponse(
      * @param recentReviewImages     최신 리뷰 이미지 4개
      * @return ShopDetailResponse
      */
-    public static ShopDetailResponse of(Shop shop, String todayOpenTime, Boolean isOpen, Boolean isFavorite,
+    public static ShopDetailResponse of(Shop shop, String todayOpenTime, String openStatus, Boolean isFavorite,
                                         List<ReviewResponse> reviews, Long reviewCount, Long totalReviewImageCount,
                                         List<String> recentReviewImages) {
         Objects.requireNonNull(shop, "Shop must not be null");
@@ -79,7 +79,7 @@ public record ShopDetailResponse(
                 shop.getLocationHint(),
                 shop.getOpenTime(),
                 todayOpenTime,
-                isOpen,
+                openStatus,
                 shop.getLatitude(),
                 shop.getLongitude(),
                 shop.getMainImageUrl(),
