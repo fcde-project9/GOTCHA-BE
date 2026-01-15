@@ -23,3 +23,7 @@ aws:
 # User Configuration
 user:
   default-profile-image-url: ${USER_DEFAULT_PROFILE_IMAGE_URL}
+
+# Shop Configuration
+shop:
+  default-image-url: ${SHOP_DEFAULT_IMAGE_URL}

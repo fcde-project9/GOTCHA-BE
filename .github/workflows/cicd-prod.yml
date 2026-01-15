@@ -74,6 +74,7 @@ jobs:
               -e JWT_ACCESS_TOKEN_VALIDITY="${{ secrets.JWT_ACCESS_TOKEN_VALIDITY }}" \
               -e JWT_REFRESH_TOKEN_VALIDITY="${{ secrets.JWT_REFRESH_TOKEN_VALIDITY }}" \
               -e KAKAO_REST_API_KEY="${{ secrets.KAKAO_REST_API_KEY }}" \
+              -e KAKAO_ADMIN_KEY="${{ secrets.KAKAO_ADMIN_KEY }}" \
               -e KAKAO_API_BASE_URL="${{ secrets.KAKAO_API_BASE_URL }}" \
               -e OAUTH2_REDIRECT_URI="${{ secrets.OAUTH2_REDIRECT_URI_PROD }}" \
               -e OAUTH2_ALLOWED_REDIRECT_URIS="${{ secrets.OAUTH2_ALLOWED_REDIRECT_URIS_PROD }}" \
@@ -88,6 +89,7 @@ jobs:
               -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_S3_ACCESS_KEY_ID }}" \
               -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}" \
               -e USER_DEFAULT_PROFILE_IMAGE_URL="${{ secrets.USER_DEFAULT_PROFILE_IMAGE_URL_PROD }}" \
+              -e SHOP_DEFAULT_IMAGE_URL="${{ secrets.SHOP_DEFAULT_IMAGE_URL_PROD }}" \
               -e OAUTH2_COOKIE_ENCRYPTION_KEY="${{ secrets.OAUTH2_COOKIE_ENCRYPTION_KEY_PROD }}" \
               ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:latest
 

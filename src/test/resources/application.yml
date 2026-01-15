@@ -73,3 +73,7 @@ gcs:
 # User Configuration for tests
 user:
   default-profile-image-url: https://storage.googleapis.com/test-bucket/defaults/profile-default.png
+
+# Shop Configuration for tests
+shop:
+  default-image-url: https://storage.googleapis.com/test-bucket/defaults/shop-default.png

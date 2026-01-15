@@ -50,6 +50,9 @@ public class ShopService {
     private final ReviewImageRepository reviewImageRepository;
     private final ReviewLikeRepository reviewLikeRepository;
 
+    @org.springframework.beans.factory.annotation.Value("${shop.default-image-url}")
+    private String defaultShopImageUrl;
+
     @Transactional
     public Shop createShop(String name, Double latitude, Double longitude,
                            String mainImageUrl, String locationHint, Map<String, String> openTime,
@@ -71,13 +74,18 @@ public class ShopService {
 
             String openTimeJson = convertOpenTimeMapToString(openTime);
 
+            // mainImageUrl이 null이거나 빈 문자열이면 기본 이미지 사용
+            String finalImageUrl = (mainImageUrl == null || mainImageUrl.trim().isEmpty())
+                    ? defaultShopImageUrl
+                    : mainImageUrl;
+
             log.info("Building Shop entity...");
             Shop shop = Shop.builder()
                     .name(name)
                     .addressName(addressInfo.addressName())
                     .latitude(latitude)
                     .longitude(longitude)
-                    .mainImageUrl(mainImageUrl)
+                    .mainImageUrl(finalImageUrl)
                     .locationHint(locationHint)
                     .openTime(openTimeJson)
                     .region1DepthName(addressInfo.region1DepthName())
@@ -87,7 +95,7 @@ public class ShopService {
                     .subAddressNo(addressInfo.subAddressNo())
                     .createdBy(createdBy)
                     .build();
-            log.info("Shop entity built successfully");
+            log.info("Shop entity built successfully with mainImageUrl: {}", finalImageUrl);
 
             log.info("Saving to database...");
             Shop savedShop = shopRepository.save(shop);
