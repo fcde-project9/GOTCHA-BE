@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS}
+
+# Google Cloud Storage Configuration (Development)
+gcs:
+  bucket-name: ${GCS_BUCKET_NAME}
+  project-id: ${GCS_PROJECT_ID}
+
+# User Configuration
+user:
+  default-profile-image-url: ${USER_DEFAULT_PROFILE_IMAGE_URL}
+
+# Shop Configuration
+shop:
+  default-image-url: ${SHOP_DEFAULT_IMAGE_URL}

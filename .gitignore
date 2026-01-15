@@ -35,3 +35,28 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Environment ###
+.env
+.env.*
+*.env
+application-local.yml
+application-secret.yml
+
+### Personal ###
+docs/chan/
+
+### Claude Automation ###
+.claude/logs/
+
+### JSON files ###
+*.json
+!**/META-INF/**/*.json
+
+### Logs and system files ###
+*.log
+.DS_Store
+
+### Claude Code temporary files ###
+tmpclaude-*
+
