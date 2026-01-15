@@ -65,7 +65,11 @@ jobs:
               --name gotcha-be-prod \
               -p 8080:8080 \
               --restart unless-stopped \
+              --memory="700m" \
+              --memory-swap="1g" \
+              --cpus="1.5" \
               -e SPRING_PROFILES_ACTIVE=prod \
+              -e JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200" \
               -e SPRING_DATASOURCE_URL="${{ secrets.DB_URL_PROD }}" \
               -e SPRING_DATASOURCE_USERNAME="${{ secrets.DB_USERNAME_PROD }}" \
               -e SPRING_DATASOURCE_PASSWORD="${{ secrets.DB_PASSWORD_PROD }}" \
