@@ -10,3 +10,12 @@ spring:
 
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS}
+
+# Google Cloud Storage Configuration (Development)
+gcs:
+  bucket-name: ${GCS_BUCKET_NAME}
+  project-id: ${GCS_PROJECT_ID}
+
+# User Configuration
+user:
+  default-profile-image-url: ${USER_DEFAULT_PROFILE_IMAGE_URL}

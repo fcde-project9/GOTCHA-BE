@@ -6,6 +6,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.mockito.ArgumentCaptor;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.gotcha._global.util.SecurityUtil;
 import com.gotcha.domain.auth.repository.RefreshTokenRepository;
@@ -93,6 +94,10 @@ class UserServiceTest {
                 .profileImageUrl("https://example.com/profile.jpg")
                 .build();
         setUserId(testUser, 1L);
+
+        // @Value 주입 대신 ReflectionTestUtils로 설정
+        ReflectionTestUtils.setField(userService, "defaultProfileImageUrl",
+                "https://storage.googleapis.com/test-bucket/defaults/profile-default.png");
     }
 
     private void setUserId(User user, Long id) {
@@ -110,7 +115,7 @@ class UserServiceTest {
     class GetMyInfo {
 
         private static final String DEFAULT_PROFILE_IMAGE_URL =
-                "https://storage.googleapis.com/gotcha-dev-files/profile-default-join.png";
+                "https://storage.googleapis.com/test-bucket/defaults/profile-default.png";
 
         @Test
         @DisplayName("현재 로그인한 사용자의 정보를 반환한다")
