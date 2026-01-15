@@ -58,7 +58,7 @@ jobs:
             docker rm gotcha-be-prod || true
 
             # 새 이미지 풀
-            docker pull ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:latest
+            docker pull ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
 
             # 새 컨테이너 실행
             docker run -d \
@@ -95,7 +95,7 @@ jobs:
               -e USER_DEFAULT_PROFILE_IMAGE_URL="${{ secrets.USER_DEFAULT_PROFILE_IMAGE_URL_PROD }}" \
               -e SHOP_DEFAULT_IMAGE_URL="${{ secrets.SHOP_DEFAULT_IMAGE_URL_PROD }}" \
               -e OAUTH2_COOKIE_ENCRYPTION_KEY="${{ secrets.OAUTH2_COOKIE_ENCRYPTION_KEY_PROD }}" \
-              ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:latest
+              ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
 
             # 컨테이너 상태 확인 (10초 대기 후 확인)
             sleep 10
