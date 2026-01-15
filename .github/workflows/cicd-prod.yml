@@ -69,7 +69,7 @@ jobs:
               --memory-swap="1g" \
               --cpus="1.5" \
               -e SPRING_PROFILES_ACTIVE=prod \
-              -e JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200" \
+              -e JAVA_TOOL_OPTIONS="-Xms256m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200" \
               -e SPRING_DATASOURCE_URL="${{ secrets.DB_URL_PROD }}" \
               -e SPRING_DATASOURCE_USERNAME="${{ secrets.DB_USERNAME_PROD }}" \
               -e SPRING_DATASOURCE_PASSWORD="${{ secrets.DB_PASSWORD_PROD }}" \
