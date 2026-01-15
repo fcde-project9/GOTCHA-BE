@@ -9,6 +9,7 @@ import org.mockito.ArgumentCaptor;
 
 import com.gotcha._global.util.SecurityUtil;
 import com.gotcha.domain.auth.repository.RefreshTokenRepository;
+import com.gotcha.domain.auth.service.SocialUnlinkService;
 import com.gotcha.domain.comment.repository.CommentRepository;
 import com.gotcha.domain.favorite.repository.FavoriteRepository;
 import com.gotcha.domain.file.service.FileStorageService;
@@ -74,6 +75,10 @@ class UserServiceTest {
 
     @Mock
     private FileStorageService fileStorageService;
+
+    @Mock
+    private SocialUnlinkService socialUnlinkService;
+
     @InjectMocks
     private UserService userService;
 
@@ -213,6 +218,9 @@ class UserServiceTest {
 
             // when
             userService.withdraw(request);
+
+            // then - 소셜 연결 끊기 검증
+            verify(socialUnlinkService).unlinkSocialAccount(testUser);
 
             // then - 설문 저장 검증
             ArgumentCaptor<WithdrawalSurvey> surveyCaptor = ArgumentCaptor.forClass(WithdrawalSurvey.class);

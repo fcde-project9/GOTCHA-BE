@@ -3,6 +3,7 @@ package com.gotcha.domain.user.service;
 import com.gotcha._global.common.PageResponse;
 import com.gotcha._global.util.SecurityUtil;
 import com.gotcha.domain.auth.repository.RefreshTokenRepository;
+import com.gotcha.domain.auth.service.SocialUnlinkService;
 import com.gotcha.domain.comment.repository.CommentRepository;
 import com.gotcha.domain.favorite.repository.FavoriteRepository;
 import com.gotcha.domain.file.service.FileStorageService;
@@ -53,6 +54,7 @@ public class UserService {
     private final FileStorageService fileStorageService;
     private final ShopRepository shopRepository;
     private final ShopService shopService;
+    private final SocialUnlinkService socialUnlinkService;
 
     @Value("${user.default-profile-image-url}")
     private String defaultProfileImageUrl;
@@ -191,15 +193,16 @@ public class UserService {
 
     /**
      * 회원 탈퇴
-     * 1. 탈퇴 설문 저장
-     * 2. 찜 목록 삭제
-     * 3. 사용자가 누른 리뷰 좋아요 삭제
-     * 4. 리뷰 이미지 GCS 삭제 및 DB 삭제 + 사용자 리뷰에 달린 좋아요 삭제
-     * 5. 리뷰 삭제
-     * 6. 댓글 삭제
-     * 7. 권한 동의 기록 삭제
-     * 8. RefreshToken 삭제
-     * 9. 사용자 soft delete (개인정보 마스킹)
+     * 1. 소셜 계정 연결 끊기 (카카오)
+     * 2. 탈퇴 설문 저장
+     * 3. 찜 목록 삭제
+     * 4. 사용자가 누른 리뷰 좋아요 삭제
+     * 5. 리뷰 이미지 GCS 삭제 및 DB 삭제 + 사용자 리뷰에 달린 좋아요 삭제
+     * 6. 리뷰 삭제
+     * 7. 댓글 삭제
+     * 8. 권한 동의 기록 삭제
+     * 9. RefreshToken 삭제
+     * 10. 사용자 soft delete (개인정보 마스킹)
      *
      * @param request 탈퇴 설문 정보 (reason 필수, detail 선택)
      * @throws UserException 이미 탈퇴한 사용자인 경우 (U005)
@@ -218,7 +221,11 @@ public class UserService {
             throw UserException.alreadyDeleted(userId);
         }
 
-        // 1. 탈퇴 설문 저장
+        // 1. 소셜 계정 연결 끊기 (user.delete() 전에 호출해야 socialType/socialId 접근 가능)
+        socialUnlinkService.unlinkSocialAccount(user);
+        log.info("Social account unlinked - userId: {}", userId);
+
+        // 2. 탈퇴 설문 저장
         WithdrawalSurvey survey = WithdrawalSurvey.builder()
                 .user(user)
                 .reasons(request.reasons())
@@ -227,34 +234,34 @@ public class UserService {
         withdrawalSurveyRepository.save(survey);
         log.info("Withdrawal survey saved - surveyId: {}, userId: {}", survey.getId(), userId);
 
-        // 2. 찜 목록 삭제
+        // 3. 찜 목록 삭제
         favoriteRepository.deleteByUserId(userId);
         log.info("Favorites deleted - userId: {}", userId);
 
-        // 3. 사용자가 누른 리뷰 좋아요 삭제 (다른 사람 리뷰에 누른 좋아요)
+        // 4. 사용자가 누른 리뷰 좋아요 삭제 (다른 사람 리뷰에 누른 좋아요)
         reviewLikeRepository.deleteByUserId(userId);
         log.info("User's review likes deleted - userId: {}", userId);
 
-        // 4. 리뷰 이미지 삭제 (GCS + DB) + 사용자 리뷰에 달린 좋아요 삭제
+        // 5. 리뷰 이미지 삭제 (GCS + DB) + 사용자 리뷰에 달린 좋아요 삭제
         deleteUserReviewImages(userId);
 
-        // 5. 리뷰 삭제
+        // 6. 리뷰 삭제
         reviewRepository.deleteByUserId(userId);
         log.info("Reviews deleted - userId: {}", userId);
 
-        // 6. 댓글 삭제
+        // 7. 댓글 삭제
         commentRepository.deleteByUserId(userId);
         log.info("Comments deleted - userId: {}", userId);
 
-        // 7. 권한 동의 기록 삭제
+        // 8. 권한 동의 기록 삭제
         userPermissionRepository.deleteByUserId(userId);
         log.info("User permissions deleted - userId: {}", userId);
 
-        // 8. RefreshToken 삭제
+        // 9. RefreshToken 삭제
         refreshTokenRepository.deleteByUserId(userId);
         log.info("RefreshToken deleted - userId: {}", userId);
 
-        // 9. 사용자 soft delete (개인정보 마스킹 포함)
+        // 10. 사용자 soft delete (개인정보 마스킹 포함)
         user.delete();
         userRepository.save(user);
         log.info("User soft deleted with masked info - userId: {}", userId);
