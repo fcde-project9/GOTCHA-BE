@@ -77,7 +77,7 @@ class ShopControllerTest {
                     "테스트 가게",
                     "https://example.com/image.jpg",
                     "테스트 힌트",
-                    Map.of("Mon", "10:00~22:00")
+                    Map.of("Mon", "10:00-22:00")
             );
 
             Shop shop = createShop(1L, "테스트 가게", null);

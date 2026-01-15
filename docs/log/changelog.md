@@ -4,6 +4,62 @@
 
 ---
 
+## 2026-01-15
+
+### 추가
+- `src/main/java/com/gotcha/domain/review/repository/ReviewImageRepository.java` - 가게별 리뷰 이미지 전체 조회 메서드
+  - 추가: findAllByShopIdOrderByCreatedAtDesc() - 리뷰 생성일시 기준 최신순 정렬
+- `src/main/java/com/gotcha/domain/review/dto/ReviewImageListResponse.java` - 리뷰 이미지 목록 Response DTO
+- `src/main/java/com/gotcha/domain/review/service/ReviewService.java` - 가게 리뷰 이미지 조회 기능
+  - 추가: getShopReviewImages() - 가게의 모든 리뷰 이미지 조회 (최신순)
+- `src/main/java/com/gotcha/domain/review/controller/ReviewController.java` - 리뷰 이미지 조회 API
+  - 추가: GET /api/shops/{shopId}/reviews/images - 가게 리뷰 이미지 전체 조회
+- `src/test/java/com/gotcha/domain/review/repository/ReviewImageRepositoryTest.java` - 리뷰 이미지 Repository 테스트
+
+### 수정
+- `src/main/java/com/gotcha/domain/shop/service/ShopService.java` - 영업 상태 로직 개편
+  - 변경: isOpenNow() 제거, getOpenStatus() 추가 (Boolean → String)
+  - 변경: openStatus 4가지 상태 지원 ("영업 중", "영업 종료", "휴무", "")
+  - 변경: openTime JSON 형식의 시간 구분자 ~ → - (예: "10:00~22:00" → "10:00-22:00")
+  - 변경: 한국 시간(Asia/Seoul) 기준으로 영업 상태 판단
+  - 변경: 요일별 영업시간 처리 (Mon, Tue, Wed, Thu, Fri, Sat, Sun)
+  - 변경: 휴무일(null) 처리 로직 추가
+- `src/main/java/com/gotcha/domain/shop/dto/ShopDetailResponse.java` - 영업 상태 필드 변경
+  - 변경: Boolean isOpen → String openStatus
+  - 변경: @Schema allowableValues 추가 ("영업 중", "영업 종료", "휴무", "")
+- `src/main/java/com/gotcha/domain/shop/dto/ShopMapResponse.java` - 영업 상태 필드 변경
+  - 변경: Boolean isOpen → String openStatus
+- `src/main/java/com/gotcha/domain/favorite/dto/FavoriteShopResponse.java` - 영업 상태 필드 변경
+  - 변경: Boolean isOpen → String openStatus
+- `src/main/java/com/gotcha/domain/user/dto/MyShopResponse.java` - 영업 상태 필드 변경
+  - 변경: Boolean isOpen → String openStatus
+- `src/main/java/com/gotcha/domain/favorite/service/FavoriteService.java` - openStatus 사용
+  - 변경: isOpenNow() → getOpenStatus() 호출
+- `src/main/java/com/gotcha/domain/user/service/UserService.java` - openStatus 사용
+  - 변경: isOpenNow() → getOpenStatus() 호출
+- `src/main/java/com/gotcha/domain/shop/dto/CreateShopRequest.java` - 시간 형식 예시 업데이트
+  - 변경: 모든 Schema 예시의 시간 구분자 ~ → -
+- `src/test/java/com/gotcha/domain/shop/controller/ShopControllerTest.java` - 테스트 데이터 업데이트
+  - 변경: openTime 테스트 데이터 시간 구분자 ~ → -
+- `src/main/resources/application-local.yml` - 환경변수 기본값 추가
+  - 추가: oauth2.cookie-encryption-key 기본값 (local 환경)
+  - 추가: shop.default-image-url 기본값 (local 환경)
+- `docs/api-spec.md` - API 명세 전면 업데이트
+  - 추가: GET /shops/{shopId}/reviews/images API 명세 (리뷰 이미지 전체 조회)
+  - 변경: 모든 API Response의 isOpen → openStatus
+  - 변경: 모든 openTime 예시의 시간 구분자 ~ → -
+  - 변경: openStatus 필드 설명 및 allowableValues 추가
+- `docs/api-design.md` - API 엔드포인트 목록 업데이트
+  - 추가: GET /shops/{id}/reviews/images 엔드포인트
+  - 변경: Response 예시의 isOpen → openStatus
+- `docs/business-rules.md` - 비즈니스 규칙 업데이트
+  - 변경: "영업중 판단 로직" → "영업 상태 판단 로직"
+  - 변경: openTime 형식 설명 (단일 시간대 → JSON 요일별)
+  - 변경: isOpen (Boolean) → openStatus (String) 로직 설명
+  - 추가: 4가지 영업 상태 설명 및 판단 로직
+
+---
+
 ## 2026-01-11
 
 ### 추가

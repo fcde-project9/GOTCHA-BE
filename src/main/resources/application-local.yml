@@ -37,3 +37,6 @@ gcs:
 
 user:
   default-profile-image-url: ${USER_DEFAULT_PROFILE_IMAGE_URL:https://storage.googleapis.com/gotcha-dev-files/defaults/profile-default-join.png}
+
+shop:
+  default-image-url: ${SHOP_DEFAULT_IMAGE_URL:https://storage.googleapis.com/gotcha-dev-files/defaults/shop-default.png}

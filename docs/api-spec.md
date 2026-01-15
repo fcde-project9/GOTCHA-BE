@@ -228,7 +228,7 @@ Authorization: Bearer {accessToken}
         "longitude": 127.0473,
         "mainImageUrl": "https://...",
         "distance": 300,
-        "isOpen": true,
+        "openStatus": "영업 중",
         "isFavorite": false
       }
     ],
@@ -334,8 +334,8 @@ Authorization: Bearer {accessToken}
       "mainImageUrl": "https://...",
       "latitude": 37.5172,
       "longitude": 127.0473,
-      "openTime": "{\"Mon\":\"10:00~22:00\",\"Tue\":\"10:00~22:00\"}",
-      "isOpen": true,
+      "openTime": "{\"Mon\":\"10:00-22:00\",\"Tue\":\"10:00-22:00\"}",
+      "openStatus": "영업 중",
       "distance": "50m",
       "isFavorite": false
     }
@@ -354,8 +354,8 @@ Authorization: Bearer {accessToken}
       "mainImageUrl": "https://...",
       "latitude": 37.5172,
       "longitude": 127.0473,
-      "openTime": "{\"Mon\":\"10:00~22:00\",\"Tue\":\"10:00~22:00\"}",
-      "isOpen": true,
+      "openTime": "{\"Mon\":\"10:00-22:00\",\"Tue\":\"10:00-22:00\"}",
+      "openStatus": "영업 중",
       "distance": null,
       "isFavorite": false
     }
@@ -394,9 +394,9 @@ Authorization: Bearer {accessToken}
     "name": "가챠샵 신사점",
     "addressName": "서울시 강남구 신사동 123-45",
     "locationHint": "신사역 4번 출구에서 도보 3분, 스타벅스 옆 건물 1층",
-    "openTime": "{\"Mon\":\"10:00~22:00\",\"Tue\":null,\"Wed\":\"10:00~22:00\",\"Thu\":\"10:00~22:00\",\"Fri\":\"10:00~22:00\",\"Sat\":\"10:00~22:00\",\"Sun\":\"10:00~22:00\"}",
-    "todayOpenTime": "10:00~22:00",
-    "isOpen": true,
+    "openTime": "{\"Mon\":\"10:00-22:00\",\"Tue\":null,\"Wed\":\"10:00-22:00\",\"Thu\":\"10:00-22:00\",\"Fri\":\"10:00-22:00\",\"Sat\":\"10:00-22:00\",\"Sun\":\"10:00-22:00\"}",
+    "todayOpenTime": "10:00-22:00",
+    "openStatus": "영업 중",
     "latitude": 37.5172,
     "longitude": 127.0473,
     "mainImageUrl": "https://...",
@@ -463,8 +463,8 @@ Authorization: Bearer {accessToken}
 | 필드 | 규칙 |
 |------|------|
 | name | 필수, 2-100자 |
-| latitude | 필수, -90 ~ 90 |
-| longitude | 필수, -180 ~ 180 |
+| latitude | 필수, -90 - 90 |
+| longitude | 필수, -180 - 180 |
 | mainImageUrl | 필수 |
 | locationHint | 선택, 최대 500자 |
 | openTime | 선택, HH:mm-HH:mm 형식 |
@@ -519,7 +519,7 @@ Authorization: Bearer {accessToken}
         "address": "서울시 강남구...",
         "mainImageUrl": "https://...",
         "distance": 300,
-        "isOpen": true,
+        "openStatus": "영업 중",
         "favoritedAt": "2025-01-01T10:00:00"
       }
     ],
@@ -836,6 +836,42 @@ Authorization: Bearer {accessToken}
 |------|------|
 | R001 | 리뷰를 찾을 수 없음 |
 | R003 | 본인의 리뷰만 삭제 가능 |
+
+---
+
+### GET /shops/{shopId}/reviews/images
+
+가게 리뷰 이미지 전체 조회 (최신순)
+
+**Path Parameters**
+| 파라미터 | 타입 | 필수 | 설명 |
+|---------|------|------|------|
+| shopId | Long | O | 가게 ID |
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "totalCount": 25,
+    "imageUrls": [
+      "https://storage.googleapis.com/.../image1.jpg",
+      "https://storage.googleapis.com/.../image2.jpg",
+      "https://storage.googleapis.com/.../image3.jpg"
+    ]
+  }
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| S001 | 가게를 찾을 수 없음 |
+
+**참고**
+- 리뷰 생성일시 기준 최신순으로 정렬됨
+- 모든 리뷰 이미지가 반환됨 (페이징 없음)
+- 이미지가 없는 경우 빈 배열 반환
 
 ---
 

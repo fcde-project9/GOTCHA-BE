@@ -231,7 +231,7 @@ public class ShopService {
                     Double distanceKm = shopDistances.get(shop);
                     String distanceStr = distanceKm != null ? formatDistance(distanceKm) : null;
                     boolean isFavorite = finalFavoriteShopIds.contains(shop.getId());
-                    boolean openStatus = isOpenNow(shop.getOpenTime());
+                    String openStatus = getOpenStatus(shop.getOpenTime());
                     return ShopMapResponse.of(shop, distanceStr, openStatus, isFavorite);
                 })
                 .collect(Collectors.toList());
@@ -291,7 +291,7 @@ public class ShopService {
     /**
      * openTime JSON 파싱
      *
-     * @param openTimeJson JSON 문자열 (예: {"Mon":"10:00~22:00","Tue":null})
+     * @param openTimeJson JSON 문자열 (예: {"Mon":"10:00-22:00","Tue":null})
      * @return 파싱된 Map (파싱 실패 시 빈 Map)
      */
     private Map<String, String> parseOpenTime(String openTimeJson) {
@@ -309,7 +309,7 @@ public class ShopService {
     /**
      * 현재 한국 시간 기준으로 영업중인지 판단
      *
-     * @param openTimeJson JSON 문자열 (예: {"Mon":"10:00~22:00","Tue":null,"Wed":"10:00~22:00"})
+     * @param openTimeJson JSON 문자열 (예: {"Mon":"10:00-22:00","Tue":null,"Wed":"10:00-22:00"})
      * @return 영업중이면 true, 아니면 false
      */
     public boolean isOpenNow(String openTimeJson) {
@@ -344,13 +344,13 @@ public class ShopService {
                 return false;
             }
 
-            // "10:00~22:00" 형식 파싱
-            if (!daySchedule.contains("~")) {
+            // "10:00-22:00" 형식 파싱
+            if (!daySchedule.contains("-")) {
                 log.warn("Invalid time format: {}", daySchedule);
                 return false;
             }
 
-            String[] times = daySchedule.split("~");
+            String[] times = daySchedule.split("-");
             if (times.length != 2) {
                 log.warn("Invalid time format: {}", daySchedule);
                 return false;
@@ -359,17 +359,93 @@ public class ShopService {
             LocalTime openTime = LocalTime.parse(times[0].trim());
             LocalTime closeTime = LocalTime.parse(times[1].trim());
 
-            // 익일 영업 (overnight) 처리 (예: 22:00~02:00)
+            // 익일 영업 (overnight) 처리 (예: 22:00-02:00)
             if (closeTime.isBefore(openTime)) {
                 return !currentTime.isBefore(openTime) || !currentTime.isAfter(closeTime);
             }
 
-            // 일반적인 경우 (예: 10:00~22:00)
+            // 일반적인 경우 (예: 10:00-22:00)
             return !currentTime.isBefore(openTime) && !currentTime.isAfter(closeTime);
 
         } catch (Exception e) {
             log.error("Error checking open status", e);
             return false;
+        }
+    }
+
+    /**
+     * 현재 한국 시간 기준으로 영업 상태를 판단
+     *
+     * @param openTimeJson JSON 문자열 (예: {"Mon":"10:00-22:00","Tue":null,"Wed":"10:00-22:00"})
+     * @return "영업 중" / "영업 종료" / "휴무" / ""
+     */
+    public String getOpenStatus(String openTimeJson) {
+        Map<String, String> timeMap = parseOpenTime(openTimeJson);
+        return getOpenStatus(timeMap);
+    }
+
+    /**
+     * 현재 한국 시간 기준으로 영업 상태를 판단 (파싱된 Map 사용)
+     *
+     * @param timeMap 파싱된 영업 시간 Map
+     * @return "영업 중" / "영업 종료" / "휴무" / ""
+     */
+    private String getOpenStatus(Map<String, String> timeMap) {
+        // openTime이 null이거나 빈 경우
+        if (timeMap == null || timeMap.isEmpty()) {
+            return "";
+        }
+
+        try {
+            // 현재 한국 시간 가져오기
+            ZonedDateTime nowInKorea = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
+            DayOfWeek dayOfWeek = nowInKorea.getDayOfWeek();
+            LocalTime currentTime = nowInKorea.toLocalTime();
+
+            // 요일을 "Mon", "Tue" 형식으로 변환
+            String dayKey = getDayKey(dayOfWeek);
+
+            String daySchedule = timeMap.get(dayKey);
+
+            // 해당 요일이 null이면 휴무
+            if (daySchedule == null) {
+                return "휴무";
+            }
+
+            // 빈 문자열이면 휴무
+            if (daySchedule.trim().isEmpty()) {
+                return "휴무";
+            }
+
+            // "10:00-22:00" 형식 파싱
+            if (!daySchedule.contains("-")) {
+                log.warn("Invalid time format: {}", daySchedule);
+                return "";
+            }
+
+            String[] times = daySchedule.split("-");
+            if (times.length != 2) {
+                log.warn("Invalid time format: {}", daySchedule);
+                return "";
+            }
+
+            LocalTime openTime = LocalTime.parse(times[0].trim());
+            LocalTime closeTime = LocalTime.parse(times[1].trim());
+
+            // 익일 영업 (overnight) 처리 (예: 22:00-02:00)
+            boolean isCurrentlyOpen;
+            if (closeTime.isBefore(openTime)) {
+                isCurrentlyOpen = !currentTime.isBefore(openTime) || !currentTime.isAfter(closeTime);
+            } else {
+                // 일반적인 경우 (예: 10:00-22:00)
+                isCurrentlyOpen = !currentTime.isBefore(openTime) && !currentTime.isAfter(closeTime);
+            }
+
+            return isCurrentlyOpen ? "영업 중" : "영업 종료";
+
+        } catch (Exception e) {
+            log.error("Error checking open status", e);
+            return "";
         }
     }
 
@@ -420,8 +496,8 @@ public class ShopService {
         // 오늘의 영업 시간 추출
         String todayOpenTime = getTodayOpenTime(openTimeMap);
 
-        // 영업 중 여부 확인
-        boolean isOpen = isOpenNow(openTimeMap);
+        // 영업 상태 확인
+        String openStatus = getOpenStatus(openTimeMap);
 
         // 리뷰 5개 조회 (정렬 적용)
         List<ReviewResponse> reviews = getTop5Reviews(shopId, sortBy, user);
@@ -441,7 +517,7 @@ public class ShopService {
         log.info("Shop detail - id: {}, reviews: {}/{}, images: {}/{}",
                 shopId, reviews.size(), reviewCount, recentReviewImages.size(), totalReviewImageCount);
 
-        return ShopDetailResponse.of(shop, todayOpenTime, isOpen, isFavorite, reviews, reviewCount,
+        return ShopDetailResponse.of(shop, todayOpenTime, openStatus, isFavorite, reviews, reviewCount,
                 totalReviewImageCount, recentReviewImages);
     }
 
@@ -513,8 +589,8 @@ public class ShopService {
     /**
      * 오늘의 영업 시간 추출 (한국 시간 기준)
      *
-     * @param openTimeJson JSON 문자열 (예: {"Mon":"10:00~22:00","Tue":null,"Wed":"10:00~22:00"})
-     * @return 오늘의 영업 시간 (예: "10:00~22:00") 또는 null (휴무일)
+     * @param openTimeJson JSON 문자열 (예: {"Mon":"10:00-22:00","Tue":null,"Wed":"10:00-22:00"})
+     * @return 오늘의 영업 시간 (예: "10:00-22:00") 또는 null (휴무일)
      */
     private String getTodayOpenTime(String openTimeJson) {
         Map<String, String> timeMap = parseOpenTime(openTimeJson);
@@ -525,7 +601,7 @@ public class ShopService {
      * 오늘의 영업 시간 추출 (파싱된 Map 사용)
      *
      * @param timeMap 파싱된 영업 시간 Map
-     * @return 오늘의 영업 시간 (예: "10:00~22:00") 또는 null (휴무일)
+     * @return 오늘의 영업 시간 (예: "10:00-22:00") 또는 null (휴무일)
      */
     private String getTodayOpenTime(Map<String, String> timeMap) {
         if (timeMap.isEmpty()) {

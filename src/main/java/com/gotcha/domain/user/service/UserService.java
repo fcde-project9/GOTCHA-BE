@@ -86,9 +86,9 @@ public class UserService {
         List<MyShopResponse> content = shopPage.getContent().stream()
                 .map(shop -> {
 
-                    Boolean isOpen = shopService.isOpenNow(shop.getOpenTime());
+                    String openStatus = shopService.getOpenStatus(shop.getOpenTime());
 
-                    return MyShopResponse.from(shop, isOpen);
+                    return MyShopResponse.from(shop, openStatus);
                 })
                 .collect(Collectors.toList());
 
