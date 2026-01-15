@@ -29,7 +29,9 @@ class SocialUnlinkServiceTest {
 
     private static final String TEST_KAKAO_USER_API_BASE_URL = "https://kapi.kakao.com";
     private static final String KAKAO_UNLINK_URL = TEST_KAKAO_USER_API_BASE_URL + "/v1/user/unlink";
+    private static final String GOOGLE_REVOKE_URL = "https://oauth2.googleapis.com/revoke";
     private static final String TEST_ADMIN_KEY = "test-admin-key";
+    private static final String TEST_GOOGLE_ACCESS_TOKEN = "ya29.test-google-access-token";
 
     @Mock
     private RestTemplate restTemplate;
@@ -44,12 +46,19 @@ class SocialUnlinkServiceTest {
     }
 
     private User createUser(SocialType socialType, String socialId) {
+        return createUser(socialType, socialId, null);
+    }
+
+    private User createUser(SocialType socialType, String socialId, String oauthAccessToken) {
         User user = User.builder()
                 .socialType(socialType)
                 .socialId(socialId)
                 .nickname("테스트유저")
                 .build();
         setUserId(user, 1L);
+        if (oauthAccessToken != null) {
+            user.updateOAuthAccessToken(oauthAccessToken);
+        }
         return user;
     }
 
@@ -112,10 +121,67 @@ class SocialUnlinkServiceTest {
         }
 
         @Test
-        @DisplayName("구글 계정은 서버에서 연결 끊기 미지원 (로그만 남김)")
-        void unlinkGoogle_NotSupported() {
+        @DisplayName("구글 계정 연결 끊기 성공")
+        void unlinkGoogle_Success() {
             // given
-            User googleUser = createUser(SocialType.GOOGLE, "google-123");
+            User googleUser = createUser(SocialType.GOOGLE, "google-123", TEST_GOOGLE_ACCESS_TOKEN);
+            when(restTemplate.postForEntity(
+                    eq(GOOGLE_REVOKE_URL),
+                    any(HttpEntity.class),
+                    eq(String.class)
+            )).thenReturn(ResponseEntity.ok(""));
+
+            // when
+            socialUnlinkService.unlinkSocialAccount(googleUser);
+
+            // then
+            verify(restTemplate).postForEntity(
+                    eq(GOOGLE_REVOKE_URL),
+                    any(HttpEntity.class),
+                    eq(String.class)
+            );
+        }
+
+        @Test
+        @DisplayName("구글 연결 끊기 실패해도 예외 발생하지 않음")
+        void unlinkGoogle_Failure_NoException() {
+            // given
+            User googleUser = createUser(SocialType.GOOGLE, "google-123", TEST_GOOGLE_ACCESS_TOKEN);
+            when(restTemplate.postForEntity(
+                    eq(GOOGLE_REVOKE_URL),
+                    any(HttpEntity.class),
+                    eq(String.class)
+            )).thenThrow(new RestClientException("API Error"));
+
+            // when - 예외 발생하지 않음
+            socialUnlinkService.unlinkSocialAccount(googleUser);
+
+            // then - API 호출은 시도됨
+            verify(restTemplate).postForEntity(
+                    eq(GOOGLE_REVOKE_URL),
+                    any(HttpEntity.class),
+                    eq(String.class)
+            );
+        }
+
+        @Test
+        @DisplayName("구글 OAuth 토큰이 null인 경우 연결 끊기 스킵")
+        void unlinkGoogle_NullToken_Skip() {
+            // given
+            User googleUser = createUser(SocialType.GOOGLE, "google-123", null);
+
+            // when
+            socialUnlinkService.unlinkSocialAccount(googleUser);
+
+            // then - RestTemplate 호출 없음
+            verify(restTemplate, never()).postForEntity(anyString(), any(), any());
+        }
+
+        @Test
+        @DisplayName("구글 OAuth 토큰이 빈 문자열인 경우 연결 끊기 스킵")
+        void unlinkGoogle_EmptyToken_Skip() {
+            // given
+            User googleUser = createUser(SocialType.GOOGLE, "google-123", "");
 
             // when
             socialUnlinkService.unlinkSocialAccount(googleUser);
