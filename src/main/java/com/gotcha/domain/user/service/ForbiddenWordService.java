@@ -30,6 +30,19 @@ public class ForbiddenWordService {
             'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'
     };
 
+    // 한글 중성(모음) 매핑
+    private static final char[] JUNGSUNG = {
+            'ㅏ', 'ㅐ', 'ㅑ', 'ㅒ', 'ㅓ', 'ㅔ', 'ㅕ', 'ㅖ', 'ㅗ', 'ㅘ',
+            'ㅙ', 'ㅚ', 'ㅛ', 'ㅜ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅠ', 'ㅡ', 'ㅢ', 'ㅣ'
+    };
+
+    // 한글 종성 매핑 (첫 번째는 종성 없음)
+    private static final char[] JONGSUNG = {
+            '\0', 'ㄱ', 'ㄲ', 'ㄳ', 'ㄴ', 'ㄵ', 'ㄶ', 'ㄷ', 'ㄹ', 'ㄺ',
+            'ㄻ', 'ㄼ', 'ㄽ', 'ㄾ', 'ㄿ', 'ㅀ', 'ㅁ', 'ㅂ', 'ㅄ', 'ㅅ',
+            'ㅆ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'
+    };
+
     @PostConstruct
     public void init() {
         loadForbiddenWords("forbidden-words/ko.txt", koreanForbiddenWords, true);
@@ -113,7 +126,15 @@ public class ForbiddenWordService {
         String normalized = normalizeEnglish(text);
 
         for (String forbidden : englishForbiddenWords) {
-            if (normalized.contains(forbidden)) {
+            // 금칙어도 동일하게 정규화하여 비교 (ass → as로 비교)
+            String normalizedForbidden = removeRepeatedCharacters(forbidden);
+
+            // 짧은 금칙어(3글자 미만)는 정확히 일치할 때만 검사 (과탐 방지)
+            if (normalizedForbidden.length() < 3) {
+                if (normalized.equals(normalizedForbidden)) {
+                    return true;
+                }
+            } else if (normalized.contains(normalizedForbidden)) {
                 return true;
             }
         }
@@ -140,63 +161,185 @@ public class ForbiddenWordService {
 
     /**
      * 한국어 텍스트 정규화
-     * - 특수문자/공백 제거
-     * - 반복 문자 제거
+     * - 특수문자/공백/영문/숫자 제거
+     * - 자모 분해 후 모음 반복 제거
      * - 유사 발음 치환
      */
     private String normalizeKorean(String text) {
         String result = text;
 
-        // 1. 특수문자, 공백 제거 (한글, 영문, 숫자, 초성만 남김)
-        result = result.replaceAll("[^가-힣a-zA-Z0-9ㄱ-ㅎㅏ-ㅣ]", "");
+        // 1. 특수문자, 공백, 영문, 숫자 제거 (한글, 자모만 남김)
+        // 영문/숫자 삽입 우회 방지: 시1발, 씨b발 → 시발, 씨발
+        result = result.replaceAll("[^가-힣ㄱ-ㅎㅏ-ㅣ]", "");
 
-        // 2. 반복 문자 제거 (씨이이이 → 씨이)
-        result = removeRepeatedCharacters(result);
+        // 2. 자모 입력을 완성형으로 조합 시도 (ㅅㅣㅂㅏㄹ → 시발)
+        result = combineJamo(result);
 
-        // 3. 유사 발음 치환
+        // 3. 자모 분해 후 모음 반복 제거 (씨이이이발 → 씨발)
+        result = removeVowelRepetition(result);
+
+        // 4. 유사 발음 치환
         result = result.replace("시", "씨")
                 .replace("팔", "발")
                 .replace("색", "새")
                 .replace("삭", "새")
                 .replace("쉬", "씨")
-                .replace("쒸", "씨");
+                .replace("쒸", "씨")
+                .replace("벌", "발")
+                .replace("십", "씹")
+                .replace("섭", "썹");
+
+        // 5. 반복 음절 제거 (씨씨발 → 씨발)
+        result = removeRepeatedCharacters(result);
 
         return result;
+    }
+
+    /**
+     * 자모 분해 후 모음(중성) 반복을 제거하여 재조합
+     * 예: "씨이이이발" → 자모 분해 → 모음 반복 제거 → "씨발"
+     */
+    private String removeVowelRepetition(String text) {
+        // 자모로 분해
+        StringBuilder jamo = new StringBuilder();
+        for (char c : text.toCharArray()) {
+            if (c >= '가' && c <= '힣') {
+                int code = c - '가';
+                int cho = code / (21 * 28);
+                int jung = (code % (21 * 28)) / 28;
+                int jong = code % 28;
+
+                jamo.append(CHOSUNG[cho]);
+                jamo.append(JUNGSUNG[jung]);
+                if (jong != 0) {
+                    jamo.append(JONGSUNG[jong]);
+                }
+            } else if ((c >= 'ㄱ' && c <= 'ㅎ') || (c >= 'ㅏ' && c <= 'ㅣ')) {
+                jamo.append(c);
+            }
+        }
+
+        // 자모 시퀀스에서 연속 모음 제거 (ㅅㅣㅇㅣㅇㅣㅂㅏㄹ → ㅅㅣㅂㅏㄹ)
+        String jamoStr = jamo.toString();
+        // 모음 뒤에 같은 모음이 반복되면 제거 (ㅣㅇㅣ 패턴 → ㅣ)
+        // 'ㅇ' + 모음 패턴이 반복되면 제거 (이이이 → 이)
+        jamoStr = jamoStr.replaceAll("([ㅏ-ㅣ])(ㅇ\\1)+", "$1");
+        // 단순 모음 반복 제거
+        jamoStr = jamoStr.replaceAll("([ㅏ-ㅣ])\\1+", "$1");
+
+        // 다시 완성형으로 조합
+        return combineJamo(jamoStr);
+    }
+
+    /**
+     * 자모 시퀀스를 완성형 한글로 조합
+     * 예: "ㅅㅣㅂㅏㄹ" → "시발"
+     */
+    private String combineJamo(String text) {
+        StringBuilder result = new StringBuilder();
+        char[] chars = text.toCharArray();
+        int i = 0;
+
+        while (i < chars.length) {
+            char c = chars[i];
+
+            // 완성형 한글이면 그대로
+            if (c >= '가' && c <= '힣') {
+                result.append(c);
+                i++;
+                continue;
+            }
+
+            // 초성인 경우 조합 시도
+            int choIndex = getChosungIndex(c);
+            if (choIndex >= 0 && i + 1 < chars.length) {
+                int jungIndex = getJungsungIndex(chars[i + 1]);
+                if (jungIndex >= 0) {
+                    // 초성 + 중성 발견
+                    int jongIndex = 0;
+                    if (i + 2 < chars.length) {
+                        int possibleJong = getJongsungIndex(chars[i + 2]);
+                        // 다음 문자가 종성이 될 수 있고, 그 다음이 중성이 아닌 경우만 종성으로 처리
+                        if (possibleJong > 0) {
+                            if (i + 3 >= chars.length || getJungsungIndex(chars[i + 3]) < 0) {
+                                jongIndex = possibleJong;
+                                i++;
+                            }
+                        }
+                    }
+                    char combined = (char) ('가' + (choIndex * 21 * 28) + (jungIndex * 28) + jongIndex);
+                    result.append(combined);
+                    i += 2;
+                    continue;
+                }
+            }
+
+            // 조합 불가능하면 그대로 추가
+            result.append(c);
+            i++;
+        }
+
+        return result.toString();
+    }
+
+    private int getChosungIndex(char c) {
+        for (int i = 0; i < CHOSUNG.length; i++) {
+            if (CHOSUNG[i] == c) return i;
+        }
+        return -1;
+    }
+
+    private int getJungsungIndex(char c) {
+        for (int i = 0; i < JUNGSUNG.length; i++) {
+            if (JUNGSUNG[i] == c) return i;
+        }
+        return -1;
+    }
+
+    private int getJongsungIndex(char c) {
+        for (int i = 0; i < JONGSUNG.length; i++) {
+            if (JONGSUNG[i] == c) return i;
+        }
+        return -1;
     }
 
     /**
      * 영어 텍스트 정규화
      * - 소문자 변환
+     * - Leet speak 치환 (숫자/특수문자 → 알파벳)
      * - 특수문자/공백 제거
      * - 반복 문자 제거
-     * - Leet speak 치환
      */
     private String normalizeEnglish(String text) {
         String result = text.toLowerCase();
 
-        // 1. 특수문자, 공백 제거
-        result = result.replaceAll("[^a-z0-9]", "");
-
-        // 2. 반복 문자 제거 (fuuuck → fuck)
-        result = removeRepeatedCharacters(result);
-
-        // 3. Leet speak 치환
-        result = result.replace("0", "o")
+        // 1. Leet speak 치환 먼저 (특수문자 제거 전에 처리)
+        result = result.replace("@", "a")
+                .replace("$", "s")
+                .replace("!", "i")
+                .replace("0", "o")
                 .replace("1", "i")
+                .replace("2", "z")
                 .replace("3", "e")
                 .replace("4", "a")
                 .replace("5", "s")
+                .replace("6", "g")
                 .replace("7", "t")
                 .replace("8", "b")
-                .replace("@", "a")
-                .replace("$", "s");
+                .replace("9", "g");
+
+        // 2. 특수문자, 공백 제거 (알파벳만 남김)
+        result = result.replaceAll("[^a-z]", "");
+
+        // 3. 반복 문자 제거 (fuuuck → fuck)
+        result = removeRepeatedCharacters(result);
 
         return result;
     }
 
     /**
-     * 반복 문자 제거
-     * 예: "씨이이이발" → "씨이발", "fuuuck" → "fuck"
+     * 반복 문자 제거 (연속 동일 문자를 1개로 축소)
+     * 예: "씨씨발" → "씨발", "fuuuck" → "fuck"
      */
     private String removeRepeatedCharacters(String text) {
         if (text == null || text.length() < 2) {
@@ -210,8 +353,8 @@ public class ForbiddenWordService {
             char current = text.charAt(i);
             char previous = text.charAt(i - 1);
 
-            // 같은 문자가 반복되면 스킵 (단, 2번까지는 허용 - 씨이 같은 패턴 감지용)
-            if (current != previous || (sb.length() >= 2 && sb.charAt(sb.length() - 2) != current)) {
+            // 같은 문자가 연속되면 스킵 (1개만 유지)
+            if (current != previous) {
                 sb.append(current);
             }
         }

@@ -55,6 +55,7 @@ public class UserService {
     private final ShopRepository shopRepository;
     private final ShopService shopService;
     private final SocialUnlinkService socialUnlinkService;
+    private final ForbiddenWordService forbiddenWordService;
 
     @Value("${user.default-profile-image-url}")
     private String defaultProfileImageUrl;
@@ -113,6 +114,12 @@ public class UserService {
         if (currentUser.getNickname().equals(nickname)) {
             log.info("Same nickname as current, skipping duplicate check");
             return UserResponse.from(currentUser, defaultProfileImageUrl);
+        }
+
+        // 금칙어 검사
+        if (forbiddenWordService.containsForbiddenWord(nickname)) {
+            log.warn("Forbidden word detected in nickname: {}", nickname);
+            throw UserException.forbiddenNickname();
         }
 
         // 닉네임 중복 체크

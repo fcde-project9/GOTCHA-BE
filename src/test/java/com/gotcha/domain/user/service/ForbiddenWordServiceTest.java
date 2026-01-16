@@ -129,6 +129,55 @@ class ForbiddenWordServiceTest {
     }
 
     @Nested
+    @DisplayName("우회 시도 방지")
+    class BypassPrevention {
+
+        @Test
+        @DisplayName("모음 삽입 우회 차단 - 씨이이이발")
+        void blockVowelInsertion() {
+            assertThat(forbiddenWordService.containsForbiddenWord("씨이발")).isTrue();
+            assertThat(forbiddenWordService.containsForbiddenWord("씨이이발")).isTrue();
+            assertThat(forbiddenWordService.containsForbiddenWord("씨이이이발")).isTrue();
+            assertThat(forbiddenWordService.containsForbiddenWord("지이랄")).isTrue();
+            // 병이신: 단일 모음 삽입은 과탐 위험이 있어 감지하지 않음
+        }
+
+        @Test
+        @DisplayName("자모 분리 입력 차단 - ㅅㅣㅂㅏㄹ")
+        void blockJamoInput() {
+            assertThat(forbiddenWordService.containsForbiddenWord("ㅅㅣㅂㅏㄹ")).isTrue();
+            assertThat(forbiddenWordService.containsForbiddenWord("ㅂㅕㅇㅅㅣㄴ")).isTrue();
+        }
+
+        @Test
+        @DisplayName("영문/숫자 삽입 우회 차단")
+        void blockAlphanumericInsertion() {
+            // 한국어 정규화에서 영문/숫자 제거
+            assertThat(forbiddenWordService.containsForbiddenWord("시1발")).isTrue();
+            assertThat(forbiddenWordService.containsForbiddenWord("씨a발")).isTrue();
+            assertThat(forbiddenWordService.containsForbiddenWord("병2신")).isTrue();
+        }
+
+        @Test
+        @DisplayName("반복 문자 우회 차단")
+        void blockRepeatedCharacters() {
+            assertThat(forbiddenWordService.containsForbiddenWord("씨씨발")).isTrue();
+            assertThat(forbiddenWordService.containsForbiddenWord("씨씨씨발")).isTrue();
+            assertThat(forbiddenWordService.containsForbiddenWord("fuuuck")).isTrue();
+            assertThat(forbiddenWordService.containsForbiddenWord("shiiiit")).isTrue();
+        }
+
+        @Test
+        @DisplayName("Leet speak 우회 차단")
+        void blockLeetSpeak() {
+            assertThat(forbiddenWordService.containsForbiddenWord("sh1t")).isTrue();  // 1→i → shit
+            assertThat(forbiddenWordService.containsForbiddenWord("b1tch")).isTrue(); // 1→i → bitch
+            assertThat(forbiddenWordService.containsForbiddenWord("a55")).isTrue();   // 5→s → ass
+            assertThat(forbiddenWordService.containsForbiddenWord("d1ck")).isTrue();  // 1→i → dick
+        }
+    }
+
+    @Nested
     @DisplayName("엣지 케이스")
     class EdgeCases {
 
