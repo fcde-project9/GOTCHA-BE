@@ -23,7 +23,7 @@
   - 변경: openTime JSON 형식의 시간 구분자 ~ → - (예: "10:00~22:00" → "10:00-22:00")
   - 변경: 한국 시간(Asia/Seoul) 기준으로 영업 상태 판단
   - 변경: 요일별 영업시간 처리 (Mon, Tue, Wed, Thu, Fri, Sat, Sun)
-  - 변경: 휴무일(null) 처리 로직 추가
+  - 변경: 휴무일(빈 문자열) 처리 로직 추가, null은 정보 없음으로 처리
 - `src/main/java/com/gotcha/domain/shop/dto/ShopDetailResponse.java` - 영업 상태 필드 변경
   - 변경: Boolean isOpen → String openStatus
   - 변경: @Schema allowableValues 추가 ("영업 중", "영업 종료", "휴무", "")

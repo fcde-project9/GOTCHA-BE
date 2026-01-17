@@ -407,14 +407,14 @@ public class ShopService {
 
             String daySchedule = timeMap.get(dayKey);
 
-            // 해당 요일이 null이면 휴무
-            if (daySchedule == null) {
+            // 빈 문자열이면 휴무
+            if (daySchedule != null && daySchedule.trim().isEmpty()) {
                 return "휴무";
             }
 
-            // 빈 문자열이면 휴무
-            if (daySchedule.trim().isEmpty()) {
-                return "휴무";
+            // 해당 요일이 null이면 빈 문자열 반환
+            if (daySchedule == null) {
+                return "";
             }
 
             // "10:00-22:00" 형식 파싱
