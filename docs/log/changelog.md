@@ -4,6 +4,42 @@
 
 ---
 
+## 2026-01-18
+
+### 수정
+- `src/main/java/com/gotcha/domain/shop/service/ShopService.java` - 영업시간 구분자 다중 지원
+  - 추가: splitTimeRange() 메서드 - 영업시간 범위 문자열 분리
+  - 변경: `-`, ` - `, `~` 구분자 모두 지원 (정규식 `\s*[-~]\s*`)
+  - 예시: "10:00-22:00", "00:00 - 24:00", "08:00~22:30" 모두 파싱 가능
+- `docs/api-spec.md` - openTime 형식 설명 업데이트
+  - 변경: HH:mm-HH:mm 또는 HH:mm~HH:mm 형식 지원 명시
+- `docs/entity-design.md` - open_time 필드 설명 업데이트
+  - 변경: 구분자 `-` 또는 `~` 지원 명시
+- `docs/business-rules.md` - 영업시간 형식 설명 업데이트
+  - 변경: 구분자 `-` 또는 `~` 지원, 공백 포함 가능 명시
+
+---
+
+## 2026-01-17
+
+### 수정
+- `src/main/java/com/gotcha/domain/shop/service/ShopService.java` - getOpenStatus() 휴무 처리 로직 수정
+  - 변경: null과 빈 문자열 처리 순서 변경 (빈 문자열 우선 체크)
+  - 변경: null이면 빈 문자열("") 반환, 빈 문자열("")이면 "휴무" 반환
+  - 의미: 빈 문자열은 휴무일, null은 영업시간 정보 없음
+- `docs/business-rules.md` - 영업 상태 판단 로직 업데이트
+  - 변경: 휴무일 표시 방법 (null → 빈 문자열)
+  - 변경: null은 영업시간 정보 없음을 의미하도록 변경
+  - 변경: openTime 예시 업데이트 (Tue:null → Tue:"")
+- `docs/api-spec.md` - openTime 예시 업데이트
+  - 변경: GET /shops/map Response 예시의 openTime (Tue:null → Tue:"")
+  - 변경: GET /shops/{shopId} Response 예시의 openTime (Tue:null → Tue:"")
+- `docs/entity-design.md` - shops.open_time 필드 설명 업데이트
+  - 변경: 휴무일 표시 방법 명시 (빈 문자열(""), null은 정보 없음)
+  - 변경: 예시 업데이트 (Tue:null → Tue:"")
+
+---
+
 ## 2026-01-15
 
 ### 추가

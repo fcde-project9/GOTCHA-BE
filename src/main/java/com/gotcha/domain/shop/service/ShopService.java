@@ -344,20 +344,15 @@ public class ShopService {
                 return false;
             }
 
-            // "10:00-22:00" 형식 파싱
-            if (!daySchedule.contains("-")) {
+            // "10:00-22:00" 또는 "10:00~22:00" 형식 파싱
+            String[] times = splitTimeRange(daySchedule);
+            if (times == null) {
                 log.warn("Invalid time format: {}", daySchedule);
                 return false;
             }
 
-            String[] times = daySchedule.split("-");
-            if (times.length != 2) {
-                log.warn("Invalid time format: {}", daySchedule);
-                return false;
-            }
-
-            LocalTime openTime = parseTimeString(times[0].trim());
-            LocalTime closeTime = parseTimeString(times[1].trim());
+            LocalTime openTime = parseTimeString(times[0]);
+            LocalTime closeTime = parseTimeString(times[1]);
 
             // 익일 영업 (overnight) 처리 (예: 22:00-02:00)
             if (closeTime.isBefore(openTime)) {
@@ -371,6 +366,24 @@ public class ShopService {
             log.error("Error checking open status", e);
             return false;
         }
+    }
+
+    /**
+     * 시간 범위 문자열을 분리 ("10:00-22:00", "10:00 - 22:00", "10:00~22:00" 모두 지원)
+     *
+     * @param timeRange 시간 범위 문자열
+     * @return [시작시간, 종료시간] 배열 (trim 적용됨), 파싱 실패 시 null
+     */
+    private String[] splitTimeRange(String timeRange) {
+        if (timeRange == null) {
+            return null;
+        }
+        // "-" 또는 "~"를 구분자로 사용 (앞뒤 공백 허용)
+        String[] times = timeRange.split("\\s*[-~]\\s*");
+        if (times.length != 2) {
+            return null;
+        }
+        return times;
     }
 
     /**
@@ -427,20 +440,15 @@ public class ShopService {
                 return "";
             }
 
-            // "10:00-22:00" 형식 파싱
-            if (!daySchedule.contains("-")) {
+            // "10:00-22:00" 또는 "10:00~22:00" 형식 파싱
+            String[] times = splitTimeRange(daySchedule);
+            if (times == null) {
                 log.warn("Invalid time format: {}", daySchedule);
                 return "";
             }
 
-            String[] times = daySchedule.split("-");
-            if (times.length != 2) {
-                log.warn("Invalid time format: {}", daySchedule);
-                return "";
-            }
-
-            LocalTime openTime = parseTimeString(times[0].trim());
-            LocalTime closeTime = parseTimeString(times[1].trim());
+            LocalTime openTime = parseTimeString(times[0]);
+            LocalTime closeTime = parseTimeString(times[1]);
 
             // 익일 영업 (overnight) 처리 (예: 22:00-02:00)
             boolean isCurrentlyOpen;
