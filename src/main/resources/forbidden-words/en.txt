@@ -1,0 +1,65 @@
+# English forbidden words list
+# One word per line, lines starting with # are comments
+
+# Profanity (basic)
+fuck
+shit
+damn
+ass
+bitch
+bastard
+crap
+dick
+cock
+pussy
+cunt
+whore
+slut
+
+# Profanity (extended)
+asshole
+motherfucker
+fucker
+bullshit
+dumbass
+jackass
+prick
+twat
+wanker
+douche
+douchebag
+cocksucker
+dickhead
+
+# Sexual terms
+porn
+blowjob
+handjob
+cum
+tits
+boobs
+dildo
+orgasm
+anal
+horny
+
+# Racial slurs
+nigger
+nigga
+chink
+gook
+kike
+spic
+wetback
+raghead
+
+# Other offensive
+retard
+fag
+faggot
+dyke
+tranny
+cripple
+idiot
+moron
+loser

@@ -334,7 +334,7 @@ Authorization: Bearer {accessToken}
       "mainImageUrl": "https://...",
       "latitude": 37.5172,
       "longitude": 127.0473,
-      "openTime": "{\"Mon\":\"10:00-22:00\",\"Tue\":\"10:00-22:00\"}",
+      "openTime": "{\"Mon\":\"10:00-22:00\",\"Tue\":\"\",\"Wed\":\"10:00-22:00\"}",
       "openStatus": "영업 중",
       "distance": "50m",
       "isFavorite": false
@@ -354,7 +354,7 @@ Authorization: Bearer {accessToken}
       "mainImageUrl": "https://...",
       "latitude": 37.5172,
       "longitude": 127.0473,
-      "openTime": "{\"Mon\":\"10:00-22:00\",\"Tue\":\"10:00-22:00\"}",
+      "openTime": "{\"Mon\":\"10:00-22:00\",\"Tue\":\"\",\"Wed\":\"10:00-22:00\"}",
       "openStatus": "영업 중",
       "distance": null,
       "isFavorite": false
@@ -394,7 +394,7 @@ Authorization: Bearer {accessToken}
     "name": "가챠샵 신사점",
     "addressName": "서울시 강남구 신사동 123-45",
     "locationHint": "신사역 4번 출구에서 도보 3분, 스타벅스 옆 건물 1층",
-    "openTime": "{\"Mon\":\"10:00-22:00\",\"Tue\":null,\"Wed\":\"10:00-22:00\",\"Thu\":\"10:00-22:00\",\"Fri\":\"10:00-22:00\",\"Sat\":\"10:00-22:00\",\"Sun\":\"10:00-22:00\"}",
+    "openTime": "{\"Mon\":\"10:00-22:00\",\"Tue\":\"\",\"Wed\":\"10:00-22:00\",\"Thu\":\"10:00-22:00\",\"Fri\":\"10:00-22:00\",\"Sat\":\"10:00-22:00\",\"Sun\":\"10:00-22:00\"}",
     "todayOpenTime": "10:00-22:00",
     "openStatus": "영업 중",
     "latitude": 37.5172,

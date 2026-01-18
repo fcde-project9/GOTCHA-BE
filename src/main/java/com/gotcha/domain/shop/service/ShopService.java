@@ -356,8 +356,8 @@ public class ShopService {
                 return false;
             }
 
-            LocalTime openTime = LocalTime.parse(times[0].trim());
-            LocalTime closeTime = LocalTime.parse(times[1].trim());
+            LocalTime openTime = parseTimeString(times[0].trim());
+            LocalTime closeTime = parseTimeString(times[1].trim());
 
             // 익일 영업 (overnight) 처리 (예: 22:00-02:00)
             if (closeTime.isBefore(openTime)) {
@@ -371,6 +371,16 @@ public class ShopService {
             log.error("Error checking open status", e);
             return false;
         }
+    }
+
+    /**
+     * 시간 문자열을 LocalTime으로 파싱 ("24:00" → "23:59:59" 변환 포함)
+     */
+    private LocalTime parseTimeString(String timeStr) {
+        if ("24:00".equals(timeStr)) {
+            return LocalTime.of(23, 59, 59);
+        }
+        return LocalTime.parse(timeStr);
     }
 
     /**
@@ -407,14 +417,14 @@ public class ShopService {
 
             String daySchedule = timeMap.get(dayKey);
 
-            // 해당 요일이 null이면 휴무
-            if (daySchedule == null) {
+            // 빈 문자열이면 휴무
+            if (daySchedule != null && daySchedule.trim().isEmpty()) {
                 return "휴무";
             }
 
-            // 빈 문자열이면 휴무
-            if (daySchedule.trim().isEmpty()) {
-                return "휴무";
+            // 해당 요일이 null이면 빈 문자열 반환
+            if (daySchedule == null) {
+                return "";
             }
 
             // "10:00-22:00" 형식 파싱
@@ -429,8 +439,8 @@ public class ShopService {
                 return "";
             }
 
-            LocalTime openTime = LocalTime.parse(times[0].trim());
-            LocalTime closeTime = LocalTime.parse(times[1].trim());
+            LocalTime openTime = parseTimeString(times[0].trim());
+            LocalTime closeTime = parseTimeString(times[1].trim());
 
             // 익일 영업 (overnight) 처리 (예: 22:00-02:00)
             boolean isCurrentlyOpen;
