@@ -467,7 +467,7 @@ Authorization: Bearer {accessToken}
 | longitude | 필수, -180 - 180 |
 | mainImageUrl | 필수 |
 | locationHint | 선택, 최대 500자 |
-| openTime | 선택, HH:mm-HH:mm 형식 |
+| openTime | 선택, HH:mm-HH:mm 또는 HH:mm~HH:mm 형식 |
 
 **Response (201)**
 ```json
