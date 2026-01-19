@@ -117,11 +117,11 @@ jobs:
               --name gotcha-be-prod \
               -p 8080:8080 \
               --restart unless-stopped \
-              --memory="700m" \
-              --memory-swap="1g" \
+              --memory="750m" \
+              --memory-swap="1536m" \
               --cpus="1.5" \
               -e SPRING_PROFILES_ACTIVE=prod \
-              -e JAVA_TOOL_OPTIONS="-Xms256m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200" \
+              -e JAVA_TOOL_OPTIONS="-Xms256m -Xmx400m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=64m" \
               -e SPRING_DATASOURCE_URL="$DB_URL" \
               -e SPRING_DATASOURCE_USERNAME="$DB_USERNAME" \
               -e SPRING_DATASOURCE_PASSWORD="$DB_PASSWORD" \
