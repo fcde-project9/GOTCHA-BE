@@ -60,3 +60,6 @@ docs/chan/
 ### Claude Code temporary files ###
 tmpclaude-*
 
+### Migration scripts (local only) ###
+migration-*.sql
+
