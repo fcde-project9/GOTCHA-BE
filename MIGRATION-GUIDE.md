@@ -73,13 +73,9 @@ gotcha-prod-files/
 
 #### 2단계: 환경변수 설정
 
-**EC2 또는 배포 환경에 추가:**
-```bash
-AWS_S3_PREFIX=dev/
-```
-
-**GitHub Secrets (dev):**
-- `AWS_S3_PREFIX` = `dev/`
+**⚠️ 중요: 아래 가이드 문서를 참조하여 설정하세요:**
+- **AWS SSM Parameter Store**: `docs/aws-ssm-setup-dev.md` 참조 (총 26개 파라미터)
+- **GitHub Secrets**: `docs/github-secrets-setup-dev.md` 참조 (총 4개 Secret)
 
 #### 3단계: 코드 커밋 & 배포
 
@@ -111,13 +107,18 @@ git push origin dev
 
 #### 2단계: 환경변수 설정
 
-**EC2 또는 배포 환경에 추가:**
-```bash
-AWS_S3_PREFIX=prod/
-```
+**⚠️ Prod 환경은 이미 SSM Parameter Store에 환경변수가 등록되어 있습니다.**
 
-**GitHub Secrets (prod):**
-- `AWS_S3_PREFIX` = `prod/`
+**업데이트 필요 항목:**
+- SSM Parameter Store에서 `/gotcha/prod/aws/s3/prefix` 값을 `prod/`로 설정
+```bash
+aws ssm put-parameter \
+  --name "/gotcha/prod/aws/s3/prefix" \
+  --value "prod/" \
+  --type "String" \
+  --overwrite \
+  --region ap-northeast-2
+```
 
 #### 3단계: Main 브랜치 머지
 
@@ -209,6 +210,8 @@ COMMIT;
 | `migration-dev-s3-structure.sql` | Dev DB 마이그레이션 스크립트 |
 | `migration-prod-s3-structure.sql` | Prod DB 마이그레이션 스크립트 |
 | `docs/aws-setup-guide.md` | AWS 환경변수 설정 가이드 (업데이트됨) |
+| `docs/aws-ssm-setup-dev.md` | **Dev 환경 SSM Parameter Store 설정 가이드** |
+| `docs/github-secrets-setup-dev.md` | **Dev 환경 GitHub Secrets 설정 가이드** |
 | `MIGRATION-GUIDE.md` | 이 문서 |
 
 ---
