@@ -39,7 +39,7 @@ GitHub Repository → Settings → Secrets and variables → Actions → New rep
 **ECR Repository 생성 방법:**
 ```bash
 aws ecr create-repository \
-  --repository-name gotcha-be-dev \
+  --repository-name gotcha-be \
   --region ap-northeast-2
 ```
 
@@ -95,45 +95,10 @@ Dev 환경을 위해 **새로 추가**해야 하는 Secrets:
 
 ---
 
-## Prod Secrets와 비교
-
-### Prod 환경 Secrets (참고용)
-
-| Secret 이름 | Prod 값 | Dev 값 |
-|-------------|---------|--------|
-| `AWS_ACCESS_KEY_ID` | [공통] | [공통] |
-| `AWS_SECRET_ACCESS_KEY` | [공통] | [공통] |
-| `AWS_REGION` | [공통] | [공통] |
-| `ECR_REPOSITORY` | `gotcha-be-prod` | - |
-| `ECR_REPOSITORY_DEV` | - | `gotcha-be-dev` |
-| `EC2_HOST` | [Prod IP] | - |
-| `EC2_HOST_DEV` | - | [Dev IP] |
-| `EC2_USER` | `ubuntu` | - |
-| `EC2_USER_DEV` | - | `ubuntu` |
-| `EC2_SSH_KEY` | [Prod Key] | - |
-| `EC2_SSH_KEY_DEV` | - | [Dev Key] |
-
----
-
 ## 등록 후 확인 방법
 
 ### GitHub UI에서 확인
 GitHub Repository → Settings → Secrets and variables → Actions
-
-다음 Secrets이 보여야 합니다:
-- ✅ AWS_ACCESS_KEY_ID
-- ✅ AWS_SECRET_ACCESS_KEY
-- ✅ AWS_REGION
-- ✅ ECR_REPOSITORY (prod용)
-- ✅ ECR_REPOSITORY_DEV
-- ✅ EC2_HOST (prod용)
-- ✅ EC2_HOST_DEV
-- ✅ EC2_USER (prod용)
-- ✅ EC2_USER_DEV
-- ✅ EC2_SSH_KEY (prod용)
-- ✅ EC2_SSH_KEY_DEV
-
----
 
 ## GitHub Actions에서 사용 방법
 
@@ -167,7 +132,7 @@ run: |
 **A.** ECR Repository가 먼저 생성되었는지 확인.
 ```bash
 aws ecr describe-repositories \
-  --repository-names gotcha-be-dev \
+  --repository-names gotcha-be \
   --region ap-northeast-2
 ```
 
@@ -182,9 +147,9 @@ aws ecr describe-repositories \
 
 GitHub Secrets 등록 완료 후:
 
-1. **Dev 브랜치에 푸시하여 배포 테스트**
+1. **파생 브랜치에서 작업 후 -> Dev 브랜치 merge 배포 테스트**
    ```bash
-   git push origin dev
+   git push origin feature/xxx
    ```
 
 2. **GitHub Actions 로그 확인**
