@@ -11,10 +11,15 @@ spring:
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS}
 
-# Google Cloud Storage Configuration (Development)
-gcs:
-  bucket-name: ${GCS_BUCKET_NAME}
-  project-id: ${GCS_PROJECT_ID}
+# AWS S3 Configuration (Development)
+aws:
+  s3:
+    bucket-name: ${AWS_S3_BUCKET_NAME}
+    region: ${AWS_REGION}
+    prefix: ${AWS_S3_PREFIX}
+  credentials:
+    access-key: ${AWS_ACCESS_KEY_ID}
+    secret-key: ${AWS_SECRET_ACCESS_KEY}
 
 # User Configuration
 user:

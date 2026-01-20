@@ -130,7 +130,7 @@
 |------|------|------|
 | id | Long (PK) | |
 | review_id | Long (FK → reviews) | |
-| image_url | String | GCS 이미지 URL |
+| image_url | String | S3 이미지 URL |
 | display_order | Integer | 표시 순서 (0부터 시작) |
 | created_at, updated_at | LocalDateTime | |
 
