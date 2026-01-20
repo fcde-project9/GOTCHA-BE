@@ -422,7 +422,7 @@ public interface UserControllerApi {
                                               "success": false,
                                               "error": {
                                                 "code": "C001",
-                                                "message": "올바른 GCS URL 형식이 아닙니다"
+                                                "message": "올바른 클라우드 스토리지 URL 형식이 아닙니다"
                                               }
                                             }
                                             """
@@ -479,7 +479,7 @@ public interface UserControllerApi {
 
     @Operation(
             summary = "프로필 이미지 삭제",
-            description = "현재 로그인한 사용자의 프로필 이미지를 삭제하고 기본 프로필 이미지로 복구합니다. 커스텀 이미지는 GCS에서 자동 삭제됩니다.",
+            description = "현재 로그인한 사용자의 프로필 이미지를 삭제하고 기본 프로필 이미지로 복구합니다. 커스텀 이미지는 클라우드 스토리지에서 자동 삭제됩니다.",
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses({

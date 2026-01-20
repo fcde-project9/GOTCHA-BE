@@ -169,17 +169,17 @@ public class ReviewService {
         List<ReviewImage> existingImages = reviewImageRepository
                 .findAllByReviewIdOrderByDisplayOrder(reviewId);
 
-        // 새 요청에 포함되지 않은 이미지만 GCS에서 삭제
+        // 새 요청에 포함되지 않은 이미지만 클라우드 스토리지에서 삭제
         List<String> newImageUrls = request.imageUrls() != null
                 ? request.imageUrls()
                 : List.of();
 
         for (ReviewImage existingImage : existingImages) {
             if (!newImageUrls.contains(existingImage.getImageUrl())) {
-                // 새 요청에 없는 이미지만 GCS에서 삭제
+                // 새 요청에 없는 이미지만 클라우드 스토리지에서 삭제
                 try {
                     fileStorageService.deleteFile(existingImage.getImageUrl());
-                    log.info("Deleted removed image from GCS: {}", existingImage.getImageUrl());
+                    log.info("Deleted removed image from 클라우드 스토리지: {}", existingImage.getImageUrl());
                 } catch (Exception e) {
                     log.error("Failed to delete image file: {}", existingImage.getImageUrl(), e);
                     // 파일 삭제 실패해도 DB는 삭제 진행
@@ -187,7 +187,7 @@ public class ReviewService {
             }
         }
 
-        // 7. DB 이미지 전체 삭제 (GCS는 위에서 필요한 것만 삭제함)
+        // 7. DB 이미지 전체 삭제 (클라우드 스토리지는 위에서 필요한 것만 삭제함)
         reviewImageRepository.deleteAllByReviewId(reviewId);
 
         // 8. 새 이미지 저장 (순서대로 displayOrder 할당)
@@ -228,7 +228,7 @@ public class ReviewService {
             throw ReviewException.unauthorized();
         }
 
-        // 4. 이미지 파일 삭제 (GCS + DB)
+        // 4. 이미지 파일 삭제 (클라우드 스토리지 + DB)
         deleteReviewImages(reviewId);
 
         // 5. DB 삭제
