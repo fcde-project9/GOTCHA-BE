@@ -16,7 +16,8 @@ public interface FileUploadControllerApi {
 
     @Operation(
             summary = "이미지 파일 업로드",
-            description = "이미지 파일을 클라우드 스토리지에 업로드 (local: GCS, dev/prod: AWS S3). 최대 20MB, jpg/jpeg/png/webp/heic/heif 형식 지원"
+            description = "이미지 파일을 AWS S3에 업로드 (모든 환경: AWS S3). " +
+                    "최대 20MB, jpg/jpeg/png/webp/heic/heif 형식 지원"
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(

@@ -14,7 +14,7 @@ GCP에서 AWS로 마이그레이션하며 S3 폴더 구조를 환경별(dev/prod
 ### 1. S3 폴더 구조 변경
 
 **변경 전:**
-```
+```text
 gotcha-prod-files/
 ├── defaults/
 ├── profiles/
@@ -23,7 +23,7 @@ gotcha-prod-files/
 ```
 
 **변경 후:**
-```
+```text
 gotcha-prod-files/
 ├── prod/
 │   ├── defaults/
@@ -168,8 +168,8 @@ aws s3 rm s3://gotcha-prod-files/dev/shops/ --recursive
 | `AWS_REGION` | `ap-northeast-2` | `ap-northeast-2` |
 | `AWS_ACCESS_KEY_ID` | (IAM Key) | (IAM Key) |
 | `AWS_SECRET_ACCESS_KEY` | (IAM Secret) | (IAM Secret) |
-| `USER_DEFAULT_PROFILE_IMAGE_URL` | `https://gotcha-prod-files.s3.ap-northeast-2.amazonaws.com/dev/defaults/profile-default-join.png` | `https://gotcha-prod-files.s3.ap-northeast-2.amazonaws.com/prod/defaults/profile-default-join.png` |
-| `SHOP_DEFAULT_IMAGE_URL` | `https://gotcha-prod-files.s3.ap-northeast-2.amazonaws.com/dev/defaults/shop-default.png` | `https://gotcha-prod-files.s3.ap-northeast-2.amazonaws.com/prod/defaults/shop-default.png` |
+| `USER_DEFAULT_PROFILE_IMAGE_URL` | `https://[S3_BUCKET].s3.[REGION].amazonaws.com/dev/defaults/profile-default-join.png` | `https://[S3_BUCKET].s3.[REGION].amazonaws.com/prod/defaults/profile-default-join.png` |
+| `SHOP_DEFAULT_IMAGE_URL` | `https://[S3_BUCKET].s3.[REGION].amazonaws.com/dev/defaults/shop-default.png` | `https://[S3_BUCKET].s3.[REGION].amazonaws.com/prod/defaults/shop-default.png` |
 
 ---
 
@@ -252,5 +252,5 @@ COMMIT;
 
 ## 참고
 
-- AWS S3 Console: https://s3.console.aws.amazon.com/s3/buckets/gotcha-prod-files
-- DBeaver 다운로드: https://dbeaver.io/download/
+- AWS S3 Console: <https://s3.console.aws.amazon.com/s3/buckets/gotcha-prod-files>
+- DBeaver 다운로드: <https://dbeaver.io/download/>
