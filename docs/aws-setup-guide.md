@@ -406,6 +406,9 @@ server {
     listen 443 ssl http2;
     server_name gotcha.com www.gotcha.com;
 
+    # 파일 업로드 크기 제한 (50MB) - 프로필 사진 등 대용량 이미지 지원
+    client_max_body_size 50M;
+
     ssl_certificate /etc/letsencrypt/live/gotcha.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/gotcha.com/privkey.pem;
 
