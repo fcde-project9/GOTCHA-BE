@@ -27,7 +27,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class S3FileUploadService implements FileStorageService {
 
-    private static final long MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+    private static final long MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
             "image/jpeg",
             "image/png",

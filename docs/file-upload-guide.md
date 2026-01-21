@@ -47,7 +47,7 @@ folder: "reviews"  // "shops", "profiles" 중 선택
 
 | 항목 | 제한 |
 |------|------|
-| 파일 크기 | 최대 20MB |
+| 파일 크기 | 최대 50MB |
 | 파일 형식 | jpg, jpeg, png, webp, heic, heif |
 | 폴더명 | reviews, shops, profiles만 허용 |
 
@@ -358,7 +358,7 @@ gotcha-bucket/
 - ❌ 확장자만 검증하면 안 됨 (우회 가능)
 
 ### 3. 파일 크기 제한
-- ✅ 최대 20MB
+- ✅ 최대 50MB
 - 프론트엔드에서도 사전 체크 권장
 
 ### 4. GCS 삭제 시 주의
