@@ -19,11 +19,11 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * AWS S3 파일 업로드 서비스 (dev, prod 환경)
+ * AWS S3 파일 업로드 서비스 (local, dev, prod 환경)
  */
 @Slf4j
 @Service
-@Profile({"dev", "prod"})
+@Profile({"local", "dev", "prod"})
 @RequiredArgsConstructor
 public class S3FileUploadService implements FileStorageService {
 
