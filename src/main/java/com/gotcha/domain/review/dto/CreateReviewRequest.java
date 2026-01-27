@@ -10,7 +10,7 @@ public record CreateReviewRequest(
 
         @Schema(description = "리뷰 내용", example = "원하는 캐릭터 뽑았어요!")
         @NotBlank(message = "리뷰 내용은 필수입니다")
-        @Size(min = 2, max = 1000, message = "리뷰는 10-1000자여야 합니다")
+        @Size(min = 2, max = 1000, message = "리뷰는 2-1000자여야 합니다")
         String content,
 
         @Schema(description = "이미지 URL 목록 (선택, 최대 10개). null 또는 빈 리스트 = 이미지 없음", example = "[\"https://example.com/image1.jpg\", \"https://example.com/image2.jpg\"]")
