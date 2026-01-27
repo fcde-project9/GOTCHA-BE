@@ -85,11 +85,11 @@ cors:
 
 # User Configuration
 user:
-  default-profile-image-url: ${USER_DEFAULT_PROFILE_IMAGE_URL:https://gotcha-default.s3.ap-northeast-2.amazonaws.com/default-profile.png}
+  default-profile-image-url: ${USER_DEFAULT_PROFILE_IMAGE_URL:https://gotcha-prod-files.s3.ap-northeast-2.amazonaws.com/dev/defaults/profile-default-join.png}
 
 # Shop Configuration
 shop:
-  default-image-url: ${SHOP_DEFAULT_IMAGE_URL:https://gotcha-default.s3.ap-northeast-2.amazonaws.com/default-shop.png}
+  default-image-url: ${SHOP_DEFAULT_IMAGE_URL:https://gotcha-prod-files.s3.ap-northeast-2.amazonaws.com/dev/defaults/shop-default.png}
 ```
 
 ## application-dev.yml / application-prod.yml
