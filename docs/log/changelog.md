@@ -4,6 +4,21 @@
 
 ---
 
+## 2026-01-27
+
+### 수정
+- `src/main/resources/application-local.yml` - 기본 이미지 URL 환경변수에 기본값 추가
+  - 변경: USER_DEFAULT_PROFILE_IMAGE_URL에 기본값 추가 (local 환경)
+  - 변경: SHOP_DEFAULT_IMAGE_URL에 기본값 추가 (local 환경)
+- `docs/skills/gotcha-config.md` - application-local.yml 예시 업데이트
+  - 추가: user.default-profile-image-url 설정 (기본값 포함)
+  - 추가: shop.default-image-url 설정 (기본값 포함)
+- `docs/skills/gotcha-config.md` - .env 파일 예시 업데이트
+  - 추가: USER_DEFAULT_PROFILE_IMAGE_URL 환경변수
+  - 추가: SHOP_DEFAULT_IMAGE_URL 환경변수
+
+---
+
 ## 2026-01-21
 
 ### 수정
