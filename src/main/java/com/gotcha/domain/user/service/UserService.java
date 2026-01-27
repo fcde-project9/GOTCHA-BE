@@ -149,7 +149,7 @@ public class UserService {
         String oldImageUrl = currentUser.getProfileImageUrl();
         log.info("Current user ID: {}, old profileImageUrl: {}", currentUser.getId(), oldImageUrl);
 
-        // 기존 이미지가 있고 기본 이미지가 아닌 경우 GCS에서 삭제
+        // 기존 이미지가 있고 기본 이미지가 아닌 경우 클라우드 스토리지에서 삭제
         if (oldImageUrl != null && !oldImageUrl.contains("/defaults/")) {
             try {
                 fileStorageService.deleteFile(oldImageUrl);
@@ -180,7 +180,7 @@ public class UserService {
         String oldImageUrl = currentUser.getProfileImageUrl();
         log.info("Current user ID: {}, old profileImageUrl: {}", currentUser.getId(), oldImageUrl);
 
-        // 기존 커스텀 이미지 GCS에서 삭제 (기본 이미지는 제외)
+        // 기존 커스텀 이미지 클라우드 스토리지에서 삭제 (기본 이미지는 제외)
         if (oldImageUrl != null && !oldImageUrl.contains("/defaults/")) {
             try {
                 fileStorageService.deleteFile(oldImageUrl);
@@ -204,7 +204,7 @@ public class UserService {
      * 2. 탈퇴 설문 저장
      * 3. 찜 목록 삭제
      * 4. 사용자가 누른 리뷰 좋아요 삭제
-     * 5. 리뷰 이미지 GCS 삭제 및 DB 삭제 + 사용자 리뷰에 달린 좋아요 삭제
+     * 5. 리뷰 이미지 클라우드 스토리지 삭제 및 DB 삭제 + 사용자 리뷰에 달린 좋아요 삭제
      * 6. 리뷰 삭제
      * 7. 댓글 삭제
      * 8. 권한 동의 기록 삭제
@@ -249,7 +249,7 @@ public class UserService {
         reviewLikeRepository.deleteByUserId(userId);
         log.info("User's review likes deleted - userId: {}", userId);
 
-        // 5. 리뷰 이미지 삭제 (GCS + DB) + 사용자 리뷰에 달린 좋아요 삭제
+        // 5. 리뷰 이미지 삭제 (클라우드 스토리지 + DB) + 사용자 리뷰에 달린 좋아요 삭제
         deleteUserReviewImages(userId);
 
         // 6. 리뷰 삭제
@@ -276,7 +276,7 @@ public class UserService {
 
     /**
      * 사용자의 모든 리뷰 관련 데이터 삭제 (이미지 + 좋아요)
-     * - 리뷰 이미지: GCS 파일 삭제 + DB 삭제
+     * - 리뷰 이미지: 클라우드 스토리지 파일 삭제 + DB 삭제
      * - 리뷰 좋아요: 해당 리뷰들에 달린 모든 좋아요 삭제 (다른 사용자의 좋아요 포함)
      */
     private void deleteUserReviewImages(Long userId) {
@@ -293,15 +293,15 @@ public class UserService {
         List<ReviewImage> reviewImages = reviewImageRepository
                 .findAllByReviewIdInOrderByReviewIdAscDisplayOrderAsc(reviewIds);
 
-        // GCS에서 이미지 파일 삭제
+        // 클라우드 스토리지에서 이미지 파일 삭제
         for (ReviewImage image : reviewImages) {
             try {
                 fileStorageService.deleteFile(image.getImageUrl());
             } catch (Exception e) {
-                log.warn("Failed to delete image from GCS: {} - {}", image.getImageUrl(), e.getMessage());
+                log.warn("Failed to delete image from 클라우드 스토리지: {} - {}", image.getImageUrl(), e.getMessage());
             }
         }
-        log.info("GCS images deleted - userId: {}, count: {}", userId, reviewImages.size());
+        log.info("클라우드 스토리지 images deleted - userId: {}, count: {}", userId, reviewImages.size());
 
         // DB에서 리뷰 이미지 삭제
         reviewImageRepository.deleteAllByReviewIdIn(reviewIds);

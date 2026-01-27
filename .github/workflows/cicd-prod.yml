@@ -93,6 +93,7 @@ jobs:
 
             # AWS S3
             S3_BUCKET=$(aws ssm get-parameter --name "/gotcha/prod/aws/s3/bucket-name" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+            S3_PREFIX=$(aws ssm get-parameter --name "/gotcha/prod/aws/s3/prefix" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
             S3_ACCESS_KEY=$(aws ssm get-parameter --name "/gotcha/prod/aws/s3/access-key-id" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
             S3_SECRET_KEY=$(aws ssm get-parameter --name "/gotcha/prod/aws/s3/secret-access-key" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
 
@@ -112,16 +113,16 @@ jobs:
             # 새 이미지 풀
             docker pull ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
 
-            # 새 컨테이너 실행
+            # 새 컨테이너 실행 (t3.small 최적화)
             docker run -d \
               --name gotcha-be-prod \
               -p 8080:8080 \
               --restart unless-stopped \
-              --memory="700m" \
-              --memory-swap="1g" \
-              --cpus="1.5" \
+              --memory="1800m" \
+              --memory-swap="1800m" \
+              --cpus="1.8" \
               -e SPRING_PROFILES_ACTIVE=prod \
-              -e JAVA_TOOL_OPTIONS="-Xms256m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200" \
+              -e JAVA_TOOL_OPTIONS="-Xms512m -Xmx1280m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:MaxMetaspaceSize=192m -XX:ReservedCodeCacheSize=64m" \
               -e SPRING_DATASOURCE_URL="$DB_URL" \
               -e SPRING_DATASOURCE_USERNAME="$DB_USERNAME" \
               -e SPRING_DATASOURCE_PASSWORD="$DB_PASSWORD" \
@@ -141,6 +142,7 @@ jobs:
               -e NAVER_CLIENT_ID="$NAVER_CLIENT_ID" \
               -e NAVER_CLIENT_SECRET="$NAVER_CLIENT_SECRET" \
               -e AWS_S3_BUCKET_NAME="$S3_BUCKET" \
+              -e AWS_S3_PREFIX="$S3_PREFIX" \
               -e AWS_REGION="$AWS_REGION_PARAM" \
               -e AWS_ACCESS_KEY_ID="$S3_ACCESS_KEY" \
               -e AWS_SECRET_ACCESS_KEY="$S3_SECRET_KEY" \

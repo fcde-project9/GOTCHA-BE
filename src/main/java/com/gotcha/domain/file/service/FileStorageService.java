@@ -5,7 +5,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 파일 스토리지 서비스 인터페이스
- * 환경별로 다른 구현체 사용 (dev: GCS, prod: AWS S3)
+ * 환경별로 다른 구현체 사용 (local: GCS, dev/prod: AWS S3)
  */
 public interface FileStorageService {
 

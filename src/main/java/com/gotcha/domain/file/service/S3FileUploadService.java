@@ -19,15 +19,15 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * AWS S3 파일 업로드 서비스 (prod 환경 전용)
+ * AWS S3 파일 업로드 서비스 (local, dev, prod 환경)
  */
 @Slf4j
 @Service
-@Profile("prod")
+@Profile({"local", "dev", "prod"})
 @RequiredArgsConstructor
 public class S3FileUploadService implements FileStorageService {
 
-    private static final long MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+    private static final long MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
             "image/jpeg",
             "image/png",
@@ -50,13 +50,16 @@ public class S3FileUploadService implements FileStorageService {
     @Value("${aws.s3.region}")
     private String region;
 
+    @Value("${aws.s3.prefix}")
+    private String prefix;
+
     @Override
     public FileUploadResponse uploadImage(MultipartFile file, String folder) {
         validateFile(file);
         validateFolder(folder);
 
         String filename = generateFilename(file.getOriginalFilename());
-        String key = folder + "/" + filename;
+        String key = prefix + folder + "/" + filename;
 
         try {
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
@@ -165,12 +168,12 @@ public class S3FileUploadService implements FileStorageService {
 
     /**
      * S3 URL에서 key 추출
-     * (예: https://bucket.s3.region.amazonaws.com/folder/file.jpg -> folder/file.jpg)
+     * (예: https://bucket.s3.region.amazonaws.com/dev/folder/file.jpg -> dev/folder/file.jpg)
      */
     private String extractKey(String fileUrl) {
-        String prefix = String.format("https://%s.s3.%s.amazonaws.com/", bucketName, region);
-        if (fileUrl.startsWith(prefix)) {
-            return fileUrl.substring(prefix.length());
+        String urlPrefix = String.format("https://%s.s3.%s.amazonaws.com/", bucketName, region);
+        if (fileUrl.startsWith(urlPrefix)) {
+            return fileUrl.substring(urlPrefix.length());
         }
         throw FileException.deleteFailed("Invalid file URL format: " + fileUrl);
     }

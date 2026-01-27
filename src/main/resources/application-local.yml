@@ -31,12 +31,20 @@ jwt:
 oauth2:
   redirect-uri: ${OAUTH2_REDIRECT_URI:http://localhost:3000/oauth/callback}
 
-gcs:
-  bucket-name: ${GCS_BUCKET_NAME:gotcha-dev-files}
-  project-id: ${GCS_PROJECT_ID:local-project}
+# AWS S3 Configuration (Local - uses dev environment)
+aws:
+  s3:
+    bucket-name: ${AWS_S3_BUCKET_NAME}
+    region: ${AWS_REGION}
+    prefix: ${AWS_S3_PREFIX}
+  credentials:
+    access-key: ${AWS_ACCESS_KEY_ID}
+    secret-key: ${AWS_SECRET_ACCESS_KEY}
 
+# User Configuration
 user:
-  default-profile-image-url: ${USER_DEFAULT_PROFILE_IMAGE_URL:https://storage.googleapis.com/gotcha-dev-files/defaults/profile-default-join.png}
+  default-profile-image-url: ${USER_DEFAULT_PROFILE_IMAGE_URL}
 
+# Shop Configuration
 shop:
-  default-image-url: ${SHOP_DEFAULT_IMAGE_URL:https://storage.googleapis.com/gotcha-dev-files/defaults/shop-default.png}
+  default-image-url: ${SHOP_DEFAULT_IMAGE_URL}

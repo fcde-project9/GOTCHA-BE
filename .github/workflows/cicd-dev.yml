@@ -1,4 +1,4 @@
-name: CI/CD Pipeline (Dev)
+name: CI/CD Pipeline (Development)
 
 on:
   push:
@@ -9,67 +9,162 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: read
-      id-token: write
-
     steps:
       # 1. 소스 체크아웃
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. GCP 인증 (Workload Identity)
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
+      # 2. AWS 자격증명 설정
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          workload_identity_provider: projects/643043229970/locations/global/workloadIdentityPools/github-pool/providers/github-provider
-          service_account: github-actions@gotcha-483107.iam.gserviceaccount.com
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-      # 3. gcloud CLI 세팅
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
+      # 3. Amazon ECR 로그인
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
-      # 4. Docker 빌드 및 Artifact Registry 푸시
+      # 4. Docker 이미지 빌드 및 ECR 푸시
       - name: Build and Push Docker Image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_DEV }}
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          gcloud auth configure-docker asia-northeast1-docker.pkg.dev
-          IMAGE_NAME="asia-northeast1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/gotcha-repo/gotcha-be-dev:${{ github.sha }}"
-          docker build -t $IMAGE_NAME .
-          docker push $IMAGE_NAME
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-      # 5. Cloud Run 배포 (Dev)
-      - name: Deploy to Cloud Run (Dev)
+      # 5. EC2에 SSH 접속하여 배포
+      - name: Deploy to EC2
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_DEV }}
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          gcloud run deploy gotcha-be-dev \
-            --image asia-northeast1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/gotcha-repo/gotcha-be-dev:${{ github.sha }} \
-            --platform managed \
-            --region asia-northeast1 \
-            --allow-unauthenticated \
-            --port 8080 \
-            --service-account github-actions@gotcha-483107.iam.gserviceaccount.com \
-            --project ${{ secrets.GCP_PROJECT_ID }} \
-            --add-cloudsql-instances=${{ secrets.CLOUD_SQL_CONNECTION_NAME_DEV }} \
-            --update-env-vars SPRING_PROFILES_ACTIVE=dev \
-            --update-env-vars SPRING_DATASOURCE_URL="${{ secrets.DB_URL_DEV }}" \
-            --update-env-vars SPRING_DATASOURCE_USERNAME="${{ secrets.DB_USERNAME_DEV }}" \
-            --update-env-vars SPRING_DATASOURCE_PASSWORD="${{ secrets.DB_PASSWORD_DEV }}" \
-            --update-env-vars "^@^CORS_ALLOWED_ORIGINS=${{ secrets.CORS_ALLOWED_ORIGINS_DEV }}" \
-            --update-env-vars JWT_SECRET="${{ secrets.JWT_SECRET_DEV }}" \
-            --update-env-vars JWT_ACCESS_TOKEN_VALIDITY="${{ secrets.JWT_ACCESS_TOKEN_VALIDITY }}" \
-            --update-env-vars JWT_REFRESH_TOKEN_VALIDITY="${{ secrets.JWT_REFRESH_TOKEN_VALIDITY }}" \
-            --update-env-vars KAKAO_REST_API_KEY="${{ secrets.KAKAO_REST_API_KEY }}" \
-            --update-env-vars KAKAO_ADMIN_KEY="${{ secrets.KAKAO_ADMIN_KEY }}" \
-            --update-env-vars KAKAO_API_BASE_URL="${{ secrets.KAKAO_API_BASE_URL }}" \
-            --update-env-vars OAUTH2_REDIRECT_URI="${{ secrets.OAUTH2_REDIRECT_URI_DEV }}" \
-            --update-env-vars "^@^OAUTH2_ALLOWED_REDIRECT_URIS=${{ secrets.OAUTH2_ALLOWED_REDIRECT_URIS_DEV }}" \
-            --update-env-vars KAKAO_CLIENT_ID="${{ secrets.KAKAO_CLIENT_ID }}" \
-            --update-env-vars KAKAO_CLIENT_SECRET="${{ secrets.KAKAO_CLIENT_SECRET }}" \
-            --update-env-vars GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
-            --update-env-vars GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
-            --update-env-vars NAVER_CLIENT_ID="${{ secrets.NAVER_CLIENT_ID }}" \
-            --update-env-vars NAVER_CLIENT_SECRET="${{ secrets.NAVER_CLIENT_SECRET }}" \
-            --update-env-vars GCS_BUCKET_NAME="${{ secrets.GCS_BUCKET_NAME_DEV }}" \
-            --update-env-vars GCS_PROJECT_ID="${{ secrets.GCS_PROJECT_ID }}" \
-            --update-env-vars USER_DEFAULT_PROFILE_IMAGE_URL="${{ secrets.USER_DEFAULT_PROFILE_IMAGE_URL_DEV }}" \
-            --update-env-vars SHOP_DEFAULT_IMAGE_URL="${{ secrets.SHOP_DEFAULT_IMAGE_URL_DEV }}" \
-            --update-env-vars OAUTH2_COOKIE_ENCRYPTION_KEY="${{ secrets.OAUTH2_COOKIE_ENCRYPTION_KEY_DEV }}"
+          echo "${{ secrets.EC2_SSH_KEY_DEV }}" > private_key.pem
+          chmod 600 private_key.pem
+
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_USER_DEV }}@${{ secrets.EC2_HOST_DEV }} << 'EOF'
+            # AWS CLI로 ECR 로그인
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
+
+            # AWS SSM Parameter Store 에서 환경변수 가져오기
+            echo "Fetching parameters from AWS SSM Parameter Store..."
+
+            # Database
+            DB_URL=$(aws ssm get-parameter --name "/gotcha/dev/database/url" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+            DB_USERNAME=$(aws ssm get-parameter --name "/gotcha/dev/database/username" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+            DB_PASSWORD=$(aws ssm get-parameter --name "/gotcha/dev/database/password" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+
+            # CORS
+            CORS_ORIGINS=$(aws ssm get-parameter --name "/gotcha/dev/cors/allowed-origins" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+
+            # JWT
+            JWT_SECRET=$(aws ssm get-parameter --name "/gotcha/dev/jwt/secret" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+            JWT_ACCESS_VALIDITY=$(aws ssm get-parameter --name "/gotcha/dev/jwt/access-token-validity" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+            JWT_REFRESH_VALIDITY=$(aws ssm get-parameter --name "/gotcha/dev/jwt/refresh-token-validity" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+
+            # Kakao API
+            KAKAO_REST_KEY=$(aws ssm get-parameter --name "/gotcha/dev/kakao/rest-api-key" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+            KAKAO_ADMIN=$(aws ssm get-parameter --name "/gotcha/dev/kakao/admin-key" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+            KAKAO_BASE_URL=$(aws ssm get-parameter --name "/gotcha/dev/kakao/api-base-url" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+
+            # OAuth - Common
+            OAUTH_REDIRECT_URI=$(aws ssm get-parameter --name "/gotcha/dev/oauth/redirect-uri" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+            OAUTH_ALLOWED_URIS=$(aws ssm get-parameter --name "/gotcha/dev/oauth/allowed-redirect-uris" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+            OAUTH_COOKIE_KEY=$(aws ssm get-parameter --name "/gotcha/dev/oauth/cookie-encryption-key" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+
+            # OAuth - Kakao
+            KAKAO_CLIENT_ID=$(aws ssm get-parameter --name "/gotcha/dev/oauth/kakao/client-id" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+            KAKAO_CLIENT_SECRET=$(aws ssm get-parameter --name "/gotcha/dev/oauth/kakao/client-secret" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+
+            # OAuth - Google
+            GOOGLE_CLIENT_ID=$(aws ssm get-parameter --name "/gotcha/dev/oauth/google/client-id" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+            GOOGLE_CLIENT_SECRET=$(aws ssm get-parameter --name "/gotcha/dev/oauth/google/client-secret" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+
+            # OAuth - Naver
+            NAVER_CLIENT_ID=$(aws ssm get-parameter --name "/gotcha/dev/oauth/naver/client-id" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+            NAVER_CLIENT_SECRET=$(aws ssm get-parameter --name "/gotcha/dev/oauth/naver/client-secret" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+
+            # AWS S3
+            S3_BUCKET=$(aws ssm get-parameter --name "/gotcha/dev/aws/s3/bucket-name" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+            S3_PREFIX=$(aws ssm get-parameter --name "/gotcha/dev/aws/s3/prefix" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+            S3_ACCESS_KEY=$(aws ssm get-parameter --name "/gotcha/dev/aws/s3/access-key-id" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+            S3_SECRET_KEY=$(aws ssm get-parameter --name "/gotcha/dev/aws/s3/secret-access-key" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+
+            # AWS Region
+            AWS_REGION_PARAM=$(aws ssm get-parameter --name "/gotcha/dev/aws/region" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+
+            # Default Images
+            USER_PROFILE_IMG=$(aws ssm get-parameter --name "/gotcha/dev/user/default-profile-image-url" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+            SHOP_IMG=$(aws ssm get-parameter --name "/gotcha/dev/shop/default-image-url" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+
+            echo "Parameters fetched successfully ✅"
+
+            # 기존 컨테이너 중지 및 제거
+            docker stop gotcha-be-dev || true
+            docker rm gotcha-be-dev || true
+
+            # 새 이미지 풀
+            docker pull ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_DEV }}:${{ github.sha }}
+
+            # 새 컨테이너 실행 (t3.micro 최적화)
+            docker run -d \
+              --name gotcha-be-dev \
+              -p 8080:8080 \
+              --restart unless-stopped \
+              --memory="850m" \
+              --memory-swap="850m" \
+              --cpus="1.0" \
+              -e SPRING_PROFILES_ACTIVE=dev \
+              -e JAVA_TOOL_OPTIONS="-Xms256m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=64m" \
+              -e SPRING_DATASOURCE_URL="$DB_URL" \
+              -e SPRING_DATASOURCE_USERNAME="$DB_USERNAME" \
+              -e SPRING_DATASOURCE_PASSWORD="$DB_PASSWORD" \
+              -e CORS_ALLOWED_ORIGINS="$CORS_ORIGINS" \
+              -e JWT_SECRET="$JWT_SECRET" \
+              -e JWT_ACCESS_TOKEN_VALIDITY="$JWT_ACCESS_VALIDITY" \
+              -e JWT_REFRESH_TOKEN_VALIDITY="$JWT_REFRESH_VALIDITY" \
+              -e KAKAO_REST_API_KEY="$KAKAO_REST_KEY" \
+              -e KAKAO_ADMIN_KEY="$KAKAO_ADMIN" \
+              -e KAKAO_API_BASE_URL="$KAKAO_BASE_URL" \
+              -e OAUTH2_REDIRECT_URI="$OAUTH_REDIRECT_URI" \
+              -e OAUTH2_ALLOWED_REDIRECT_URIS="$OAUTH_ALLOWED_URIS" \
+              -e KAKAO_CLIENT_ID="$KAKAO_CLIENT_ID" \
+              -e KAKAO_CLIENT_SECRET="$KAKAO_CLIENT_SECRET" \
+              -e GOOGLE_CLIENT_ID="$GOOGLE_CLIENT_ID" \
+              -e GOOGLE_CLIENT_SECRET="$GOOGLE_CLIENT_SECRET" \
+              -e NAVER_CLIENT_ID="$NAVER_CLIENT_ID" \
+              -e NAVER_CLIENT_SECRET="$NAVER_CLIENT_SECRET" \
+              -e AWS_S3_BUCKET_NAME="$S3_BUCKET" \
+              -e AWS_S3_PREFIX="$S3_PREFIX" \
+              -e AWS_REGION="$AWS_REGION_PARAM" \
+              -e AWS_ACCESS_KEY_ID="$S3_ACCESS_KEY" \
+              -e AWS_SECRET_ACCESS_KEY="$S3_SECRET_KEY" \
+              -e USER_DEFAULT_PROFILE_IMAGE_URL="$USER_PROFILE_IMG" \
+              -e SHOP_DEFAULT_IMAGE_URL="$SHOP_IMG" \
+              -e OAUTH2_COOKIE_ENCRYPTION_KEY="$OAUTH_COOKIE_KEY" \
+              ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_DEV }}:${{ github.sha }}
+
+            # 컨테이너 상태 확인 (10초 대기 후 확인)
+            sleep 10
+            if ! docker ps | grep -q gotcha-be-dev; then
+              echo "Container failed to start ❌"
+              docker logs gotcha-be-dev
+              exit 1
+            fi
+            echo "Container started successfully ✅"
+
+            # 이전 이미지 정리
+            docker image prune -f
+          EOF
+
+      # 6. SSH 키 정리 (항상 실행)
+      - name: Cleanup SSH key
+        if: always()
+        run: rm -f private_key.pem

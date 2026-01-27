@@ -80,7 +80,7 @@ class UpdateProfileImageRequestTest {
         // then
         assertThat(violations).hasSize(1);
         assertThat(violations.iterator().next().getMessage())
-                .isEqualTo("올바른 GCS 또는 S3 URL 형식이 아닙니다");
+                .isEqualTo("올바른 클라우드 스토리지 URL 형식이 아닙니다");
     }
 
     @Test
@@ -110,6 +110,6 @@ class UpdateProfileImageRequestTest {
         // then
         assertThat(violations).hasSize(1);
         assertThat(violations.iterator().next().getMessage())
-                .isEqualTo("올바른 GCS 또는 S3 URL 형식이 아닙니다");
+                .isEqualTo("올바른 클라우드 스토리지 URL 형식이 아닙니다");
     }
 }

@@ -4,6 +4,36 @@
 
 ---
 
+## 2026-01-27
+
+### 수정
+- `src/main/resources/application-local.yml` - 기본 이미지 URL 환경변수에 기본값 추가
+  - 변경: USER_DEFAULT_PROFILE_IMAGE_URL에 기본값 추가 (local 환경)
+  - 변경: SHOP_DEFAULT_IMAGE_URL에 기본값 추가 (local 환경)
+- `docs/skills/gotcha-config.md` - application-local.yml 예시 업데이트
+  - 추가: user.default-profile-image-url 설정 (기본값 포함)
+  - 추가: shop.default-image-url 설정 (기본값 포함)
+- `docs/skills/gotcha-config.md` - .env 파일 예시 업데이트
+  - 추가: USER_DEFAULT_PROFILE_IMAGE_URL 환경변수
+  - 추가: SHOP_DEFAULT_IMAGE_URL 환경변수
+
+---
+
+## 2026-01-21
+
+### 수정
+- `src/main/resources/application.yml` - 파일 업로드 크기 제한 증가
+  - 변경: max-file-size 20MB → 50MB (아이폰 고화질 사진 지원)
+  - 변경: max-request-size 20MB → 50MB
+- `src/main/java/com/gotcha/domain/file/service/S3FileUploadService.java` - 파일 크기 검증 로직 수정
+  - 변경: MAX_FILE_SIZE 20MB → 50MB
+- `docs/file-upload-guide.md` - 파일 크기 제한 문서 업데이트
+  - 변경: 최대 파일 크기 20MB → 50MB (2곳)
+- `docs/aws-setup-guide.md` - Nginx 설정에 파일 업로드 크기 제한 추가
+  - 추가: client_max_body_size 50M 설정 (413 Request Entity Too Large 에러 방지)
+
+---
+
 ## 2026-01-18
 
 ### 수정

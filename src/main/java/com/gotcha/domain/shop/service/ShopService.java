@@ -109,11 +109,20 @@ public class ShopService {
     }
 
     private String convertOpenTimeMapToString(Map<String, String> openTime) {
+        log.info("convertOpenTimeMapToString - 입력 Map: {}", openTime);
+        if (openTime != null) {
+            openTime.forEach((key, value) ->
+                log.info("  {} = '{}' (null여부: {})", key, value, value == null));
+        }
+
         if (openTime == null) {
+            log.info("convertOpenTimeMapToString - Map이 null이므로 null 반환");
             return null;
         }
         try {
-            return objectMapper.writeValueAsString(openTime);
+            String result = objectMapper.writeValueAsString(openTime);
+            log.info("convertOpenTimeMapToString - 변환 결과: {}", result);
+            return result;
         } catch (JsonProcessingException e) {
             log.error("Error converting openTime to JSON string", e);
             throw new RuntimeException("Error converting openTime to JSON string", e);
@@ -295,11 +304,15 @@ public class ShopService {
      * @return 파싱된 Map (파싱 실패 시 빈 Map)
      */
     private Map<String, String> parseOpenTime(String openTimeJson) {
+        log.debug("parseOpenTime 호출 - 입력값: '{}'", openTimeJson);
         if (openTimeJson == null || openTimeJson.isEmpty()) {
+            log.debug("parseOpenTime - null 또는 빈 문자열이므로 빈 Map 반환");
             return Map.of();
         }
         try {
-            return objectMapper.readValue(openTimeJson, new TypeReference<Map<String, String>>() {});
+            Map<String, String> result = objectMapper.readValue(openTimeJson, new TypeReference<Map<String, String>>() {});
+            log.debug("parseOpenTime - 파싱 결과: {}", result);
+            return result;
         } catch (Exception e) {
             log.error("Error parsing openTime JSON: {}", openTimeJson, e);
             return Map.of();
@@ -414,8 +427,11 @@ public class ShopService {
      * @return "영업 중" / "영업 종료" / "휴무" / ""
      */
     private String getOpenStatus(Map<String, String> timeMap) {
+        log.debug("getOpenStatus 호출 - timeMap: {}", timeMap);
+
         // openTime이 null이거나 빈 경우
         if (timeMap == null || timeMap.isEmpty()) {
+            log.debug("getOpenStatus - timeMap이 null 또는 empty이므로 빈 문자열 반환");
             return "";
         }
 
@@ -427,16 +443,20 @@ public class ShopService {
 
             // 요일을 "Mon", "Tue" 형식으로 변환
             String dayKey = getDayKey(dayOfWeek);
+            log.debug("getOpenStatus - 현재: {}, 요일: {}, 시간: {}", nowInKorea, dayKey, currentTime);
 
             String daySchedule = timeMap.get(dayKey);
+            log.debug("getOpenStatus - 오늘({}) 스케줄: '{}'", dayKey, daySchedule);
 
-            // 빈 문자열이면 휴무
-            if (daySchedule != null && daySchedule.trim().isEmpty()) {
+            // "휴무"라고 명시되어 있으면 휴무 반환
+            if ("휴무".equals(daySchedule)) {
+                log.debug("getOpenStatus - '휴무' 값이므로 '휴무' 반환");
                 return "휴무";
             }
 
-            // 해당 요일이 null이면 빈 문자열 반환
-            if (daySchedule == null) {
+            // 해당 요일이 null이거나 빈 문자열이면 빈 문자열 반환
+            if (daySchedule == null || daySchedule.trim().isEmpty()) {
+                log.debug("getOpenStatus - null 또는 빈 문자열이므로 빈 문자열 반환");
                 return "";
             }
 
@@ -449,6 +469,7 @@ public class ShopService {
 
             LocalTime openTime = parseTimeString(times[0]);
             LocalTime closeTime = parseTimeString(times[1]);
+            log.debug("getOpenStatus - openTime: {}, closeTime: {}", openTime, closeTime);
 
             // 익일 영업 (overnight) 처리 (예: 22:00-02:00)
             boolean isCurrentlyOpen;
@@ -459,7 +480,9 @@ public class ShopService {
                 isCurrentlyOpen = !currentTime.isBefore(openTime) && !currentTime.isAfter(closeTime);
             }
 
-            return isCurrentlyOpen ? "영업 중" : "영업 종료";
+            String result = isCurrentlyOpen ? "영업 중" : "영업 종료";
+            log.debug("getOpenStatus - 최종 결과: '{}'", result);
+            return result;
 
         } catch (Exception e) {
             log.error("Error checking open status", e);

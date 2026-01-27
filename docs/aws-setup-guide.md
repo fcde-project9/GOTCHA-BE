@@ -181,11 +181,18 @@ echo "https://gotcha-prod-files.s3.ap-northeast-2.amazonaws.com/defaults/profile
 **S3 폴더 구조:**
 ```
 gotcha-prod-files/
-├── defaults/
-│   └── profile-default-join.png   (관리자만 AWS Console/CLI로 수동 업로드)
-├── profiles/      (사용자가 API를 통해 업로드, 자동 생성)
-├── reviews/       (사용자가 API를 통해 업로드, 자동 생성)
-└── shops/         (사용자가 API를 통해 업로드, 자동 생성)
+├── prod/
+│   ├── defaults/
+│   │   ├── profile-default-join.png   (관리자만 AWS Console/CLI로 수동 업로드)
+│   │   └── shop-default.png
+│   ├── profiles/      (사용자가 API를 통해 업로드, 자동 생성)
+│   ├── reviews/       (사용자가 API를 통해 업로드, 자동 생성)
+│   └── shops/         (사용자가 API를 통해 업로드, 자동 생성)
+└── dev/
+    ├── defaults/
+    ├── profiles/
+    ├── reviews/
+    └── shops/
 ```
 
 **허용된 업로드 폴더 (API):**
@@ -223,6 +230,7 @@ GitHub 리포지토리의 Settings > Secrets and variables > Actions에서 다�
 | `AWS_REGION` | AWS 리전 | `ap-northeast-2` |
 | `ECR_REPOSITORY` | ECR 리포지토리 이름 | `gotcha-be-prod` |
 | `AWS_S3_BUCKET_NAME` | S3 버킷 이름 | `gotcha-prod-files` |
+| `AWS_S3_PREFIX` | S3 폴더 prefix (환경별 구분용) | `prod/` (prod) / `dev/` (dev) |
 | `AWS_S3_ACCESS_KEY_ID` | S3 전용 IAM 액세스 키 (선택) | `AKIAIOSFODNN7EXAMPLE` |
 | `AWS_S3_SECRET_ACCESS_KEY` | S3 전용 IAM 시크릿 키 (선택) | `wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY` |
 
@@ -397,6 +405,9 @@ server {
 server {
     listen 443 ssl http2;
     server_name gotcha.com www.gotcha.com;
+
+    # 파일 업로드 크기 제한 (50MB) - 프로필 사진 등 대용량 이미지 지원
+    client_max_body_size 50M;
 
     ssl_certificate /etc/letsencrypt/live/gotcha.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/gotcha.com/privkey.pem;

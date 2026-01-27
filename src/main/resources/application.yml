@@ -7,8 +7,8 @@ spring:
     active: ${SPRING_PROFILES_ACTIVE:local}
   servlet:
     multipart:
-      max-file-size: 20MB
-      max-request-size: 20MB
+      max-file-size: 50MB
+      max-request-size: 50MB
   datasource:
     driver-class-name: org.postgresql.Driver
   jpa:
