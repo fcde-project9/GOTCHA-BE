@@ -19,11 +19,11 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * AWS S3 파일 업로드 서비스 (dev, prod 환경)
+ * AWS S3 파일 업로드 서비스 (local, dev, prod 환경)
  */
 @Slf4j
 @Service
-@Profile({"dev", "prod"})
+@Profile({"local", "dev", "prod"})
 @RequiredArgsConstructor
 public class S3FileUploadService implements FileStorageService {
 
@@ -59,7 +59,13 @@ public class S3FileUploadService implements FileStorageService {
         validateFolder(folder);
 
         String filename = generateFilename(file.getOriginalFilename());
-        String key = prefix + folder + "/" + filename;
+        // Ensure prefix ends with "/" for proper path construction, handle null/empty prefix
+        String normalizedPrefix = (prefix == null || prefix.isBlank())
+                ? ""
+                : (prefix.endsWith("/") ? prefix : prefix + "/");
+        String key = normalizedPrefix + folder + "/" + filename;
+
+        log.info("Uploading file to S3. Bucket: {}, Key: {}, ContentType: {}", bucketName, key, file.getContentType());
 
         try {
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
@@ -73,7 +79,7 @@ public class S3FileUploadService implements FileStorageService {
             String publicUrl = String.format("https://%s.s3.%s.amazonaws.com/%s",
                     bucketName, region, key);
 
-            log.info("File uploaded successfully to S3: {}", publicUrl);
+            log.info("File uploaded successfully to S3. URL: {}, Key: {}", publicUrl, key);
 
             return FileUploadResponse.of(
                     publicUrl,
@@ -97,7 +103,11 @@ public class S3FileUploadService implements FileStorageService {
     @Override
     public void deleteFile(String fileUrl) {
         try {
+            log.info("Attempting to delete file from S3. URL: {}", fileUrl);
+            log.debug("S3 Config - Bucket: {}, Region: {}, Prefix: {}", bucketName, region, prefix);
+
             String key = extractKey(fileUrl);
+            log.info("Extracted key for deletion: {}", key);
 
             DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
                     .bucket(bucketName)
@@ -107,13 +117,13 @@ public class S3FileUploadService implements FileStorageService {
             s3Client.deleteObject(deleteObjectRequest);
 
             // S3 deleteObject는 멱등성(idempotent) 연산: 객체가 없어도 성공 처리됨
-            log.info("File deleted successfully from S3: {}", fileUrl);
+            log.info("File deleted successfully from S3. Bucket: {}, Key: {}", bucketName, key);
 
         } catch (S3Exception e) {
-            log.error("S3 delete failed: {}", e.awsErrorDetails().errorMessage(), e);
+            log.error("S3 delete failed for URL: {}. Error: {}", fileUrl, e.awsErrorDetails().errorMessage(), e);
             throw FileException.deleteFailed(e.awsErrorDetails().errorMessage());
         } catch (Exception e) {
-            log.error("File delete failed: {}", e.getMessage(), e);
+            log.error("File delete failed for URL: {}. Error: {}", fileUrl, e.getMessage(), e);
             throw FileException.deleteFailed(e.getMessage());
         }
     }
@@ -172,9 +182,15 @@ public class S3FileUploadService implements FileStorageService {
      */
     private String extractKey(String fileUrl) {
         String urlPrefix = String.format("https://%s.s3.%s.amazonaws.com/", bucketName, region);
+        log.debug("Extracting key from URL. Expected prefix: {}, Actual URL: {}", urlPrefix, fileUrl);
+
         if (fileUrl.startsWith(urlPrefix)) {
-            return fileUrl.substring(urlPrefix.length());
+            String extractedKey = fileUrl.substring(urlPrefix.length());
+            log.debug("Successfully extracted key: {}", extractedKey);
+            return extractedKey;
         }
-        throw FileException.deleteFailed("Invalid file URL format: " + fileUrl);
+
+        log.error("URL format mismatch! Expected prefix: {}, Actual URL: {}", urlPrefix, fileUrl);
+        throw FileException.deleteFailed("Invalid file URL format. Expected: " + urlPrefix + "*, Actual: " + fileUrl);
     }
 }

@@ -129,7 +129,7 @@ public class ReviewService {
                         review,
                         review.getUser(),
                         imageMap.getOrDefault(review.getId(), List.of()),
-                        currentUserId != null && review.getUser().getId().equals(currentUserId),
+                        review.getUser().getId().equals(currentUserId),
                         likeCountMap.getOrDefault(review.getId(), 0L),
                         finalLikedReviewIds.contains(review.getId())
                 ))
@@ -231,7 +231,11 @@ public class ReviewService {
         // 4. 이미지 파일 삭제 (클라우드 스토리지 + DB)
         deleteReviewImages(reviewId);
 
-        // 5. DB 삭제
+        // 5. ReviewLike 삭제 (FK 제약조건 위반 방지)
+        reviewLikeRepository.deleteAllByReviewId(reviewId);
+        log.info("Deleted all likes for review {}", reviewId);
+
+        // 6. Review 삭제
         reviewRepository.delete(review);
 
         log.info("Review {} deleted successfully", reviewId);

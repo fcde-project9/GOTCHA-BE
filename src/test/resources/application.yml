@@ -65,15 +65,20 @@ kakao:
     base-url: https://dapi.kakao.com
     user-api-base-url: https://kapi.kakao.com
 
-# GCS Configuration for tests
-gcs:
-  project-id: test-project-id
-  bucket-name: test-bucket-name
+# AWS S3 Configuration for tests
+aws:
+  s3:
+    bucket-name: ${AWS_S3_BUCKET_NAME:test-bucket-name}
+    region: ${AWS_REGION:ap-northeast-2}
+    prefix: ${AWS_S3_PREFIX:test/}
+  credentials:
+    access-key: ${AWS_ACCESS_KEY_ID:test-access-key}
+    secret-key: ${AWS_SECRET_ACCESS_KEY:test-secret-key}
 
 # User Configuration for tests
 user:
-  default-profile-image-url: https://storage.googleapis.com/test-bucket/defaults/profile-default.png
+  default-profile-image-url: ${USER_DEFAULT_PROFILE_IMAGE_URL:https://example.com/test/profile-default.png}
 
 # Shop Configuration for tests
 shop:
-  default-image-url: https://storage.googleapis.com/test-bucket/defaults/shop-default.png
+  default-image-url: ${SHOP_DEFAULT_IMAGE_URL:https://example.com/test/shop-default.png}
