@@ -2,8 +2,8 @@
 
 ## 개요
 
-GOTCHA 프로젝트의 모든 이미지 업로드는 **Google Cloud Storage (GCS)**를 사용합니다.
-`FileUploadService`가 공통 서비스로 제공되며, 리뷰/가게/프로필 이미지를 통합 관리합니다.
+GOTCHA 프로젝트의 모든 이미지 업로드는 **AWS S3**를 사용합니다.
+`FileStorageService`가 공통 서비스로 제공되며, 리뷰/가게/프로필 이미지를 통합 관리합니다.
 
 ---
 
@@ -27,7 +27,7 @@ folder: "reviews"  // "shops", "profiles" 중 선택
 {
   "success": true,
   "data": {
-    "url": "https://storage.googleapis.com/gotcha-bucket/reviews/abc123-def456.jpg",
+    "url": "https://your-bucket.s3.ap-northeast-2.amazonaws.com/env/reviews/abc123-def456.jpg",
     "originalFilename": "my-photo.jpg",
     "size": 1024000,
     "contentType": "image/jpeg"
@@ -85,7 +85,7 @@ await fetch('/api/shops/1/reviews', {
   },
   body: JSON.stringify({
     content: '좋아요!',
-    imageUrls: uploadedUrls  // ← GCS URL 배열
+    imageUrls: uploadedUrls  // ← S3 URL 배열
   })
 });
 ```
@@ -130,7 +130,7 @@ await fetch('/api/shops/1/reviews/10', {
 });
 
 // 백엔드가 자동으로:
-// - GCS에서 url3만 삭제
+// - S3에서 url3만 삭제
 // - DB에 finalUrls를 displayOrder 0,1,2,... 로 저장
 ```
 
@@ -138,9 +138,11 @@ await fetch('/api/shops/1/reviews/10', {
 
 ## 백엔드 개발자용
 
-### 1. FileUploadService 사용법
+### 1. FileStorageService 사용법
 
-**위치**: `com.gotcha.domain.file.service.FileUploadService`
+**위치**: `com.gotcha.domain.file.service.FileStorageService`
+
+**구현체**: `S3FileUploadService` (AWS S3 사용, local/dev/prod 환경)
 
 **의존성 주입**:
 ```java
@@ -148,7 +150,7 @@ await fetch('/api/shops/1/reviews/10', {
 @RequiredArgsConstructor
 public class YourService {
 
-    private final FileUploadService fileUploadService;
+    private final FileStorageService fileStorageService;
 
     // ...
 }
@@ -160,11 +162,11 @@ public class YourService {
 
 ```java
 /**
- * GCS에서 파일 삭제
+ * S3에서 파일 삭제
  *
  * @param fileUrl 삭제할 파일의 공개 URL
  */
-public void deleteFile(String fileUrl)
+public void deleteFile(String fileUrl);
 ```
 
 **사용 예시** (ReviewService 참고):
@@ -178,10 +180,10 @@ public void deleteReview(Long reviewId) {
     List<ReviewImage> images = reviewImageRepository
             .findAllByReviewIdOrderByDisplayOrder(reviewId);
 
-    // 2. GCS에서 파일 삭제
+    // 2. S3에서 파일 삭제
     for (ReviewImage image : images) {
         try {
-            fileUploadService.deleteFile(image.getImageUrl());
+            fileStorageService.deleteFile(image.getImageUrl());
             log.info("Deleted image: {}", image.getImageUrl());
         } catch (Exception e) {
             log.error("Failed to delete image: {}", image.getImageUrl(), e);
@@ -204,13 +206,13 @@ public void deleteReview(Long reviewId) {
 하지만 서버에서 직접 업로드해야 하는 경우:
 
 ```java
-public FileUploadResponse uploadImage(MultipartFile file, String folder)
+public FileUploadResponse uploadImage(MultipartFile file, String folder);
 ```
 
 **사용 예시**:
 ```java
 // 예: 관리자가 기본 프로필 이미지 업로드
-FileUploadResponse response = fileUploadService.uploadImage(file, "profiles");
+FileUploadResponse response = fileStorageService.uploadImage(file, "profiles");
 String imageUrl = response.url();
 ```
 
@@ -222,7 +224,7 @@ String imageUrl = response.url();
 @Transactional
 public ReviewResponse createReview(Long shopId, Long userId, CreateReviewRequest request) {
     // 1. request.imageUrls()는 프론트가 이미 업로드한 URL 배열
-    //    → GCS에 파일은 이미 존재함
+    //    → S3에 파일은 이미 존재함
 
     // 2. Review 엔티티 생성
     Review review = Review.builder()
@@ -232,7 +234,7 @@ public ReviewResponse createReview(Long shopId, Long userId, CreateReviewRequest
             .build();
     reviewRepository.save(review);
 
-    // 3. 이미지 URL을 DB에 저장 (파일은 이미 GCS에 있음)
+    // 3. 이미지 URL을 DB에 저장 (파일은 이미 S3에 있음)
     for (int i = 0; i < request.imageUrls().size(); i++) {
         ReviewImage image = ReviewImage.builder()
                 .review(review)
@@ -246,7 +248,7 @@ public ReviewResponse createReview(Long shopId, Long userId, CreateReviewRequest
 }
 ```
 
-#### 패턴 2: 이미지 수정 시 삭제된 것만 GCS에서 제거
+#### 패턴 2: 이미지 수정 시 삭제된 것만 S3에서 제거
 
 ```java
 @Transactional
@@ -257,16 +259,16 @@ public ReviewResponse updateReview(Long reviewId, UpdateReviewRequest request) {
     List<ReviewImage> existingImages = reviewImageRepository
             .findAllByReviewIdOrderByDisplayOrder(reviewId);
 
-    // 2. 새 요청에 포함되지 않은 이미지만 GCS에서 삭제
+    // 2. 새 요청에 포함되지 않은 이미지만 S3에서 삭제
     List<String> newImageUrls = request.imageUrls() != null
             ? request.imageUrls()
             : List.of();
 
     for (ReviewImage existingImage : existingImages) {
         if (!newImageUrls.contains(existingImage.getImageUrl())) {
-            // 삭제된 이미지만 GCS에서 제거
+            // 삭제된 이미지만 S3에서 제거
             try {
-                fileUploadService.deleteFile(existingImage.getImageUrl());
+                fileStorageService.deleteFile(existingImage.getImageUrl());
             } catch (Exception e) {
                 log.error("Failed to delete image: {}", existingImage.getImageUrl(), e);
             }
@@ -300,10 +302,10 @@ public void deleteReview(Long reviewId) {
     List<ReviewImage> images = reviewImageRepository
             .findAllByReviewIdOrderByDisplayOrder(reviewId);
 
-    // 2. GCS에서 파일 삭제
+    // 2. S3에서 파일 삭제
     for (ReviewImage image : images) {
         try {
-            fileUploadService.deleteFile(image.getImageUrl());
+            fileStorageService.deleteFile(image.getImageUrl());
         } catch (Exception e) {
             log.error("Failed to delete image: {}", image.getImageUrl(), e);
             // 파일 삭제 실패해도 계속 진행 (이미 삭제된 파일일 수 있음)
@@ -327,23 +329,32 @@ public void deleteReview(Long reviewId) {
 
 ---
 
-## GCS 저장 구조
+## S3 저장 구조
 
-```
-gotcha-bucket/
-├── reviews/
-│   ├── abc123-def456.jpg
-│   ├── ghi789-jkl012.png
-│   └── mno345-pqr678.webp
-├── shops/
-│   ├── stu901-vwx234.jpg
-│   └── yza567-bcd890.png
-└── profiles/
-    ├── efg123-hij456.jpg
-    └── klm789-nop012.heic
+```text
+your-bucket/
+├── env/                      # 환경별 prefix (dev/, prod/)
+│   ├── reviews/
+│   │   ├── abc123-def456.jpg
+│   │   ├── ghi789-jkl012.png
+│   │   └── mno345-pqr678.webp
+│   ├── shops/
+│   │   ├── stu901-vwx234.jpg
+│   │   └── yza567-bcd890.png
+│   ├── profiles/
+│   │   ├── efg123-hij456.jpg
+│   │   └── klm789-nop012.heic
+│   └── defaults/
+│       ├── profile-default-join.png
+│       └── shop-default-v2.png
 ```
 
 **파일명 규칙**: `UUID.확장자` (예: `abc123-def456-789.jpg`)
+
+**환경 분리**:
+- Dev 환경: `dev/reviews/`, `dev/shops/`, `dev/profiles/`
+- Prod 환경: `prod/reviews/`, `prod/shops/`, `prod/profiles/`
+- 동일 버킷 사용, prefix로 환경 구분
 
 ---
 
@@ -361,9 +372,10 @@ gotcha-bucket/
 - ✅ 최대 50MB
 - 프론트엔드에서도 사전 체크 권장
 
-### 4. GCS 삭제 시 주의
-- 삭제 실패해도 예외 던지지 않음 (이미 삭제된 파일일 수 있음)
-- 트랜잭션 밖에서 동작 (GCS는 외부 시스템)
+### 4. S3 삭제 시 주의
+- 삭제 실패 시 로그만 남기고 계속 진행 (이미 삭제된 파일일 수 있음)
+- S3 deleteObject는 멱등성(idempotent) 연산: 파일이 없어도 성공 처리
+- 트랜잭션 밖에서 동작 (S3는 외부 시스템)
 
 ---
 
@@ -373,7 +385,7 @@ gotcha-bucket/
 
 **A**: 아니요. 일반적으로:
 1. 프론트엔드가 `/api/files/upload` API로 파일 업로드
-2. GCS URL을 받음
+2. S3 URL을 받음
 3. 해당 URL을 백엔드 API에 전달 (예: `/api/shops/1/reviews`)
 4. 백엔드는 URL만 DB에 저장
 
@@ -381,7 +393,7 @@ gotcha-bucket/
 
 **A**:
 1. 프론트엔드가 최종 URL 배열을 전송 (삭제된 URL 제외)
-2. 백엔드가 기존 URL과 비교하여 삭제된 것만 GCS에서 제거
+2. 백엔드가 기존 URL과 비교하여 삭제된 것만 S3에서 제거
 3. DB는 전체 삭제/재생성하여 displayOrder 재할당
 
 ### Q3. displayOrder가 불연속이 될 수 있나요?
@@ -390,12 +402,13 @@ gotcha-bucket/
 - 예: `[0, 1, 2, 3, 4]` (5개 이미지)
 - 3번 삭제 후: `[0, 1, 2, 3]` (4개 이미지, 순서 재할당)
 
-### Q4. GCS 파일 삭제가 실패하면 어떻게 되나요?
+### Q4. S3 파일 삭제가 실패하면 어떻게 되나요?
 
 **A**:
 - 로그만 남기고 계속 진행 (이미 삭제된 파일일 수 있음)
 - DB 삭제는 정상적으로 진행
-- 트랜잭션 롤백 안 함 (GCS는 외부 시스템)
+- 트랜잭션 롤백 안 함 (S3는 외부 시스템)
+- S3 deleteObject는 멱등성 연산으로 파일이 없어도 성공 처리됨
 
 ### Q5. 프로필 사진은 단일 파일인데 배열로 저장해야 하나요?
 
@@ -405,8 +418,52 @@ gotcha-bucket/
 
 ---
 
+## AWS S3 설정
+
+### 필수 환경 변수
+
+```yaml
+aws:
+  s3:
+    bucket-name: ${AWS_S3_BUCKET_NAME}      # S3 버킷 이름
+    region: ${AWS_REGION}                    # AWS 리전 (예: ap-northeast-2)
+    prefix: ${AWS_S3_PREFIX}                 # 환경별 prefix (dev/, prod/)
+  credentials:
+    access-key: ${AWS_ACCESS_KEY_ID}         # AWS IAM 액세스 키
+    secret-key: ${AWS_SECRET_ACCESS_KEY}     # AWS IAM 시크릿 키
+```
+
+### IAM 권한 요구사항
+
+S3 사용자에게 필요한 권한:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject",
+        "s3:GetObject",
+        "s3:DeleteObject"
+      ],
+      "Resource": "arn:aws:s3:::your-bucket/*"
+    }
+  ]
+}
+```
+
+### URL 형식
+
+- **업로드된 파일 URL**: `https://your-bucket.s3.region.amazonaws.com/prefix/folder/uuid.ext`
+- **예시**: `https://your-bucket.s3.ap-northeast-2.amazonaws.com/dev/reviews/abc-123.jpg`
+
+---
+
 ## 관련 문서
 
 - API 스펙: `docs/api-spec.md` - 파일 업로드 API 섹션
 - 에러 코드: `docs/error-codes.md` - 파일 관련 에러 (I001, I002, I003)
 - Review 구현: `src/main/java/com/gotcha/domain/review/service/ReviewService.java`
+- S3 구현: `src/main/java/com/gotcha/domain/file/service/S3FileUploadService.java`
