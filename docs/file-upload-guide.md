@@ -331,7 +331,7 @@ public void deleteReview(Long reviewId) {
 
 ## S3 저장 구조
 
-```
+```text
 your-bucket/
 ├── env/                      # 환경별 prefix (dev/, prod/)
 │   ├── reviews/

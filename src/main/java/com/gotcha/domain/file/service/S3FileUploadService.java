@@ -59,8 +59,10 @@ public class S3FileUploadService implements FileStorageService {
         validateFolder(folder);
 
         String filename = generateFilename(file.getOriginalFilename());
-        // Ensure prefix ends with "/" for proper path construction
-        String normalizedPrefix = prefix.endsWith("/") ? prefix : prefix + "/";
+        // Ensure prefix ends with "/" for proper path construction, handle null/empty prefix
+        String normalizedPrefix = (prefix == null || prefix.isBlank())
+                ? ""
+                : (prefix.endsWith("/") ? prefix : prefix + "/");
         String key = normalizedPrefix + folder + "/" + filename;
 
         log.info("Uploading file to S3. Bucket: {}, Key: {}, ContentType: {}", bucketName, key, file.getContentType());
