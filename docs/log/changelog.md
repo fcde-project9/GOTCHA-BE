@@ -4,6 +4,28 @@
 
 ---
 
+## 2026-01-28
+
+### 수정
+- `src/main/java/com/gotcha/domain/file/service/S3FileUploadService.java` - S3 파일 삭제 개선 및 로깅 강화
+  - 수정: uploadImage() - prefix 정규화 (항상 `/`로 끝나도록 처리)
+  - 추가: uploadImage(), deleteFile() - 상세 로깅 (URL, bucket, key, region, prefix)
+  - 추가: extractKey() - 디버그 로깅 및 에러 메시지 개선
+  - 목적: S3 파일 삭제 실패 디버깅 용이성 향상
+- `src/main/java/com/gotcha/domain/review/service/ReviewService.java` - TODO 주석 제거
+  - 제거: deleteReview() 메서드의 "S3에 파일이 그대로 남아있다" TODO 주석 (해결됨)
+- `docs/file-upload-guide.md` - 전면 업데이트 (GCS → AWS S3 마이그레이션 반영)
+  - 변경: 모든 "GCS", "Google Cloud Storage" → "S3", "AWS S3"
+  - 변경: FileUploadService → FileStorageService (인터페이스명 변경)
+  - 변경: URL 형식 `storage.googleapis.com` → `s3.amazonaws.com`
+  - 추가: S3 버킷 구조 설명 (환경별 prefix: dev/, prod/)
+  - 추가: AWS S3 설정 섹션 (필수 환경변수, IAM 권한, URL 형식)
+  - 변경: 모든 코드 예시에서 fileUploadService → fileStorageService
+  - 변경: 모든 주석에서 GCS → S3
+  - 추가: S3 deleteObject 멱등성 설명 (Q4 FAQ)
+
+---
+
 ## 2026-01-27
 
 ### 수정
