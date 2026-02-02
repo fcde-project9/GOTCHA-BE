@@ -2,7 +2,6 @@ package com.gotcha.domain.review.repository;
 
 import com.gotcha.domain.review.entity.ReviewLike;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -18,6 +17,14 @@ public interface ReviewLikeRepository extends JpaRepository<ReviewLike, Long> {
     @Modifying(clearAutomatically = true)
     @Query("DELETE FROM ReviewLike rl WHERE rl.user.id = :userId")
     void deleteByUserId(@Param("userId") Long userId);
+
+    /**
+     * 특정 리뷰에 대한 모든 좋아요 삭제 (리뷰 삭제 시 사용)
+     * @param reviewId 삭제할 리뷰 ID
+     */
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM ReviewLike rl WHERE rl.review.id = :reviewId")
+    void deleteAllByReviewId(@Param("reviewId") Long reviewId);
 
     /**
      * 특정 리뷰들에 대한 모든 좋아요 삭제 (회원 탈퇴 시 사용)
