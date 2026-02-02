@@ -4,6 +4,23 @@
 
 ---
 
+## 2026-02-02
+
+### 수정
+- `README.md` - 프로젝트 README 전면 개편
+  - 추가: 주요 기능 섹션 (API 기능, 예정 기능)
+  - 추가: Tech Stack 상세화 (Framework, Language, ORM, Database, Security, Storage, Documentation, Infrastructure)
+  - 추가: CI/CD 파이프라인 설명 (GitHub Actions, dev/main 브랜치별 환경)
+  - 추가: 개발 환경 설정 가이드 (필수 요구사항, 빌드 및 실행 방법)
+  - 추가: 프로젝트 폴더 구조 (_global, domain 모듈별 설명)
+  - 추가: API 문서 섹션 (Swagger UI 링크, 주요 API 엔드포인트 테이블)
+  - 추가: docs 폴더 문서 목록 (문서 및 스킬 문서)
+  - 추가: Git 브랜치 전략 (feature, fix, refactor, docs)
+  - 추가: 환경 변수 목록 (.env.example 참조)
+  - 변경: 프론트엔드 레포지토리 링크 추가
+
+---
+
 ## 2026-01-27
 
 ### 수정
