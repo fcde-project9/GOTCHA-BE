@@ -4,6 +4,36 @@
 
 ---
 
+## 2026-02-02
+
+### 추가
+- `docs/architecture.md` - 백엔드 서버 아키텍처 문서 신규 작성
+  - 추가: 전체 시스템 아키텍처 다이어그램 (클라이언트 → 외부 서비스 → Spring Boot → DB/S3)
+  - 추가: 도메인 구조 (패키지 아키텍처) - _global, domain별 구조
+  - 추가: 배포 인프라 아키텍처 (AWS: Route53, EC2, RDS, S3, ECR)
+  - 추가: 인증 플로우 다이어그램 (OAuth2 + JWT)
+  - 추가: 데이터베이스 스키마 (주요 테이블, Phase 2 테이블)
+  - 추가: 기술 스택 상세 목록
+  - 추가: API 엔드포인트 구조 (Auth, User, Shop, Review, File)
+  - 추가: 보안 정책 (인증 필요/불필요 엔드포인트)
+  - 추가: 환경 설정 (프로필별 설정, 필수 환경변수)
+  - 추가: 주요 설계 결정사항
+
+### 수정
+- `README.md` - 프로젝트 README 전면 개편
+  - 추가: 주요 기능 섹션 (API 기능, 예정 기능)
+  - 추가: Tech Stack 상세화 (Framework, Language, ORM, Database, Security, Storage, Documentation, Infrastructure)
+  - 추가: CI/CD 파이프라인 설명 (GitHub Actions, dev/main 브랜치별 환경)
+  - 추가: 개발 환경 설정 가이드 (필수 요구사항, 빌드 및 실행 방법)
+  - 추가: 프로젝트 폴더 구조 (_global, domain 모듈별 설명)
+  - 추가: API 문서 섹션 (Swagger UI 링크, 주요 API 엔드포인트 테이블)
+  - 추가: docs 폴더 문서 목록 (문서 및 스킬 문서)
+  - 추가: Git 브랜치 전략 (feature, fix, refactor, docs)
+  - 추가: 환경 변수 목록 (.env.example 참조)
+  - 변경: 프론트엔드 레포지토리 링크 추가
+
+---
+
 ## 2026-01-28
 
 ### 수정
