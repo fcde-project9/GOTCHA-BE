@@ -4,6 +4,58 @@
 
 ---
 
+## 2026-02-02
+
+### 추가
+- `docs/architecture.md` - 백엔드 서버 아키텍처 문서 신규 작성
+  - 추가: 전체 시스템 아키텍처 다이어그램 (클라이언트 → 외부 서비스 → Spring Boot → DB/S3)
+  - 추가: 도메인 구조 (패키지 아키텍처) - _global, domain별 구조
+  - 추가: 배포 인프라 아키텍처 (AWS: Route53, EC2, RDS, S3, ECR)
+  - 추가: 인증 플로우 다이어그램 (OAuth2 + JWT)
+  - 추가: 데이터베이스 스키마 (주요 테이블, Phase 2 테이블)
+  - 추가: 기술 스택 상세 목록
+  - 추가: API 엔드포인트 구조 (Auth, User, Shop, Review, File)
+  - 추가: 보안 정책 (인증 필요/불필요 엔드포인트)
+  - 추가: 환경 설정 (프로필별 설정, 필수 환경변수)
+  - 추가: 주요 설계 결정사항
+
+### 수정
+- `README.md` - 프로젝트 README 전면 개편
+  - 추가: 주요 기능 섹션 (API 기능, 예정 기능)
+  - 추가: Tech Stack 상세화 (Framework, Language, ORM, Database, Security, Storage, Documentation, Infrastructure)
+  - 추가: CI/CD 파이프라인 설명 (GitHub Actions, dev/main 브랜치별 환경)
+  - 추가: 개발 환경 설정 가이드 (필수 요구사항, 빌드 및 실행 방법)
+  - 추가: 프로젝트 폴더 구조 (_global, domain 모듈별 설명)
+  - 추가: API 문서 섹션 (Swagger UI 링크, 주요 API 엔드포인트 테이블)
+  - 추가: docs 폴더 문서 목록 (문서 및 스킬 문서)
+  - 추가: Git 브랜치 전략 (feature, fix, refactor, docs)
+  - 추가: 환경 변수 목록 (.env.example 참조)
+  - 변경: 프론트엔드 레포지토리 링크 추가
+
+---
+
+## 2026-01-28
+
+### 수정
+- `src/main/java/com/gotcha/domain/file/service/S3FileUploadService.java` - S3 파일 삭제 개선 및 로깅 강화
+  - 수정: uploadImage() - prefix 정규화 (항상 `/`로 끝나도록 처리)
+  - 추가: uploadImage(), deleteFile() - 상세 로깅 (URL, bucket, key, region, prefix)
+  - 추가: extractKey() - 디버그 로깅 및 에러 메시지 개선
+  - 목적: S3 파일 삭제 실패 디버깅 용이성 향상
+- `src/main/java/com/gotcha/domain/review/service/ReviewService.java` - TODO 주석 제거
+  - 제거: deleteReview() 메서드의 "S3에 파일이 그대로 남아있다" TODO 주석 (해결됨)
+- `docs/file-upload-guide.md` - 전면 업데이트 (GCS → AWS S3 마이그레이션 반영)
+  - 변경: 모든 "GCS", "Google Cloud Storage" → "S3", "AWS S3"
+  - 변경: FileUploadService → FileStorageService (인터페이스명 변경)
+  - 변경: URL 형식 `storage.googleapis.com` → `s3.amazonaws.com`
+  - 추가: S3 버킷 구조 설명 (환경별 prefix: dev/, prod/)
+  - 추가: AWS S3 설정 섹션 (필수 환경변수, IAM 권한, URL 형식)
+  - 변경: 모든 코드 예시에서 fileUploadService → fileStorageService
+  - 변경: 모든 주석에서 GCS → S3
+  - 추가: S3 deleteObject 멱등성 설명 (Q4 FAQ)
+
+---
+
 ## 2026-01-27
 
 ### 수정
