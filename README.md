@@ -172,39 +172,3 @@ Swagger UI를 통해 API 문서를 확인할 수 있습니다.
 
 **PR 대상 브랜치**: `dev`
 **PR 전 필수**: `./gradlew spotlessApply`
-
----
-
-## 환경 변수
-
-주요 환경 변수 목록 (`.env.example` 참조):
-
-```bash
-# Database
-DATABASE_URL=jdbc:postgresql://localhost:5432/gotcha
-DATABASE_USERNAME=postgres
-DATABASE_PASSWORD=password
-
-# JWT
-JWT_SECRET=your-secret-key
-JWT_EXPIRATION=3600000
-
-# OAuth2
-KAKAO_CLIENT_ID=your-kakao-client-id
-GOOGLE_CLIENT_ID=your-google-client-id
-NAVER_CLIENT_ID=your-naver-client-id
-
-# AWS
-AWS_ACCESS_KEY=your-access-key
-AWS_SECRET_KEY=your-secret-key
-AWS_S3_BUCKET=your-bucket-name
-
-# Kakao Map
-KAKAO_REST_API_KEY=your-kakao-rest-api-key
-```
-
----
-
-## 라이선스
-
-This project is private and proprietary.
