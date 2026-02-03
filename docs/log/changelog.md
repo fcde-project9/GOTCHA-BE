@@ -36,6 +36,8 @@
 - `src/main/java/com/gotcha/_global/config/SecurityConfig.java` - 가게 수정/삭제 엔드포인트 인증 규칙 추가
 - `docs/error-codes.md` - S008 에러 코드 추가 (가게 수정/삭제 권한 없음)
 - `docs/auth-policy.md` - API 권한 매트릭스 업데이트 (가게 CRUD, 리뷰 ADMIN 바이패스)
+- `Dockerfile` - Docker 컨테이너 타임존 Asia/Seoul 설정 (ENV TZ + JVM -Duser.timezone)
+- `src/main/resources/application.yml` - hibernate.jdbc.time_zone: Asia/Seoul 추가 (UTC 저장 문제 해결)
 - `src/main/java/com/gotcha/domain/user/entity/User.java` - UserType, UserStatus 필드 추가
   - 추가: userType 필드 (기본값: NORMAL)
   - 추가: status 필드 (기본값: ACTIVE)
