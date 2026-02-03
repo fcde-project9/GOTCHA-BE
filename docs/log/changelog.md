@@ -4,6 +4,54 @@
 
 ---
 
+## 2026-02-03
+
+### 추가
+- `src/main/java/com/gotcha/domain/user/entity/UserType.java` - 사용자 타입 Enum (ADMIN, OWNER, NORMAL)
+- `src/main/java/com/gotcha/domain/user/entity/UserStatus.java` - 사용자 상태 Enum (ACTIVE, SUSPENDED, BANNED, DELETED)
+- `src/main/java/com/gotcha/domain/shop/dto/UpdateShopRequest.java` - 가게 수정 요청 DTO
+- `src/main/java/com/gotcha/domain/shop/dto/UpdateShopMainImageRequest.java` - 가게 대표 이미지 수정 요청 DTO
+
+### 수정
+- `src/main/java/com/gotcha/domain/shop/exception/ShopErrorCode.java` - SHOP_UNAUTHORIZED(S008) 에러 코드 추가
+- `src/main/java/com/gotcha/domain/shop/exception/ShopException.java` - unauthorized() 팩토리 메서드 추가
+- `src/main/java/com/gotcha/domain/shop/service/ShopService.java` - ADMIN 전용 가게 관리 메서드 추가
+  - 추가: updateShop() - 가게 정보 수정 (ADMIN 전용)
+  - 추가: updateShopMainImage() - 가게 대표 이미지 수정 (ADMIN 전용)
+  - 추가: deleteShop() - 가게 삭제 (연관 데이터 포함, ADMIN 전용)
+  - 추가: validateAdmin() - ADMIN 권한 검증 헬퍼
+  - 추가: FileStorageService 의존성 주입 (S3 이미지 삭제용)
+- `src/main/java/com/gotcha/domain/shop/controller/ShopController.java` - 가게 수정/삭제 엔드포인트 추가
+  - 추가: PUT /api/shops/{shopId} - 가게 정보 수정
+  - 추가: PATCH /api/shops/{shopId}/main-image - 가게 대표 이미지 수정
+  - 추가: DELETE /api/shops/{shopId} - 가게 삭제
+  - 추가: getCurrentUserOrThrow() 헬퍼 메서드
+- `src/main/java/com/gotcha/domain/shop/controller/ShopControllerApi.java` - Swagger 명세 추가 (updateShop, updateShopMainImage, deleteShop)
+- `src/main/java/com/gotcha/domain/review/service/ReviewService.java` - ADMIN 권한 바이패스 추가
+  - 변경: updateReview() 시그니처 Long userId → User currentUser, ADMIN 바이패스 추가
+  - 변경: deleteReview() 시그니처 Long userId → User currentUser, ADMIN 바이패스 추가
+- `src/main/java/com/gotcha/domain/review/controller/ReviewController.java` - updateReview, deleteReview에 User 객체 전달
+- `src/main/java/com/gotcha/domain/review/repository/ReviewRepository.java` - findAllByShopId() 메서드 추가
+- `src/main/java/com/gotcha/domain/favorite/repository/FavoriteRepository.java` - deleteAllByShopId() 메서드 추가
+- `src/main/java/com/gotcha/_global/config/SecurityConfig.java` - 가게 수정/삭제 엔드포인트 인증 규칙 추가
+- `docs/error-codes.md` - S008 에러 코드 추가 (가게 수정/삭제 권한 없음)
+- `docs/auth-policy.md` - API 권한 매트릭스 업데이트 (가게 CRUD, 리뷰 ADMIN 바이패스)
+- `src/main/java/com/gotcha/domain/user/entity/User.java` - UserType, UserStatus 필드 추가
+  - 추가: userType 필드 (기본값: NORMAL)
+  - 추가: status 필드 (기본값: ACTIVE)
+  - 추가: suspend(), ban(), activate() 상태 변경 메서드
+  - 추가: isActive(), isAdmin() 편의 메서드
+  - 변경: delete() 메서드에 status = DELETED 설정 추가
+  - 변경: Builder에 userType 파라미터 추가 (선택)
+- `docs/entity-design.md` - users 테이블 설계 업데이트
+  - 추가: user_type 필드 (Enum: ADMIN, OWNER, NORMAL)
+  - 추가: status 필드 (Enum: ACTIVE, SUSPENDED, BANNED, DELETED)
+  - 추가: UserType, UserStatus Enum 설명 테이블
+  - 제거: is_anonymous 필드 (사용하지 않음)
+  - 변경: 탈퇴 처리 설명에 status = DELETED 추가
+
+---
+
 ## 2026-02-02
 
 ### 추가
