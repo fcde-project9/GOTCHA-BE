@@ -32,6 +32,14 @@ public class User extends BaseTimeEntity {
     @Column(name = "social_type", length = 20)
     private SocialType socialType;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private UserType userType = UserType.NORMAL;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private UserStatus status = UserStatus.ACTIVE;
+
     @Column(name = "social_id")
     private String socialId;
 
@@ -56,13 +64,13 @@ public class User extends BaseTimeEntity {
 
     @Builder
     public User(SocialType socialType, String socialId, String nickname,
-                String email, String profileImageUrl) {
+                String email, String profileImageUrl, UserType userType) {
         this.socialType = socialType;
         this.socialId = socialId;
         this.nickname = nickname;
         this.email = email;
         this.profileImageUrl = profileImageUrl;
-        this.isDeleted = false;
+        this.userType = userType != null ? userType : UserType.NORMAL;
     }
 
     public void updateNickname(String nickname) {
@@ -90,7 +98,7 @@ public class User extends BaseTimeEntity {
      * - 소셜 연동 정보 제거 (재가입 허용)
      * - 개인정보 마스킹 (닉네임, 이메일, 프로필 이미지)
      * - OAuth 토큰 제거
-     * - soft delete 플래그 설정
+     * - 상태 변경 및 soft delete 플래그 설정
      */
     public void delete() {
         this.socialType = null;
@@ -99,6 +107,27 @@ public class User extends BaseTimeEntity {
         this.email = null;
         this.profileImageUrl = null;
         this.oauthAccessToken = null;
+        this.status = UserStatus.DELETED;
         this.isDeleted = true;
+    }
+
+    public void suspend() {
+        this.status = UserStatus.SUSPENDED;
+    }
+
+    public void ban() {
+        this.status = UserStatus.BANNED;
+    }
+
+    public void activate() {
+        this.status = UserStatus.ACTIVE;
+    }
+
+    public boolean isActive() {
+        return this.status == UserStatus.ACTIVE;
+    }
+
+    public boolean isAdmin() {
+        return this.userType == UserType.ADMIN;
     }
 }
