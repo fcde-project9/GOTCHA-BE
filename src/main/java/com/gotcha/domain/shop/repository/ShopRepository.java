@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -37,4 +38,8 @@ public interface ShopRepository extends JpaRepository<Shop, Long> {
 
     @Query(value = "SELECT s FROM Shop s JOIN FETCH s.createdBy WHERE s.createdBy.id = :userId ORDER BY s.createdAt DESC",countQuery = "SELECT COUNT(s) FROM Shop s WHERE s.createdBy.id = :userId")
     Page<Shop> findAllByCreatedByIdWithUser(@Param("userId") Long userId, Pageable pageable);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Shop s SET s.createdBy = null WHERE s.createdBy.id = :userId")
+    void clearCreatedByUserId(@Param("userId") Long userId);
 }
