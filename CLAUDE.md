@@ -49,7 +49,7 @@ com.gotcha
 | 인증/권한 구현 | `docs/auth-policy.md` |
 | 비즈니스 로직 | `docs/business-rules.md` |
 | 이미지 업로드 구현 | `docs/file-upload-guide.md` |
-| 설계 확인 | `docs/decisions.md`, `docs/flow.md` |
+| 설계 확인 | `docs/flow.md` |
 | Repository/테스트 | `docs/repository-edge-cases.md`, `docs/skills/gotcha-test.md` |
 | 설정/yml 변경 | `docs/skills/gotcha-config.md` |
 
@@ -65,15 +65,18 @@ com.gotcha
 |------|------|
 | `docs/entity-design.md` | Entity 구조 (V1 + V2) |
 | `docs/api-spec.md` | API 상세 명세 (Request/Response) |
-| `docs/api-design.md` | API 엔드포인트 개요 |
 | `docs/business-rules.md` | 비즈니스 규칙 |
 | `docs/auth-policy.md` | 인증/권한 정책 |
 | `docs/error-codes.md` | 에러 코드 정의 |
 | `docs/flow.md` | 화면/검색 플로우 |
-| `docs/decisions.md` | 설계 결정 사항 |
 | `docs/coding-patterns.md` | 코딩 패턴 |
 | `docs/repository-edge-cases.md` | Repository 엣지 케이스 |
-| `docs/file-upload-guide.md` | 이미지 업로드 가이드 (GCS 사용법) |
+| `docs/file-upload-guide.md` | 이미지 업로드 가이드 (S3) |
+
+<!-- TODO: 아래 보안 문서 2개 검토 후 문서 목록에 추가 여부 결정
+- docs/security-concepts.md: 보안 개념 정리
+- docs/security-roadmap.md: 보안 로드맵
+-->
 
 ## 스킬 문서 (자동화용)
 
@@ -98,14 +101,6 @@ com.gotcha
 ### 2. 빌드 & 테스트
 - `./gradlew build` 성공
 - `./gradlew test` 모든 테스트 통과
-
-### 3. Confluence 문서화 (필수)
-작업 완료 시 Confluence에 상세 문서 작성:
-- 구현 개요
-- 변경된 파일 목록
-- API 변경 사항 (있는 경우)
-- 테스트 케이스 목록
-- 엣지 케이스 처리 방법
 
 ## 문서 변경 로그
 
