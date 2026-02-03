@@ -2,6 +2,7 @@ package com.gotcha.domain.auth.oauth2;
 
 import com.gotcha.domain.user.entity.SocialType;
 import com.gotcha.domain.user.entity.User;
+import com.gotcha.domain.user.entity.UserType;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -28,7 +29,7 @@ public class CustomOAuth2User implements OAuth2User {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singleton(new SimpleGrantedAuthority("ROLE_USER"));
+        return Collections.singleton(new SimpleGrantedAuthority("ROLE_" + user.getUserType().name()));
     }
 
     @Override

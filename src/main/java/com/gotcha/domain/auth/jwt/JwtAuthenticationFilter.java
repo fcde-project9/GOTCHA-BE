@@ -5,6 +5,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import com.gotcha.domain.user.entity.UserType;
 import java.io.IOException;
 import java.util.Collections;
 import lombok.RequiredArgsConstructor;
@@ -33,12 +34,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
                 Long userId = jwtTokenProvider.getUserIdFromToken(token);
+                String userTypeStr = jwtTokenProvider.getUserTypeFromToken(token);
+                String role = resolveRole(userTypeStr);
 
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
                                 userId,
                                 null,
-                                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+                                Collections.singletonList(new SimpleGrantedAuthority(role))
                         );
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -48,6 +51,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private String resolveRole(String userTypeStr) {
+        try {
+            UserType userType = UserType.valueOf(userTypeStr);
+            return "ROLE_" + userType.name();
+        } catch (IllegalArgumentException | NullPointerException e) {
+            return "ROLE_NORMAL";
+        }
     }
 
     private String resolveToken(HttpServletRequest request) {

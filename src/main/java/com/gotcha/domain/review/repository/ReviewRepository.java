@@ -23,6 +23,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     List<Review> findAllByUserId(Long userId);
 
+    List<Review> findAllByShopId(Long shopId);
+
     Long countByShopId(Long shopId);
 
     @Modifying(clearAutomatically = true)
