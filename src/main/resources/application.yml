@@ -87,3 +87,12 @@ springdoc:
     path: /api/swagger-ui.html
     operationsSorter: method
     tagsSorter: alpha
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics, prometheus
+  metrics:
+     tags:
+       application: ${spring.application.name}
