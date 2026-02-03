@@ -53,4 +53,8 @@ public class ShopException extends BusinessException {
         return new ShopException(ShopErrorCode.ADDRESS_NOT_FOUND,
                 "lat: " + latitude + ", lng: " + longitude);
     }
+
+    public static ShopException unauthorized() {
+        return new ShopException(ShopErrorCode.SHOP_UNAUTHORIZED);
+    }
 }

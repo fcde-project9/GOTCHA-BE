@@ -13,10 +13,12 @@ import com.gotcha.domain.review.entity.ReviewImage;
 import com.gotcha.domain.review.repository.ReviewImageRepository;
 import com.gotcha.domain.review.repository.ReviewLikeRepository;
 import com.gotcha.domain.review.repository.ReviewRepository;
+import com.gotcha.domain.file.service.FileStorageService;
 import com.gotcha.domain.shop.dto.NearbyShopResponse;
 import com.gotcha.domain.shop.dto.NearbyShopsResponse;
 import com.gotcha.domain.shop.dto.ShopDetailResponse;
 import com.gotcha.domain.shop.dto.ShopMapResponse;
+import com.gotcha.domain.shop.dto.UpdateShopRequest;
 import com.gotcha.domain.shop.entity.Shop;
 import com.gotcha.domain.shop.exception.ShopException;
 import com.gotcha.domain.shop.repository.ShopRepository;
@@ -49,6 +51,7 @@ public class ShopService {
     private final ReviewRepository reviewRepository;
     private final ReviewImageRepository reviewImageRepository;
     private final ReviewLikeRepository reviewLikeRepository;
+    private final FileStorageService fileStorageService;
 
     @org.springframework.beans.factory.annotation.Value("${shop.default-image-url}")
     private String defaultShopImageUrl;
@@ -663,6 +666,128 @@ public class ShopService {
         } catch (Exception e) {
             log.error("Error extracting today's open time", e);
             return null;
+        }
+    }
+
+    /**
+     * 가게 정보 수정 (ADMIN 전용)
+     */
+    @Transactional
+    public void updateShop(Long shopId, UpdateShopRequest request, User currentUser) {
+        log.info("updateShop - shopId: {}, userId: {}", shopId, currentUser.getId());
+
+        validateAdmin(currentUser);
+
+        Shop shop = shopRepository.findById(shopId)
+                .orElseThrow(() -> ShopException.notFound(shopId));
+
+        validateCoordinates(shop.getLatitude(), shop.getLongitude());
+        validateShopName(request.name());
+
+        AddressInfo addressInfo = kakaoMapClient.getAddressInfo(shop.getLatitude(), shop.getLongitude());
+        String openTimeJson = convertOpenTimeMapToString(request.openTime());
+
+        shop.updateInfo(
+                request.name(),
+                addressInfo.addressName(),
+                shop.getLatitude(),
+                shop.getLongitude(),
+                request.locationHint(),
+                openTimeJson,
+                addressInfo.region1DepthName(),
+                addressInfo.region2DepthName(),
+                addressInfo.region3DepthName(),
+                addressInfo.mainAddressNo(),
+                addressInfo.subAddressNo()
+        );
+
+        log.info("Shop {} updated successfully", shopId);
+    }
+
+    /**
+     * 가게 대표 이미지 수정 (ADMIN 전용)
+     */
+    @Transactional
+    public void updateShopMainImage(Long shopId, String mainImageUrl, User currentUser) {
+        log.info("updateShopMainImage - shopId: {}, userId: {}", shopId, currentUser.getId());
+
+        validateAdmin(currentUser);
+
+        Shop shop = shopRepository.findById(shopId)
+                .orElseThrow(() -> ShopException.notFound(shopId));
+
+        // 기존 이미지가 기본 이미지가 아니면 S3에서 삭제
+        if (shop.getMainImageUrl() != null && !shop.getMainImageUrl().equals(defaultShopImageUrl)) {
+            try {
+                fileStorageService.deleteFile(shop.getMainImageUrl());
+                log.info("Deleted old main image from S3: {}", shop.getMainImageUrl());
+            } catch (Exception e) {
+                log.error("Failed to delete old main image: {}", shop.getMainImageUrl(), e);
+            }
+        }
+
+        shop.updateMainImage(mainImageUrl);
+        log.info("Shop {} main image updated successfully", shopId);
+    }
+
+    /**
+     * 가게 삭제 (ADMIN 전용)
+     * 연관 데이터(리뷰, 찜, 이미지) 모두 삭제
+     */
+    @Transactional
+    public void deleteShop(Long shopId, User currentUser) {
+        log.info("deleteShop - shopId: {}, userId: {}", shopId, currentUser.getId());
+
+        validateAdmin(currentUser);
+
+        Shop shop = shopRepository.findById(shopId)
+                .orElseThrow(() -> ShopException.notFound(shopId));
+
+        // 1. 리뷰 관련 데이터 삭제 (이미지 + 좋아요 + 리뷰)
+        List<Review> reviews = reviewRepository.findAllByShopId(shopId);
+        if (!reviews.isEmpty()) {
+            List<Long> reviewIds = reviews.stream().map(Review::getId).toList();
+
+            // 리뷰 이미지 S3 삭제
+            for (Review review : reviews) {
+                List<ReviewImage> images = reviewImageRepository
+                        .findAllByReviewIdOrderByDisplayOrder(review.getId());
+                for (ReviewImage image : images) {
+                    try {
+                        fileStorageService.deleteFile(image.getImageUrl());
+                    } catch (Exception e) {
+                        log.error("Failed to delete review image: {}", image.getImageUrl(), e);
+                    }
+                }
+            }
+
+            // DB 삭제: 이미지 → 좋아요 → 리뷰
+            reviewImageRepository.deleteAllByReviewIdIn(reviewIds);
+            reviewLikeRepository.deleteAllByReviewIdIn(reviewIds);
+            reviewRepository.deleteAll(reviews);
+            log.info("Deleted {} reviews for shop {}", reviews.size(), shopId);
+        }
+
+        // 2. 찜 삭제
+        favoriteRepository.deleteAllByShopId(shopId);
+
+        // 3. 가게 대표 이미지 S3 삭제
+        if (shop.getMainImageUrl() != null && !shop.getMainImageUrl().equals(defaultShopImageUrl)) {
+            try {
+                fileStorageService.deleteFile(shop.getMainImageUrl());
+            } catch (Exception e) {
+                log.error("Failed to delete shop main image: {}", shop.getMainImageUrl(), e);
+            }
+        }
+
+        // 4. 가게 삭제
+        shopRepository.delete(shop);
+        log.info("Shop {} deleted successfully", shopId);
+    }
+
+    private void validateAdmin(User user) {
+        if (!user.isAdmin()) {
+            throw ShopException.unauthorized();
         }
     }
 }
