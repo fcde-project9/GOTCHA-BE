@@ -716,17 +716,22 @@ public class ShopService {
         Shop shop = shopRepository.findById(shopId)
                 .orElseThrow(() -> ShopException.notFound(shopId));
 
-        // 기존 이미지가 기본 이미지가 아니면 S3에서 삭제
-        if (shop.getMainImageUrl() != null && !shop.getMainImageUrl().equals(defaultShopImageUrl)) {
+        // 기존 이미지가 기본 이미지가 아니고, 변경되는 경우에만 삭제
+        String currentImageUrl = shop.getMainImageUrl();
+        if (currentImageUrl != null
+                && !currentImageUrl.equals(defaultShopImageUrl)
+                && !Objects.equals(currentImageUrl, mainImageUrl)) {
             try {
-                fileStorageService.deleteFile(shop.getMainImageUrl());
-                log.info("Deleted old main image from S3: {}", shop.getMainImageUrl());
+                fileStorageService.deleteFile(currentImageUrl);
+                log.info("Deleted old main image from S3: {}", currentImageUrl);
             } catch (Exception e) {
-                log.error("Failed to delete old main image: {}", shop.getMainImageUrl(), e);
+                log.error("Failed to delete old main image: {}", currentImageUrl, e);
             }
         }
 
-        shop.updateMainImage(mainImageUrl);
+        if (!Objects.equals(currentImageUrl, mainImageUrl)) {
+            shop.updateMainImage(mainImageUrl);
+        }
         log.info("Shop {} main image updated successfully", shopId);
     }
 
