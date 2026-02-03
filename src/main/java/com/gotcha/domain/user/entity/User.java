@@ -11,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
+import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -100,11 +101,14 @@ public class User extends BaseTimeEntity {
      * - 개인정보 마스킹 (닉네임, 이메일, 프로필 이미지)
      * - OAuth 토큰 제거
      * - 상태 변경 및 soft delete 플래그 설정
+     *
+     * 닉네임은 랜덤 UUID 8자리로 마스킹하여 내부 ID 노출 방지
      */
     public void delete() {
+        String randomSuffix = UUID.randomUUID().toString().substring(0, 8);
         this.socialType = null;
         this.socialId = null;
-        this.nickname = "탈퇴한 사용자_" + this.id;
+        this.nickname = "탈퇴한 사용자_" + randomSuffix;
         this.email = null;
         this.profileImageUrl = null;
         this.socialRevokeToken = null;
