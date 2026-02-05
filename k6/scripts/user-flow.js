@@ -34,8 +34,8 @@ export default function () {
 
     // Step 1: 지도에서 가게 목록 조회
     group('Step 1: 지도 조회', function () {
-        const { swLat, swLng, neLat, neLng, latitude, longitude } = CONFIG.MAP_BOUNDS;
-        const url = `${CONFIG.BASE_URL}/api/shops/map?swLat=${swLat}&swLng=${swLng}&neLat=${neLat}&neLng=${neLng}&latitude=${latitude}&longitude=${longitude}`;
+        const { southWestLat, southWestLng, northEastLat, northEastLng, latitude, longitude } = CONFIG.MAP_BOUNDS;
+        const url = `${CONFIG.BASE_URL}/api/shops/map?southWestLat=${southWestLat}&southWestLng=${southWestLng}&northEastLat=${northEastLat}&northEastLng=${northEastLng}&latitude=${latitude}&longitude=${longitude}`;
 
         const response = http.get(url, {
             headers: getHeaders(),

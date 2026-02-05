@@ -12,10 +12,10 @@ export const CONFIG = {
 
     // 지도 테스트용 좌표 (서울 강남역 기준)
     MAP_BOUNDS: {
-        swLat: 37.4900,
-        swLng: 127.0200,
-        neLat: 37.5100,
-        neLng: 127.0400,
+        southWestLat: 37.4900,
+        southWestLng: 127.0200,
+        northEastLat: 37.5100,
+        northEastLng: 127.0400,
         latitude: 37.5000,
         longitude: 127.0300,
     },

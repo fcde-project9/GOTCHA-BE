@@ -27,9 +27,9 @@ export const options = {
 
 // 테스트 시나리오
 export default function () {
-    const { swLat, swLng, neLat, neLng, latitude, longitude } = CONFIG.MAP_BOUNDS;
+    const { southWestLat, southWestLng, northEastLat, northEastLng, latitude, longitude } = CONFIG.MAP_BOUNDS;
 
-    const url = `${CONFIG.BASE_URL}/api/shops/map?swLat=${swLat}&swLng=${swLng}&neLat=${neLat}&neLng=${neLng}&latitude=${latitude}&longitude=${longitude}`;
+    const url = `${CONFIG.BASE_URL}/api/shops/map?southWestLat=${southWestLat}&southWestLng=${southWestLng}&northEastLat=${northEastLat}&northEastLng=${northEastLng}&latitude=${latitude}&longitude=${longitude}`;
 
     const response = http.get(url, {
         headers: getHeaders(),

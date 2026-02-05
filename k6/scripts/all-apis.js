@@ -118,9 +118,9 @@ export default function () {
 
 // API 호출 함수들
 function callShopMap() {
-    const { swLat, swLng, neLat, neLng, latitude, longitude } = CONFIG.MAP_BOUNDS;
+    const { southWestLat, southWestLng, northEastLat, northEastLng, latitude, longitude } = CONFIG.MAP_BOUNDS;
     return http.get(
-        `${CONFIG.BASE_URL}/api/shops/map?swLat=${swLat}&swLng=${swLng}&neLat=${neLat}&neLng=${neLng}&latitude=${latitude}&longitude=${longitude}`,
+        `${CONFIG.BASE_URL}/api/shops/map?southWestLat=${southWestLat}&southWestLng=${southWestLng}&northEastLat=${northEastLat}&northEastLng=${northEastLng}&latitude=${latitude}&longitude=${longitude}`,
         { headers: getHeaders(), tags: { name: 'AllApis_ShopMap' } }
     );
 }
