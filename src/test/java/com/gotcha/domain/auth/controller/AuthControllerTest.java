@@ -19,6 +19,7 @@ import com.gotcha.domain.auth.dto.TokenResponse;
 import com.gotcha.domain.auth.exception.AuthException;
 import com.gotcha.domain.auth.service.AuthService;
 import com.gotcha.domain.user.entity.SocialType;
+import com.gotcha.domain.user.entity.UserType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -72,7 +73,7 @@ class AuthControllerTest {
             TokenResponse response = new TokenResponse(
                     "new-access-token",
                     "new-refresh-token",
-                    new TokenResponse.UserResponse(1L, "테스트유저", "test@example.com", SocialType.KAKAO, false)
+                    new TokenResponse.UserResponse(1L, "테스트유저", "test@example.com", SocialType.KAKAO, UserType.NORMAL, false)
             );
 
             given(authService.reissueToken(anyString())).willReturn(response);
