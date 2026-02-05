@@ -21,7 +21,9 @@ import com.gotcha.domain.shop.dto.ShopMapResponse;
 import com.gotcha.domain.shop.dto.UpdateShopRequest;
 import com.gotcha.domain.shop.entity.Shop;
 import com.gotcha.domain.shop.exception.ShopException;
+import com.gotcha.domain.shop.repository.ShopReportRepository;
 import com.gotcha.domain.shop.repository.ShopRepository;
+import com.gotcha.domain.comment.repository.CommentRepository;
 import com.gotcha.domain.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +54,8 @@ public class ShopService {
     private final ReviewImageRepository reviewImageRepository;
     private final ReviewLikeRepository reviewLikeRepository;
     private final FileStorageService fileStorageService;
+    private final CommentRepository commentRepository;
+    private final ShopReportRepository shopReportRepository;
 
     @org.springframework.beans.factory.annotation.Value("${shop.default-image-url}")
     private String defaultShopImageUrl;
@@ -769,14 +773,20 @@ public class ShopService {
             // DB 삭제: 이미지 → 좋아요 → 리뷰
             reviewImageRepository.deleteAllByReviewIdIn(reviewIds);
             reviewLikeRepository.deleteAllByReviewIdIn(reviewIds);
-            reviewRepository.deleteAll(reviews);
+            reviewRepository.deleteAllByShopId(shopId);
             log.info("Deleted {} reviews for shop {}", reviews.size(), shopId);
         }
 
         // 2. 찜 삭제
         favoriteRepository.deleteAllByShopId(shopId);
 
-        // 3. 가게 대표 이미지 S3 삭제
+        // 3. 댓글 삭제
+        commentRepository.deleteAllByShopId(shopId);
+
+        // 4. 신고 기록 삭제
+        shopReportRepository.deleteAllByShopId(shopId);
+
+        // 5. 가게 대표 이미지 S3 삭제
         if (shop.getMainImageUrl() != null && !shop.getMainImageUrl().equals(defaultShopImageUrl)) {
             try {
                 fileStorageService.deleteFile(shop.getMainImageUrl());
@@ -785,7 +795,7 @@ public class ShopService {
             }
         }
 
-        // 4. 가게 삭제
+        // 6. 가게 삭제
         shopRepository.delete(shop);
         log.info("Shop {} deleted successfully", shopId);
     }
