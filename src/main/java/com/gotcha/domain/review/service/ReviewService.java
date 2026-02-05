@@ -157,8 +157,8 @@ public class ReviewService {
         User reviewAuthor = review.getUser();
         reviewAuthor.getNickname();
 
-        // 4. 권한 확인 (본인 또는 ADMIN)
-        if (!reviewAuthor.getId().equals(currentUser.getId()) && !currentUser.isAdmin()) {
+        // 4. 권한 확인 (본인만 수정 가능 - ADMIN도 타인의 리뷰 수정 불가)
+        if (!reviewAuthor.getId().equals(currentUser.getId())) {
             log.warn("Unauthorized update attempt for review {} by user {}", reviewId, currentUser.getId());
             throw ReviewException.unauthorized();
         }

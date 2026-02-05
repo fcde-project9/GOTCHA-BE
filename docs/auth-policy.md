@@ -119,7 +119,7 @@ OAUTH2_REDIRECT_URI=http://localhost:3000/oauth/callback
 | PUT | /shops/{id}/comments/{cid} | 댓글 수정 | 작성자 본인 |
 | DELETE | /shops/{id}/comments/{cid} | 댓글 삭제 | 작성자 본인 |
 | POST | /shops/{id}/reviews | 리뷰 작성 | 로그인 사용자 |
-| PUT | /shops/{id}/reviews/{rid} | 리뷰 수정 | 작성자 본인 또는 ADMIN |
+| PUT | /shops/{id}/reviews/{rid} | 리뷰 수정 | 작성자 본인 |
 | DELETE | /shops/{id}/reviews/{rid} | 리뷰 삭제 | 작성자 본인 또는 ADMIN |
 
 ---
