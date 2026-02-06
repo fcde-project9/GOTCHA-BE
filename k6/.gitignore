@@ -1,0 +1,3 @@
+# k6 테스트 결과 파일
+results/*.json
+!results/.gitkeep

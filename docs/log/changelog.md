@@ -4,6 +4,95 @@
 
 ---
 
+## 2026-02-05
+
+### 수정
+- `docs/auth-policy.md` - API 권한 매트릭스 업데이트
+  - 변경: PUT /shops/{id}/reviews/{rid} 권한 "작성자 본인 또는 ADMIN" → "작성자 본인"
+  - 사유: ADMIN도 타인의 리뷰 수정 불가 정책 적용 (삭제는 기존대로 ADMIN 가능)
+
+---
+
+## 2026-02-03
+
+### 추가
+- `src/main/java/com/gotcha/domain/user/entity/UserType.java` - 사용자 타입 Enum (ADMIN, OWNER, NORMAL)
+- `src/main/java/com/gotcha/domain/user/entity/UserStatus.java` - 사용자 상태 Enum (ACTIVE, SUSPENDED, BANNED, DELETED)
+- `src/main/java/com/gotcha/domain/shop/dto/UpdateShopRequest.java` - 가게 수정 요청 DTO
+- `src/main/java/com/gotcha/domain/shop/dto/UpdateShopMainImageRequest.java` - 가게 대표 이미지 수정 요청 DTO
+
+### 수정
+- `src/main/java/com/gotcha/domain/shop/exception/ShopErrorCode.java` - SHOP_UNAUTHORIZED(S008) 에러 코드 추가
+- `src/main/java/com/gotcha/domain/shop/exception/ShopException.java` - unauthorized() 팩토리 메서드 추가
+- `src/main/java/com/gotcha/domain/shop/service/ShopService.java` - ADMIN 전용 가게 관리 메서드 추가
+  - 추가: updateShop() - 가게 정보 수정 (ADMIN 전용)
+  - 추가: updateShopMainImage() - 가게 대표 이미지 수정 (ADMIN 전용)
+  - 추가: deleteShop() - 가게 삭제 (연관 데이터 포함, ADMIN 전용)
+  - 추가: validateAdmin() - ADMIN 권한 검증 헬퍼
+  - 추가: FileStorageService 의존성 주입 (S3 이미지 삭제용)
+- `src/main/java/com/gotcha/domain/shop/controller/ShopController.java` - 가게 수정/삭제 엔드포인트 추가
+  - 추가: PUT /api/shops/{shopId} - 가게 정보 수정
+  - 추가: PATCH /api/shops/{shopId}/main-image - 가게 대표 이미지 수정
+  - 추가: DELETE /api/shops/{shopId} - 가게 삭제
+  - 추가: getCurrentUserOrThrow() 헬퍼 메서드
+- `src/main/java/com/gotcha/domain/shop/controller/ShopControllerApi.java` - Swagger 명세 추가 (updateShop, updateShopMainImage, deleteShop)
+- `src/main/java/com/gotcha/domain/review/service/ReviewService.java` - ADMIN 권한 바이패스 추가
+  - 변경: updateReview() 시그니처 Long userId → User currentUser, ADMIN 바이패스 추가
+  - 변경: deleteReview() 시그니처 Long userId → User currentUser, ADMIN 바이패스 추가
+- `src/main/java/com/gotcha/domain/review/controller/ReviewController.java` - updateReview, deleteReview에 User 객체 전달
+- `src/main/java/com/gotcha/domain/review/repository/ReviewRepository.java` - findAllByShopId() 메서드 추가
+- `src/main/java/com/gotcha/domain/favorite/repository/FavoriteRepository.java` - deleteAllByShopId() 메서드 추가
+- `src/main/java/com/gotcha/_global/config/SecurityConfig.java` - 가게 수정/삭제 엔드포인트 인증 규칙 추가
+- `docs/error-codes.md` - S008 에러 코드 추가 (가게 수정/삭제 권한 없음)
+- `docs/auth-policy.md` - API 권한 매트릭스 업데이트 (가게 CRUD, 리뷰 ADMIN 바이패스)
+- `Dockerfile` - Docker 컨테이너 타임존 Asia/Seoul 설정 (ENV TZ + JVM -Duser.timezone)
+- `src/main/resources/application.yml` - hibernate.jdbc.time_zone: Asia/Seoul 추가 (UTC 저장 문제 해결)
+- `src/main/java/com/gotcha/domain/user/entity/User.java` - UserType, UserStatus 필드 추가
+  - 추가: userType 필드 (기본값: NORMAL)
+  - 추가: status 필드 (기본값: ACTIVE)
+  - 추가: suspend(), ban(), activate() 상태 변경 메서드
+  - 추가: isActive(), isAdmin() 편의 메서드
+  - 변경: delete() 메서드에 status = DELETED 설정 추가
+  - 변경: Builder에 userType 파라미터 추가 (선택)
+- `docs/entity-design.md` - users 테이블 설계 업데이트
+  - 추가: user_type 필드 (Enum: ADMIN, OWNER, NORMAL)
+  - 추가: status 필드 (Enum: ACTIVE, SUSPENDED, BANNED, DELETED)
+  - 추가: UserType, UserStatus Enum 설명 테이블
+  - 제거: is_anonymous 필드 (사용하지 않음)
+  - 변경: 탈퇴 처리 설명에 status = DELETED 추가
+
+---
+
+## 2026-02-02
+
+### 추가
+- `docs/architecture.md` - 백엔드 서버 아키텍처 문서 신규 작성
+  - 추가: 전체 시스템 아키텍처 다이어그램 (클라이언트 → 외부 서비스 → Spring Boot → DB/S3)
+  - 추가: 도메인 구조 (패키지 아키텍처) - _global, domain별 구조
+  - 추가: 배포 인프라 아키텍처 (AWS: Route53, EC2, RDS, S3, ECR)
+  - 추가: 인증 플로우 다이어그램 (OAuth2 + JWT)
+  - 추가: 데이터베이스 스키마 (주요 테이블, Phase 2 테이블)
+  - 추가: 기술 스택 상세 목록
+  - 추가: API 엔드포인트 구조 (Auth, User, Shop, Review, File)
+  - 추가: 보안 정책 (인증 필요/불필요 엔드포인트)
+  - 추가: 환경 설정 (프로필별 설정, 필수 환경변수)
+  - 추가: 주요 설계 결정사항
+
+### 수정
+- `README.md` - 프로젝트 README 전면 개편
+  - 추가: 주요 기능 섹션 (API 기능, 예정 기능)
+  - 추가: Tech Stack 상세화 (Framework, Language, ORM, Database, Security, Storage, Documentation, Infrastructure)
+  - 추가: CI/CD 파이프라인 설명 (GitHub Actions, dev/main 브랜치별 환경)
+  - 추가: 개발 환경 설정 가이드 (필수 요구사항, 빌드 및 실행 방법)
+  - 추가: 프로젝트 폴더 구조 (_global, domain 모듈별 설명)
+  - 추가: API 문서 섹션 (Swagger UI 링크, 주요 API 엔드포인트 테이블)
+  - 추가: docs 폴더 문서 목록 (문서 및 스킬 문서)
+  - 추가: Git 브랜치 전략 (feature, fix, refactor, docs)
+  - 추가: 환경 변수 목록 (.env.example 참조)
+  - 변경: 프론트엔드 레포지토리 링크 추가
+
+---
+
 ## 2026-01-28
 
 ### 수정

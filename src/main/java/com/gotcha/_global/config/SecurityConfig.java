@@ -47,6 +47,8 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // prometheus - 설정
+                        .requestMatchers("/actuator/**").permitAll()
                         // CORS preflight (OPTIONS) must always be allowed
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Public - 인증
@@ -54,6 +56,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/auth/**").permitAll()
                         // Public - OAuth2 로그인
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
+                        // Authenticated - 가게 수정/삭제 (ADMIN 전용, 서비스 레이어에서 권한 체크)
+                        .requestMatchers(HttpMethod.PUT, "/api/shops/*").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/shops/*/main-image").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/shops/*").authenticated()
                         // Public - 가게 조회
                         .requestMatchers(HttpMethod.GET, "/api/shops/**").permitAll()
                         // Swagger

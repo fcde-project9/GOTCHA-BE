@@ -139,8 +139,8 @@ public class ReviewService {
     }
 
     @Transactional
-    public ReviewResponse updateReview(Long shopId, Long reviewId, Long userId, UpdateReviewRequest request) {
-        log.info("Updating review {} for shop {} by user {}", reviewId, shopId, userId);
+    public ReviewResponse updateReview(Long shopId, Long reviewId, User currentUser, UpdateReviewRequest request) {
+        log.info("Updating review {} for shop {} by user {}", reviewId, shopId, currentUser.getId());
 
         // 1. Review 조회
         Review review = reviewRepository.findById(reviewId)
@@ -153,13 +153,17 @@ public class ReviewService {
             throw ReviewException.notFound(reviewId);
         }
 
-        // 3. 권한 확인
-        if (!review.getUser().getId().equals(userId)) {
-            log.warn("Unauthorized update attempt for review {} by user {}", reviewId, userId);
+        // 3. 리뷰 작성자 Lazy 프록시 초기화 (deleteAllByReviewId의 clearAutomatically로 인한 detach 방지)
+        User reviewAuthor = review.getUser();
+        reviewAuthor.getNickname();
+
+        // 4. 권한 확인 (본인만 수정 가능 - ADMIN도 타인의 리뷰 수정 불가)
+        if (!reviewAuthor.getId().equals(currentUser.getId())) {
+            log.warn("Unauthorized update attempt for review {} by user {}", reviewId, currentUser.getId());
             throw ReviewException.unauthorized();
         }
 
-        // 4. 이미지 개수 검증
+        // 5. 이미지 개수 검증
         validateImageCount(request.imageUrls());
 
         // 5. Content 수정
@@ -200,16 +204,16 @@ public class ReviewService {
         List<ReviewImage> images = reviewImageRepository
                 .findAllByReviewIdOrderByDisplayOrder(reviewId);
         Long likeCount = reviewLikeRepository.countByReviewId(reviewId);
-        // 본인이 작성한 리뷰이므로 좋아요 여부 확인
-        boolean isLiked = reviewLikeRepository.existsByUserIdAndReviewId(userId, reviewId);
+        boolean isOwner = reviewAuthor.getId().equals(currentUser.getId());
+        boolean isLiked = reviewLikeRepository.existsByUserIdAndReviewId(currentUser.getId(), reviewId);
 
         log.info("Review {} updated successfully", reviewId);
-        return ReviewResponse.from(review, review.getUser(), images, true, likeCount, isLiked);
+        return ReviewResponse.from(review, reviewAuthor, images, isOwner, likeCount, isLiked);
     }
 
     @Transactional
-    public void deleteReview(Long shopId, Long reviewId, Long userId) {
-        log.info("Deleting review {} for shop {} by user {}", reviewId, shopId, userId);
+    public void deleteReview(Long shopId, Long reviewId, User currentUser) {
+        log.info("Deleting review {} for shop {} by user {}", reviewId, shopId, currentUser.getId());
 
         // 1. Review 조회
         Review review = reviewRepository.findById(reviewId)
@@ -222,9 +226,9 @@ public class ReviewService {
             throw ReviewException.notFound(reviewId);
         }
 
-        // 3. 권한 확인
-        if (!review.getUser().getId().equals(userId)) {
-            log.warn("Unauthorized delete attempt for review {} by user {}", reviewId, userId);
+        // 3. 권한 확인 (본인 또는 ADMIN)
+        if (!review.getUser().getId().equals(currentUser.getId()) && !currentUser.isAdmin()) {
+            log.warn("Unauthorized delete attempt for review {} by user {}", reviewId, currentUser.getId());
             throw ReviewException.unauthorized();
         }
 

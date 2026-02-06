@@ -10,6 +10,8 @@ import com.gotcha.domain.shop.dto.NearbyShopsResponse;
 import com.gotcha.domain.shop.dto.ShopDetailResponse;
 import com.gotcha.domain.shop.dto.ShopMapResponse;
 import com.gotcha.domain.shop.dto.ShopResponse;
+import com.gotcha.domain.shop.dto.UpdateShopMainImageRequest;
+import com.gotcha.domain.shop.dto.UpdateShopRequest;
 import com.gotcha.domain.shop.entity.Shop;
 import com.gotcha.domain.shop.service.ShopService;
 import com.gotcha.domain.user.entity.User;
@@ -24,8 +26,10 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -128,6 +132,36 @@ public class ShopController implements ShopControllerApi {
         return ApiResponse.success(favoriteService.removeFavorite(shopId));
     }
 
+    @Override
+    @PutMapping("/{shopId}")
+    public ApiResponse<Void> updateShop(
+            @PathVariable Long shopId,
+            @Valid @RequestBody UpdateShopRequest request
+    ) {
+        User currentUser = getCurrentUserOrThrow();
+        shopService.updateShop(shopId, request, currentUser);
+        return ApiResponse.success(null);
+    }
+
+    @Override
+    @PatchMapping("/{shopId}/main-image")
+    public ApiResponse<Void> updateShopMainImage(
+            @PathVariable Long shopId,
+            @Valid @RequestBody UpdateShopMainImageRequest request
+    ) {
+        User currentUser = getCurrentUserOrThrow();
+        shopService.updateShopMainImage(shopId, request.mainImageUrl(), currentUser);
+        return ApiResponse.success(null);
+    }
+
+    @Override
+    @DeleteMapping("/{shopId}")
+    public ApiResponse<Void> deleteShop(@PathVariable Long shopId) {
+        User currentUser = getCurrentUserOrThrow();
+        shopService.deleteShop(shopId, currentUser);
+        return ApiResponse.success(null);
+    }
+
     private Double parseDoubleOrNull(String value) {
         if (value == null || value.trim().isEmpty() || "null".equalsIgnoreCase(value.trim())) {
             return null;
@@ -153,5 +187,13 @@ public class ShopController implements ShopControllerApi {
         }
 
         return null;
+    }
+
+    private User getCurrentUserOrThrow() {
+        User user = getCurrentUser();
+        if (user == null) {
+            throw new IllegalStateException("로그인이 필요합니다");
+        }
+        return user;
     }
 }

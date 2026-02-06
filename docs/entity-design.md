@@ -14,16 +14,34 @@
 | id | Long (PK) | |
 | social_type | Enum | KAKAO, GOOGLE, NAVER (탈퇴 시 null) |
 | social_id | String | 소셜 제공자 ID (탈퇴 시 null) |
+| user_type | Enum | ADMIN, OWNER, NORMAL (기본값: NORMAL) |
+| status | Enum | ACTIVE, SUSPENDED, BANNED, DELETED (기본값: ACTIVE) |
 | nickname | String | ex: 빨간캡슐#21 (탈퇴 시 "탈퇴한 사용자_{id}") |
 | email | String | 소셜 이메일 (탈퇴 시 null) |
 | profile_image_url | String | 프로필 이미지 URL (탈퇴 시 null) |
-| is_anonymous | Boolean | 게스트 여부 |
 | is_deleted | Boolean | 탈퇴 여부 (soft delete) |
 | last_login_at | LocalDateTime | |
 | created_at, updated_at | LocalDateTime | BaseTimeEntity |
 
+### UserType (Enum)
+
+| 값 | 설명 |
+|----|------|
+| ADMIN | 시스템 관리자 (개발자, PM, 디자이너) - 모든 권한 |
+| OWNER | 가게 사장님 (추후 확장용) |
+| NORMAL | 일반 사용자 |
+
+### UserStatus (Enum)
+
+| 값 | 설명 | 로그인 가능 |
+|----|------|------------|
+| ACTIVE | 정상 활성 | O |
+| SUSPENDED | 일시 정지 (관리자에 의한 기간 제재) | X |
+| BANNED | 영구 차단 | X |
+| DELETED | 탈퇴 | X |
+
 **탈퇴 처리**
-- soft delete: is_deleted = true
+- soft delete: is_deleted = true, status = DELETED
 - 개인정보 마스킹: email, profile_image_url = null
 - 소셜 연동 해제: social_type, social_id = null (재가입 허용)
 - 닉네임 변경: "탈퇴한 사용자_{id}"

@@ -23,9 +23,19 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     List<Review> findAllByUserId(Long userId);
 
+    List<Review> findAllByShopId(Long shopId);
+
     Long countByShopId(Long shopId);
 
     @Modifying(clearAutomatically = true)
     @Query("DELETE FROM Review r WHERE r.user.id = :userId")
     void deleteByUserId(@Param("userId") Long userId);
+
+    /**
+     * 가게 삭제 시 해당 가게의 모든 리뷰 삭제
+     * flushAutomatically = true: Shop 삭제 전 리뷰가 먼저 삭제되도록 즉시 flush
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM Review r WHERE r.shop.id = :shopId")
+    void deleteAllByShopId(@Param("shopId") Long shopId);
 }

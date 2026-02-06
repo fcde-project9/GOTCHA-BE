@@ -33,4 +33,12 @@ public interface FavoriteRepository extends JpaRepository<Favorite, Long> {
     @Modifying(clearAutomatically = true)
     @Query("DELETE FROM Favorite f WHERE f.user.id = :userId")
     void deleteByUserId(@Param("userId") Long userId);
+
+    /**
+     * 가게 삭제 시 해당 가게의 모든 찜 삭제
+     * flushAutomatically = true: Shop 삭제 전 찜이 먼저 삭제되도록 즉시 flush
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM Favorite f WHERE f.shop.id = :shopId")
+    void deleteAllByShopId(@Param("shopId") Long shopId);
 }
