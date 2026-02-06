@@ -2,6 +2,7 @@ package com.gotcha.domain.user.dto;
 
 import com.gotcha.domain.user.entity.SocialType;
 import com.gotcha.domain.user.entity.User;
+import com.gotcha.domain.user.entity.UserType;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "사용자 정보 응답")
@@ -19,7 +20,10 @@ public record UserResponse(
         String profileImageUrl,
 
         @Schema(description = "소셜 로그인 타입", example = "KAKAO")
-        SocialType socialType
+        SocialType socialType,
+
+        @Schema(description = "사용자 타입", example = "NORMAL")
+        UserType userType
 ) {
     public static UserResponse from(User user, String defaultProfileImageUrl) {
         return new UserResponse(
@@ -29,7 +33,8 @@ public record UserResponse(
                 user.getProfileImageUrl() != null && !user.getProfileImageUrl().isBlank()
                         ? user.getProfileImageUrl()
                         : defaultProfileImageUrl,
-                user.getSocialType()
+                user.getSocialType(),
+                user.getUserType()
         );
     }
 }

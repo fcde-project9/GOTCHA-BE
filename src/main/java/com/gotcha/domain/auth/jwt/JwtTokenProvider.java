@@ -37,6 +37,7 @@ public class JwtTokenProvider {
                 .subject(String.valueOf(user.getId()))
                 .claim("nickname", user.getNickname())
                 .claim("socialType", user.getSocialType().name())
+                .claim("userType", user.getUserType().name())
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(secretKey)
@@ -70,12 +71,20 @@ public class JwtTokenProvider {
     }
 
     public Long getUserIdFromToken(String token) {
-        Claims claims = Jwts.parser()
+        Claims claims = getClaims(token);
+        return Long.valueOf(claims.getSubject());
+    }
+
+    public String getUserTypeFromToken(String token) {
+        Claims claims = getClaims(token);
+        return claims.get("userType", String.class);
+    }
+
+    private Claims getClaims(String token) {
+        return Jwts.parser()
                 .verifyWith(secretKey)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-
-        return Long.valueOf(claims.getSubject());
     }
 }

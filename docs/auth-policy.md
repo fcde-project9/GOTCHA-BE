@@ -107,6 +107,9 @@ OAUTH2_REDIRECT_URI=http://localhost:3000/oauth/callback
 | Method | Endpoint | 설명 | 권한 |
 |--------|----------|------|------|
 | POST | /shops/report | 가게 제보 | 로그인 사용자 |
+| PUT | /shops/{id} | 가게 수정 | ADMIN |
+| PATCH | /shops/{id}/main-image | 가게 대표 이미지 수정 | ADMIN |
+| DELETE | /shops/{id} | 가게 삭제 | ADMIN |
 | GET | /users/me | 내 정보 | 본인 |
 | PATCH | /users/me/nickname | 닉네임 수정 | 본인 |
 | GET | /users/me/favorites | 내 찜 목록 | 본인 |
@@ -117,17 +120,7 @@ OAUTH2_REDIRECT_URI=http://localhost:3000/oauth/callback
 | DELETE | /shops/{id}/comments/{cid} | 댓글 삭제 | 작성자 본인 |
 | POST | /shops/{id}/reviews | 리뷰 작성 | 로그인 사용자 |
 | PUT | /shops/{id}/reviews/{rid} | 리뷰 수정 | 작성자 본인 |
-| DELETE | /shops/{id}/reviews/{rid} | 리뷰 삭제 | 작성자 본인 |
-
-### Admin (관리자 전용) - 추후 구현
-
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| DELETE | /admin/shops/{id} | 가게 삭제 |
-| DELETE | /admin/comments/{id} | 댓글 강제 삭제 |
-| DELETE | /admin/reviews/{id} | 리뷰 강제 삭제 |
-| GET | /admin/reports | 신고 목록 |
-| PATCH | /admin/reports/{id} | 신고 처리 |
+| DELETE | /shops/{id}/reviews/{rid} | 리뷰 삭제 | 작성자 본인 또는 ADMIN |
 
 ---
 

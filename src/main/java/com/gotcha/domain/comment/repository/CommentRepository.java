@@ -15,4 +15,12 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     @Modifying(clearAutomatically = true)
     @Query("DELETE FROM Comment c WHERE c.user.id = :userId")
     void deleteByUserId(@Param("userId") Long userId);
+
+    /**
+     * 가게 삭제 시 해당 가게의 모든 댓글 삭제
+     * flushAutomatically = true: Shop 삭제 전 댓글이 먼저 삭제되도록 즉시 flush
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM Comment c WHERE c.shop.id = :shopId")
+    void deleteAllByShopId(@Param("shopId") Long shopId);
 }

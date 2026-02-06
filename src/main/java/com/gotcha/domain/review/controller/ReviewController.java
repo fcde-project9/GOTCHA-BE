@@ -76,7 +76,7 @@ public class ReviewController implements ReviewControllerApi {
             @Valid @RequestBody UpdateReviewRequest request
     ) {
         User currentUser = getCurrentUserOrThrow();
-        ReviewResponse response = reviewService.updateReview(shopId, reviewId, currentUser.getId(), request);
+        ReviewResponse response = reviewService.updateReview(shopId, reviewId, currentUser, request);
         return ApiResponse.success(response);
     }
 
@@ -87,7 +87,7 @@ public class ReviewController implements ReviewControllerApi {
             @PathVariable Long reviewId
     ) {
         User currentUser = getCurrentUserOrThrow();
-        reviewService.deleteReview(shopId, reviewId, currentUser.getId());
+        reviewService.deleteReview(shopId, reviewId, currentUser);
         return ApiResponse.success(null);
     }
 

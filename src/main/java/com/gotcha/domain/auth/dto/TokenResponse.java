@@ -2,6 +2,7 @@ package com.gotcha.domain.auth.dto;
 
 import com.gotcha.domain.user.entity.SocialType;
 import com.gotcha.domain.user.entity.User;
+import com.gotcha.domain.user.entity.UserType;
 
 public record TokenResponse(
         String accessToken,
@@ -17,6 +18,7 @@ public record TokenResponse(
             String nickname,
             String email,
             SocialType socialType,
+            UserType userType,
             boolean isNewUser
     ) {
         public static UserResponse from(User user, boolean isNewUser) {
@@ -25,6 +27,7 @@ public record TokenResponse(
                     user.getNickname(),
                     user.getEmail(),
                     user.getSocialType(),
+                    user.getUserType(),
                     isNewUser
             );
         }
