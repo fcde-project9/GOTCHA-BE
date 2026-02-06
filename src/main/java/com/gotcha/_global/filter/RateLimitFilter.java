@@ -1,0 +1,93 @@
+package com.gotcha._global.filter;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gotcha._global.common.ApiResponse;
+import com.gotcha._global.config.RateLimitProperties;
+import io.github.bucket4j.Bandwidth;
+import io.github.bucket4j.Bucket;
+import io.github.bucket4j.ConsumptionProbe;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.time.Duration;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class RateLimitFilter extends OncePerRequestFilter {
+
+    private final RateLimitProperties rateLimitProperties;
+    private final ObjectMapper objectMapper;
+    private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+            FilterChain filterChain) throws ServletException, IOException {
+
+        if (!rateLimitProperties.isEnabled()) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        String clientIp = getClientIp(request);
+        Bucket bucket = buckets.computeIfAbsent(clientIp, this::createBucket);
+
+        ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
+
+        if (probe.isConsumed()) {
+            response.setHeader("X-Rate-Limit-Remaining", String.valueOf(probe.getRemainingTokens()));
+            filterChain.doFilter(request, response);
+        } else {
+            long waitTimeSeconds = probe.getNanosToWaitForRefill() / 1_000_000_000;
+            response.setHeader("X-Rate-Limit-Retry-After-Seconds", String.valueOf(waitTimeSeconds));
+
+            log.warn("Rate limit exceeded for IP: {}", clientIp);
+
+            response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.setCharacterEncoding("UTF-8");
+
+            ApiResponse<Void> errorResponse = ApiResponse.error(
+                    "RATE_LIMIT_EXCEEDED",
+                    "Too many requests. Please try again after " + waitTimeSeconds + " seconds."
+            );
+            response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
+        }
+    }
+
+    private Bucket createBucket(String clientIp) {
+        Bandwidth limit = Bandwidth.builder()
+                .capacity(rateLimitProperties.getCapacity())
+                .refillGreedy(
+                        rateLimitProperties.getRefillTokens(),
+                        Duration.ofSeconds(rateLimitProperties.getRefillDurationSeconds())
+                )
+                .build();
+
+        return Bucket.builder()
+                .addLimit(limit)
+                .build();
+    }
+
+    private String getClientIp(HttpServletRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
+            return xForwardedFor.split(",")[0].trim();
+        }
+        String xRealIp = request.getHeader("X-Real-IP");
+        if (xRealIp != null && !xRealIp.isEmpty()) {
+            return xRealIp;
+        }
+        return request.getRemoteAddr();
+    }
+}

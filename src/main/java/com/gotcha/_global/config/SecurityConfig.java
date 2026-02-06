@@ -1,5 +1,6 @@
 package com.gotcha._global.config;
 
+import com.gotcha._global.filter.RateLimitFilter;
 import com.gotcha.domain.auth.jwt.JwtAuthenticationEntryPoint;
 import com.gotcha.domain.auth.jwt.JwtAuthenticationFilter;
 import com.gotcha.domain.auth.oauth2.CustomOAuth2UserService;
@@ -29,6 +30,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private final RateLimitFilter rateLimitFilter;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final CustomOAuth2UserService customOAuth2UserService;
@@ -102,6 +104,7 @@ public class SecurityConfig {
                         .failureHandler(oAuth2AuthenticationFailureHandler)
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(rateLimitFilter, jwtAuthenticationFilter.getClass())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .build();
     }
