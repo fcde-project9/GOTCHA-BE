@@ -140,7 +140,15 @@ public class SecurityConfig {
         configuration.setExposedHeaders(List.of("Authorization"));
         configuration.setMaxAge(3600L);  // preflight 캐시 1시간
 
+        // OAuth2 콜백 - Apple form_post는 Origin: https://appleid.apple.com으로 POST 요청
+        CorsConfiguration callbackConfig = new CorsConfiguration();
+        callbackConfig.addAllowedOrigin("https://appleid.apple.com");
+        callbackConfig.setAllowedMethods(List.of("GET", "POST"));
+        callbackConfig.setAllowedHeaders(List.of("*"));
+        callbackConfig.setAllowCredentials(false);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/auth/callback/*", callbackConfig);
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
