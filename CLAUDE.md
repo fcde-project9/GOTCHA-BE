@@ -49,7 +49,7 @@ com.gotcha
 | 인증/권한 구현 | `docs/auth-policy.md` |
 | 비즈니스 로직 | `docs/business-rules.md` |
 | 이미지 업로드 구현 | `docs/file-upload-guide.md` |
-| 설계 확인 | `docs/flow.md` |
+| 설계 확인 | `docs/architecture.md` |
 | Repository/테스트 | `docs/repository-edge-cases.md`, `docs/skills/gotcha-test.md` |
 | 설정/yml 변경 | `docs/skills/gotcha-config.md` |
 
@@ -68,15 +68,11 @@ com.gotcha
 | `docs/business-rules.md` | 비즈니스 규칙 |
 | `docs/auth-policy.md` | 인증/권한 정책 |
 | `docs/error-codes.md` | 에러 코드 정의 |
-| `docs/flow.md` | 화면/검색 플로우 |
 | `docs/coding-patterns.md` | 코딩 패턴 |
+| `docs/architecture.md` | 서버 아키텍처 |
 | `docs/repository-edge-cases.md` | Repository 엣지 케이스 |
 | `docs/file-upload-guide.md` | 이미지 업로드 가이드 (S3) |
-
-<!-- TODO: 아래 보안 문서 2개 검토 후 문서 목록에 추가 여부 결정
-- docs/security-concepts.md: 보안 개념 정리
-- docs/security-roadmap.md: 보안 로드맵
--->
+| `docs/security-checklist.md` | 배포 전 보안 체크리스트 |
 
 ## 스킬 문서 (자동화용)
 

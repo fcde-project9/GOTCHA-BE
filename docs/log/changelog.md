@@ -4,6 +4,25 @@
 
 ---
 
+## 2026-02-09
+
+### 삭제
+- `docs/api-design.md` - api-spec.md와 중복
+- `docs/decisions.md` - architecture.md에 동일 내용 포함
+- `docs/flow.md` - architecture.md에 흡수
+- `docs/aws-setup-guide.md` - 인프라 문서 (코드와 무관)
+- `docs/aws-ssm-console-guide.md` - 인프라 문서 (코드와 무관)
+- `docs/aws-ssm-setup-dev.md` - 인프라 문서 (코드와 무관)
+- `docs/dev-deployment-checklist.md` - 인프라 문서 (코드와 무관)
+- `docs/github-secrets-setup-dev.md` - 인프라 문서 (코드와 무관)
+- `docs/security-concepts.md` - outdated 참조 포함, 필요 시 재작성
+- `docs/security-roadmap.md` - outdated 참조 포함, 필요 시 재작성
+
+### 수정
+- `CLAUDE.md` - 삭제된 문서 참조 제거, architecture.md/security-checklist.md 추가
+
+---
+
 ## 2026-02-05
 
 ### 수정
