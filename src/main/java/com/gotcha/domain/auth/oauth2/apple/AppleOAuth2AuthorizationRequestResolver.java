@@ -38,7 +38,6 @@ public class AppleOAuth2AuthorizationRequestResolver implements OAuth2Authorizat
         return customizeForApple(authRequest);
     }
 
-    // [AI:unreviewed]
     private OAuth2AuthorizationRequest customizeForApple(OAuth2AuthorizationRequest request) {
         if (request == null) {
             return null;
