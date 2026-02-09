@@ -1,6 +1,8 @@
 package com.gotcha._global.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.gotcha._global.common.ApiResponse;
 import com.gotcha._global.config.RateLimitProperties;
 import io.github.bucket4j.Bandwidth;
@@ -12,8 +14,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -28,7 +29,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
     private final RateLimitProperties rateLimitProperties;
     private final ObjectMapper objectMapper;
-    private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
+    private final Cache<String, Bucket> buckets = Caffeine.newBuilder()
+            .maximumSize(10_000)
+            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .build();
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
@@ -40,7 +44,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         }
 
         String clientIp = getClientIp(request);
-        Bucket bucket = buckets.computeIfAbsent(clientIp, this::createBucket);
+        Bucket bucket = buckets.get(clientIp, this::createBucket);
 
         ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
 
