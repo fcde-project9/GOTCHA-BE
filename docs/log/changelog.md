@@ -6,6 +6,25 @@
 
 ## 2026-02-09
 
+### 추가
+- `src/main/java/com/gotcha/_global/config/RateLimitProperties.java` - Rate Limit 설정 Properties 클래스
+- `src/main/java/com/gotcha/_global/filter/RateLimitFilter.java` - Rate Limiting 필터 (Bucket4j 기반, IP당 60초/100요청)
+- `src/main/resources/logback-spring.xml` - Loki 로깅 설정 (프로파일별: local/dev/prod)
+- `build.gradle` - 라이브러리 추가
+  - 추가: com.bucket4j:bucket4j-core:8.10.1 (Rate Limiting)
+  - 추가: com.github.loki4j:loki-logback-appender:1.5.2 (Loki 로깅)
+
+### 수정
+- `src/main/java/com/gotcha/_global/config/SecurityConfig.java` - Rate Limit 필터 통합
+  - 추가: RateLimitFilter 의존성 주입
+  - 추가: addFilterBefore(rateLimitFilter, jwtAuthenticationFilter) 필터 체인 등록
+- `src/main/resources/application.yml` - Rate Limit, Loki 설정 추가
+  - 추가: rate-limit.enabled, capacity, refill-tokens, refill-duration-seconds
+  - 추가: logging.loki.url
+- `.github/workflows/cicd-dev.yml` - LOKI_URL 환경변수 추가
+  - 추가: AWS SSM에서 /gotcha/dev/loki/url 파라미터 조회
+  - 추가: Docker run 시 LOKI_URL 환경변수 전달
+
 ### 삭제
 - `docs/api-design.md` - api-spec.md와 중복
 - `docs/decisions.md` - architecture.md에 동일 내용 포함
