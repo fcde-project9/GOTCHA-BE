@@ -30,9 +30,21 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException {
-        CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
-        User user = oAuth2User.getUser();
-        boolean isNewUser = oAuth2User.isNewUser();
+        User user;
+        boolean isNewUser;
+
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof CustomOidcUser oidcUser) {
+            // Apple (OIDC) 로그인
+            user = oidcUser.getUser();
+            isNewUser = oidcUser.isNewUser();
+        } else if (principal instanceof CustomOAuth2User oAuth2User) {
+            // 카카오/구글/네이버 (OAuth2) 로그인
+            user = oAuth2User.getUser();
+            isNewUser = oAuth2User.isNewUser();
+        } else {
+            throw new IllegalStateException("Unexpected principal type: " + principal.getClass());
+        }
 
         String accessToken = jwtTokenProvider.generateAccessToken(user);
         String refreshToken = jwtTokenProvider.generateRefreshToken(user);

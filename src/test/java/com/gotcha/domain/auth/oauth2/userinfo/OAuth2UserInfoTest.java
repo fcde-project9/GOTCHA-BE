@@ -191,4 +191,142 @@ class OAuth2UserInfoTest {
             assertThat(userInfo.getProfileImageUrl()).isNull();
         }
     }
+
+    @Nested
+    @DisplayName("AppleOAuth2UserInfo")
+    class AppleOAuth2UserInfoTest {
+
+        @Test
+        @DisplayName("애플 사용자 ID 추출 - sub claim에서 추출")
+        void getId_fromSubClaim_success() {
+            // given
+            Map<String, Object> attributes = new HashMap<>();
+            attributes.put("sub", "000000.abcdef123456.0000");
+            attributes.put("email", "user@privaterelay.appleid.com");
+
+            // when
+            AppleOAuth2UserInfo userInfo = new AppleOAuth2UserInfo(attributes);
+
+            // then
+            assertThat(userInfo.getId()).isEqualTo("000000.abcdef123456.0000");
+        }
+
+        @Test
+        @DisplayName("애플 사용자 ID 추출 - sub claim 없으면 null")
+        void getId_noSubClaim_returnsNull() {
+            // given
+            Map<String, Object> attributes = new HashMap<>();
+            attributes.put("email", "user@example.com");
+
+            // when
+            AppleOAuth2UserInfo userInfo = new AppleOAuth2UserInfo(attributes);
+
+            // then
+            assertThat(userInfo.getId()).isNull();
+        }
+
+        @Test
+        @DisplayName("애플 이메일 추출 - 일반 이메일")
+        void getEmail_success() {
+            // given
+            Map<String, Object> attributes = new HashMap<>();
+            attributes.put("sub", "000000.abcdef123456.0000");
+            attributes.put("email", "user@gmail.com");
+
+            // when
+            AppleOAuth2UserInfo userInfo = new AppleOAuth2UserInfo(attributes);
+
+            // then
+            assertThat(userInfo.getEmail()).isEqualTo("user@gmail.com");
+        }
+
+        @Test
+        @DisplayName("애플 이메일 추출 - Private Relay 이메일")
+        void getEmail_privateRelay_success() {
+            // given
+            Map<String, Object> attributes = new HashMap<>();
+            attributes.put("sub", "000000.abcdef123456.0000");
+            attributes.put("email", "abc123@privaterelay.appleid.com");
+
+            // when
+            AppleOAuth2UserInfo userInfo = new AppleOAuth2UserInfo(attributes);
+
+            // then
+            assertThat(userInfo.getEmail()).isEqualTo("abc123@privaterelay.appleid.com");
+        }
+
+        @Test
+        @DisplayName("애플 닉네임 추출 - 최초 로그인 시 user.name에서 추출")
+        void getNickname_firstLogin_success() {
+            // given
+            Map<String, String> name = new HashMap<>();
+            name.put("firstName", "길동");
+            name.put("lastName", "홍");
+
+            Map<String, Object> user = new HashMap<>();
+            user.put("name", name);
+
+            Map<String, Object> attributes = new HashMap<>();
+            attributes.put("sub", "000000.abcdef123456.0000");
+            attributes.put("user", user);
+
+            // when
+            AppleOAuth2UserInfo userInfo = new AppleOAuth2UserInfo(attributes);
+
+            // then
+            assertThat(userInfo.getNickname()).isEqualTo("홍길동");
+        }
+
+        @Test
+        @DisplayName("애플 닉네임 추출 - firstName만 있는 경우")
+        void getNickname_onlyFirstName_success() {
+            // given
+            Map<String, String> name = new HashMap<>();
+            name.put("firstName", "John");
+
+            Map<String, Object> user = new HashMap<>();
+            user.put("name", name);
+
+            Map<String, Object> attributes = new HashMap<>();
+            attributes.put("sub", "000000.abcdef123456.0000");
+            attributes.put("user", user);
+
+            // when
+            AppleOAuth2UserInfo userInfo = new AppleOAuth2UserInfo(attributes);
+
+            // then
+            assertThat(userInfo.getNickname()).isEqualTo("John");
+        }
+
+        @Test
+        @DisplayName("애플 닉네임 추출 - 재로그인 시 user 없으면 null")
+        void getNickname_subsequentLogin_returnsNull() {
+            // given
+            Map<String, Object> attributes = new HashMap<>();
+            attributes.put("sub", "000000.abcdef123456.0000");
+            attributes.put("email", "user@example.com");
+            // user 파라미터 없음 (재로그인)
+
+            // when
+            AppleOAuth2UserInfo userInfo = new AppleOAuth2UserInfo(attributes);
+
+            // then
+            assertThat(userInfo.getNickname()).isNull();
+        }
+
+        @Test
+        @DisplayName("애플 프로필 이미지 - 항상 null (애플 미지원)")
+        void getProfileImageUrl_alwaysNull() {
+            // given
+            Map<String, Object> attributes = new HashMap<>();
+            attributes.put("sub", "000000.abcdef123456.0000");
+            attributes.put("email", "user@example.com");
+
+            // when
+            AppleOAuth2UserInfo userInfo = new AppleOAuth2UserInfo(attributes);
+
+            // then
+            assertThat(userInfo.getProfileImageUrl()).isNull();
+        }
+    }
 }

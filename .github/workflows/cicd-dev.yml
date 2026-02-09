@@ -91,6 +91,12 @@ jobs:
             NAVER_CLIENT_ID=$(aws ssm get-parameter --name "/gotcha/dev/oauth/naver/client-id" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
             NAVER_CLIENT_SECRET=$(aws ssm get-parameter --name "/gotcha/dev/oauth/naver/client-secret" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
 
+            # OAuth - Apple
+            APPLE_TEAM_ID=$(aws ssm get-parameter --name "/gotcha/dev/oauth/apple/team-id" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+            APPLE_CLIENT_ID=$(aws ssm get-parameter --name "/gotcha/dev/oauth/apple/client-id" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+            APPLE_KEY_ID=$(aws ssm get-parameter --name "/gotcha/dev/oauth/apple/key-id" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+            APPLE_PRIVATE_KEY=$(aws ssm get-parameter --name "/gotcha/dev/oauth/apple/private-key" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+
             # AWS S3
             S3_BUCKET=$(aws ssm get-parameter --name "/gotcha/dev/aws/s3/bucket-name" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
             S3_PREFIX=$(aws ssm get-parameter --name "/gotcha/dev/aws/s3/prefix" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
@@ -141,6 +147,10 @@ jobs:
               -e GOOGLE_CLIENT_SECRET="$GOOGLE_CLIENT_SECRET" \
               -e NAVER_CLIENT_ID="$NAVER_CLIENT_ID" \
               -e NAVER_CLIENT_SECRET="$NAVER_CLIENT_SECRET" \
+              -e APPLE_TEAM_ID="$APPLE_TEAM_ID" \
+              -e APPLE_CLIENT_ID="$APPLE_CLIENT_ID" \
+              -e APPLE_KEY_ID="$APPLE_KEY_ID" \
+              -e APPLE_PRIVATE_KEY="$APPLE_PRIVATE_KEY" \
               -e AWS_S3_BUCKET_NAME="$S3_BUCKET" \
               -e AWS_S3_PREFIX="$S3_PREFIX" \
               -e AWS_REGION="$AWS_REGION_PARAM" \
