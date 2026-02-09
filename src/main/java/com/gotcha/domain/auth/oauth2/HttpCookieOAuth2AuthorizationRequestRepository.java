@@ -72,11 +72,12 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
         boolean isSecure = isSecureRequest(request);
 
         // 암호화된 OAuth2AuthorizationRequest를 쿠키에 저장
+        // SameSite=None: Apple form_post (cross-site POST)에서 쿠키 전송을 위해 필요
         ResponseCookie authRequestCookie = ResponseCookie.from(OAUTH2_AUTH_REQUEST_COOKIE_NAME, serialized)
                 .path("/")
                 .httpOnly(true)
-                .secure(isSecure)
-                .sameSite("Lax")
+                .secure(true)
+                .sameSite("None")
                 .maxAge(COOKIE_EXPIRE_SECONDS)
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, authRequestCookie.toString());
@@ -89,8 +90,8 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
                 ResponseCookie redirectCookie = ResponseCookie.from(REDIRECT_URI_COOKIE_NAME, encodedUri)
                         .path("/")
                         .httpOnly(true)
-                        .secure(isSecure)
-                        .sameSite("Lax")
+                        .secure(true)
+                        .sameSite("None")
                         .maxAge(COOKIE_EXPIRE_SECONDS)
                         .build();
                 response.addHeader(HttpHeaders.SET_COOKIE, redirectCookie.toString());
@@ -139,7 +140,7 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
                 .path("/")
                 .httpOnly(true)
                 .secure(true)
-                .sameSite("Lax")
+                .sameSite("None")
                 .maxAge(0)
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
@@ -170,7 +171,7 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
                 .path("/")
                 .httpOnly(true)
                 .secure(true)
-                .sameSite("Lax")
+                .sameSite("None")
                 .maxAge(0)
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
