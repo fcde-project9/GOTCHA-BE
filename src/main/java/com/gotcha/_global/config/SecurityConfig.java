@@ -7,6 +7,7 @@ import com.gotcha.domain.auth.oauth2.CustomOidcUserService;
 import com.gotcha.domain.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.gotcha.domain.auth.oauth2.OAuth2AuthenticationFailureHandler;
 import com.gotcha.domain.auth.oauth2.OAuth2AuthenticationSuccessHandler;
+import com.gotcha.domain.auth.oauth2.apple.AppleOAuth2AuthorizationRequestResolver;
 import com.gotcha.domain.auth.oauth2.apple.AppleOAuth2TokenResponseClient;
 import java.util.Arrays;
 import java.util.List;
@@ -38,6 +39,7 @@ public class SecurityConfig {
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
     private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
     private final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
+    private final AppleOAuth2AuthorizationRequestResolver appleOAuth2AuthorizationRequestResolver;
     private final AppleOAuth2TokenResponseClient appleOAuth2TokenResponseClient;
 
     @Value("${cors.allowed-origins}")
@@ -97,6 +99,7 @@ public class SecurityConfig {
                 .oauth2Login(oauth2 -> oauth2
                         .authorizationEndpoint(authorization ->
                                 authorization.baseUri("/oauth2/authorize")
+                                        .authorizationRequestResolver(appleOAuth2AuthorizationRequestResolver)
                                         .authorizationRequestRepository(httpCookieOAuth2AuthorizationRequestRepository))
                         .redirectionEndpoint(redirection ->
                                 redirection.baseUri("/api/auth/callback/*"))
