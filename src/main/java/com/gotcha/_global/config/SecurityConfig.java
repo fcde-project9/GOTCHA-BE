@@ -4,9 +4,11 @@ import com.gotcha._global.filter.RateLimitFilter;
 import com.gotcha.domain.auth.jwt.JwtAuthenticationEntryPoint;
 import com.gotcha.domain.auth.jwt.JwtAuthenticationFilter;
 import com.gotcha.domain.auth.oauth2.CustomOAuth2UserService;
+import com.gotcha.domain.auth.oauth2.CustomOidcUserService;
 import com.gotcha.domain.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.gotcha.domain.auth.oauth2.OAuth2AuthenticationFailureHandler;
 import com.gotcha.domain.auth.oauth2.OAuth2AuthenticationSuccessHandler;
+import com.gotcha.domain.auth.oauth2.apple.AppleOAuth2TokenResponseClient;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -34,9 +36,11 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final CustomOAuth2UserService customOAuth2UserService;
+    private final CustomOidcUserService customOidcUserService;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
     private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
     private final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
+    private final AppleOAuth2TokenResponseClient appleOAuth2TokenResponseClient;
 
     @Value("${cors.allowed-origins}")
     private String allowedOrigins;
@@ -98,8 +102,11 @@ public class SecurityConfig {
                                         .authorizationRequestRepository(httpCookieOAuth2AuthorizationRequestRepository))
                         .redirectionEndpoint(redirection ->
                                 redirection.baseUri("/api/auth/callback/*"))
-                        .userInfoEndpoint(userInfo ->
-                                userInfo.userService(customOAuth2UserService))
+                        .tokenEndpoint(token ->
+                                token.accessTokenResponseClient(appleOAuth2TokenResponseClient))
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService)
+                                .oidcUserService(customOidcUserService))
                         .successHandler(oAuth2AuthenticationSuccessHandler)
                         .failureHandler(oAuth2AuthenticationFailureHandler)
                 )

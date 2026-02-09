@@ -121,6 +121,8 @@ OAUTH2_REDIRECT_URI=http://localhost:3000/oauth/callback
 | POST | /shops/{id}/reviews | 리뷰 작성 | 로그인 사용자 |
 | PUT | /shops/{id}/reviews/{rid} | 리뷰 수정 | 작성자 본인 |
 | DELETE | /shops/{id}/reviews/{rid} | 리뷰 삭제 | 작성자 본인 또는 ADMIN |
+| POST | /shops/reviews/{rid}/like | 리뷰 좋아요 | 로그인 사용자 |
+| DELETE | /shops/reviews/{rid}/like | 리뷰 좋아요 취소 | 본인 좋아요만 |
 
 ---
 

@@ -1,5 +1,7 @@
 package com.gotcha.domain.auth.service;
 
+import com.gotcha.domain.auth.oauth2.apple.AppleClientSecretGenerator;
+import com.gotcha.domain.auth.oauth2.apple.AppleOAuth2Properties;
 import com.gotcha.domain.user.entity.SocialType;
 import com.gotcha.domain.user.entity.User;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ import org.springframework.web.client.RestTemplate;
  * 회원 탈퇴 시 각 소셜 플랫폼의 앱 연결을 해제합니다.
  * - 카카오: Admin Key를 사용한 서버 방식 unlink
  * - 구글: 저장된 OAuth Access Token을 사용한 revoke
+ * - 애플: 저장된 Refresh Token을 사용한 revoke
  * - 네이버: Access Token이 필요하여 현재 미지원 (로그만 기록)
  */
 @Slf4j
@@ -30,8 +33,11 @@ public class SocialUnlinkService {
 
     private static final String KAKAO_UNLINK_PATH = "/v1/user/unlink";
     private static final String GOOGLE_REVOKE_URL = "https://oauth2.googleapis.com/revoke";
+    private static final String APPLE_REVOKE_URL = "https://appleid.apple.com/auth/revoke";
 
     private final RestTemplate restTemplate;
+    private final AppleClientSecretGenerator appleClientSecretGenerator;
+    private final AppleOAuth2Properties appleOAuth2Properties;
 
     @Value("${kakao.api.admin-key}")
     private String kakaoAdminKey;
@@ -55,7 +61,8 @@ public class SocialUnlinkService {
 
         switch (socialType) {
             case KAKAO -> unlinkKakao(user.getId(), socialId);
-            case GOOGLE -> unlinkGoogle(user.getId(), user.getOauthAccessToken());
+            case GOOGLE -> unlinkGoogle(user.getId(), user.getSocialRevokeToken());
+            case APPLE -> unlinkApple(user.getId(), user.getSocialRevokeToken());
             case NAVER -> logUnsupportedUnlink(user.getId(), socialType);
         }
     }
@@ -129,6 +136,48 @@ public class SocialUnlinkService {
             // 연결 끊기 실패해도 탈퇴는 계속 진행
             // 토큰 만료, 이미 연결 끊긴 경우 등
             log.warn("Google unlink failed - userId: {}, error: {}", userId, e.getMessage());
+        }
+    }
+
+    /**
+     * 애플 연결 끊기 (Token Revoke)
+     * POST https://appleid.apple.com/auth/revoke
+     */
+    private void unlinkApple(Long userId, String refreshToken) {
+        log.info("Unlinking Apple account - userId: {}", userId);
+
+        if (refreshToken == null || refreshToken.isBlank()) {
+            log.warn("Apple refresh token is not available - skipping unlink for userId: {}", userId);
+            return;
+        }
+
+        try {
+            String clientSecret = appleClientSecretGenerator.generateClientSecret();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+            MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+            body.add("client_id", appleOAuth2Properties.getClientId());
+            body.add("client_secret", clientSecret);
+            body.add("token", refreshToken);
+            body.add("token_type_hint", "refresh_token");
+
+            HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
+
+            ResponseEntity<String> response = restTemplate.postForEntity(
+                    APPLE_REVOKE_URL,
+                    request,
+                    String.class
+            );
+            log.info("Apple unlink success - userId: {}, status: {}", userId, response.getStatusCode());
+        } catch (RestClientException e) {
+            // 연결 끊기 실패해도 탈퇴는 계속 진행
+            // 토큰 만료, 이미 연결 끊긴 경우 등
+            log.warn("Apple unlink failed - userId: {}, error: {}", userId, e.getMessage());
+        } catch (Exception e) {
+            // client_secret 생성 실패 등
+            log.warn("Apple unlink failed (unexpected error) - userId: {}, error: {}", userId, e.getMessage());
         }
     }
 

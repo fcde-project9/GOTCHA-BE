@@ -56,11 +56,12 @@ public class User extends BaseTimeEntity {
     private Boolean isDeleted = false;
 
     /**
-     * OAuth2 Access Token (구글 연동 해제용)
+     * 소셜 연동 해제용 토큰.
+     * Google: OAuth access_token / Apple: refresh_token
      * 로그인 시 저장, 탈퇴 시 revoke API 호출에 사용
      */
-    @Column(name = "oauth_access_token", columnDefinition = "TEXT")
-    private String oauthAccessToken;
+    @Column(name = "social_revoke_token", columnDefinition = "TEXT")
+    private String socialRevokeToken;
 
     @Builder
     public User(SocialType socialType, String socialId, String nickname,
@@ -89,8 +90,8 @@ public class User extends BaseTimeEntity {
         this.lastLoginAt = LocalDateTime.now();
     }
 
-    public void updateOAuthAccessToken(String oauthAccessToken) {
-        this.oauthAccessToken = oauthAccessToken;
+    public void updateSocialRevokeToken(String socialRevokeToken) {
+        this.socialRevokeToken = socialRevokeToken;
     }
 
     /**
@@ -106,7 +107,7 @@ public class User extends BaseTimeEntity {
         this.nickname = "탈퇴한 사용자_" + this.id;
         this.email = null;
         this.profileImageUrl = null;
-        this.oauthAccessToken = null;
+        this.socialRevokeToken = null;
         this.status = UserStatus.DELETED;
         this.isDeleted = true;
     }
