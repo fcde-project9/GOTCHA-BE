@@ -84,14 +84,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
     }
 
     private String getClientIp(HttpServletRequest request) {
-        String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-            return xForwardedFor.split(",")[0].trim();
-        }
-        String xRealIp = request.getHeader("X-Real-IP");
-        if (xRealIp != null && !xRealIp.isEmpty()) {
-            return xRealIp;
-        }
+        // Spring의 ForwardedHeaderFilter가 프록시 헤더를 검증하고
+        // getRemoteAddr()에 실제 클라이언트 IP를 설정함
+        // (server.forward-headers-strategy: framework 설정 필요)
         return request.getRemoteAddr();
     }
 }
