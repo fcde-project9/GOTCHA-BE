@@ -280,7 +280,6 @@ class UserServiceTest {
             verify(commentRepository).deleteByUserId(testUser.getId());
             verify(userPermissionRepository).deleteByUserId(testUser.getId());
             verify(refreshTokenRepository).deleteByUserId(testUser.getId());
-            verify(shopRepository).clearCreatedByUserId(testUser.getId());
             verify(shopReportRepository).deleteByReporterId(testUser.getId());
             verify(inquiryRepository).deleteByUserId(testUser.getId());
             verify(postCommentRepository).clearParentByUserId(testUser.getId());

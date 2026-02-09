@@ -223,12 +223,11 @@ public class UserService {
      * 7. 댓글 삭제 (Shop 댓글)
      * 8. 권한 동의 기록 삭제
      * 9. RefreshToken 삭제
-     * 10. Shop 제보자 정보 익명화 (createdBy null)
-     * 11. ShopReport 삭제
-     * 12. Inquiry 삭제
-     * 13. Chat/ChatRoom 삭제
-     * 14. Post/PostComment 삭제 (이미지 포함)
-     * 15. 사용자 soft delete (개인정보 마스킹)
+     * 10. ShopReport 삭제
+     * 11. Inquiry 삭제
+     * 12. Chat/ChatRoom 삭제
+     * 13. Post/PostComment 삭제 (이미지 포함)
+     * 14. 사용자 soft delete (개인정보 마스킹, Shop createdBy FK 유지)
      *
      * @param request 탈퇴 설문 정보 (reason 필수, detail 선택)
      * @throws UserException 이미 탈퇴한 사용자인 경우 (U005)
@@ -287,25 +286,21 @@ public class UserService {
         refreshTokenRepository.deleteByUserId(userId);
         log.info("RefreshToken deleted - userId: {}", userId);
 
-        // 10. Shop 제보자 정보 익명화 (가게 정보는 유지, 제보자만 null)
-        shopRepository.clearCreatedByUserId(userId);
-        log.info("Shop createdBy cleared - userId: {}", userId);
-
-        // 11. ShopReport 삭제
+        // 10. ShopReport 삭제
         shopReportRepository.deleteByReporterId(userId);
         log.info("ShopReports deleted - userId: {}", userId);
 
-        // 12. Inquiry 삭제
+        // 11. Inquiry 삭제
         inquiryRepository.deleteByUserId(userId);
         log.info("Inquiries deleted - userId: {}", userId);
 
-        // 13. Chat/ChatRoom 삭제 (ChatRoom에 속한 Chat 먼저 삭제)
+        // 12. Chat/ChatRoom 삭제 (ChatRoom에 속한 Chat 먼저 삭제)
         deleteUserChats(userId);
 
-        // 14. Post/PostComment 삭제 (이미지 포함)
+        // 13. Post/PostComment 삭제 (이미지 포함)
         deleteUserPosts(userId);
 
-        // 15. 사용자 soft delete (개인정보 마스킹 포함)
+        // 14. 사용자 soft delete (개인정보 마스킹 포함, Shop createdBy FK 유지)
         user.delete();
         userRepository.save(user);
         log.info("User soft deleted with masked info - userId: {}", userId);

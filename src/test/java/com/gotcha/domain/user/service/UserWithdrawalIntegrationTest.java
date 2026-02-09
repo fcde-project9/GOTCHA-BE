@@ -210,9 +210,10 @@ class UserWithdrawalIntegrationTest {
             assertThat(postCommentRepository.findAll()).isEmpty();
             assertThat(postRepository.findAll()).isEmpty();
 
-            // then - Shop createdBy null 확인
+            // then - Shop createdBy FK 유지 확인 (soft delete된 사용자 참조 유지)
             Shop updatedShop = shopRepository.findById(testShop.getId()).orElseThrow();
-            assertThat(updatedShop.getCreatedBy()).isNull();
+            assertThat(updatedShop.getCreatedBy()).isNotNull();
+            assertThat(updatedShop.getCreatedBy().getId()).isEqualTo(testUser.getId());
             assertThat(updatedShop.getName()).isEqualTo("테스트 가게"); // 가게 정보는 유지
         }
 
