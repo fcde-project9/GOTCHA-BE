@@ -43,10 +43,9 @@ spring:
             client-name: Naver
           apple:
             client-id: ${APPLE_CLIENT_ID}
-            client-secret: ${APPLE_CLIENT_SECRET}
             redirect-uri: "{baseUrl}/api/auth/callback/apple"
             authorization-grant-type: authorization_code
-            client-authentication-method: client_secret_post
+            client-authentication-method: none
             scope: openid, name, email
             client-name: Apple
         provider:
