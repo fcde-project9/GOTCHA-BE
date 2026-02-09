@@ -5,7 +5,8 @@ import com.gotcha.domain.user.entity.UserPermission;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 /**
  * UserPermission Repository
@@ -25,7 +26,7 @@ public interface UserPermissionRepository extends JpaRepository<UserPermission, 
     /**
      * 특정 사용자의 모든 권한 삭제 (회원 탈퇴 시)
      */
-    @Modifying
-    @Transactional
-    void deleteByUserId(Long userId);
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM UserPermission up WHERE up.user.id = :userId")
+    void deleteByUserId(@Param("userId") Long userId);
 }

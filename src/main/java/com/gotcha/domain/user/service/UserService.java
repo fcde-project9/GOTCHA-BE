@@ -4,15 +4,23 @@ import com.gotcha._global.common.PageResponse;
 import com.gotcha._global.util.SecurityUtil;
 import com.gotcha.domain.auth.repository.RefreshTokenRepository;
 import com.gotcha.domain.auth.service.SocialUnlinkService;
+import com.gotcha.domain.chat.entity.ChatRoom;
+import com.gotcha.domain.chat.repository.ChatRepository;
+import com.gotcha.domain.chat.repository.ChatRoomRepository;
 import com.gotcha.domain.comment.repository.CommentRepository;
 import com.gotcha.domain.favorite.repository.FavoriteRepository;
 import com.gotcha.domain.file.service.FileStorageService;
+import com.gotcha.domain.inquiry.repository.InquiryRepository;
+import com.gotcha.domain.post.entity.Post;
+import com.gotcha.domain.post.repository.PostCommentRepository;
+import com.gotcha.domain.post.repository.PostRepository;
 import com.gotcha.domain.review.entity.Review;
 import com.gotcha.domain.review.entity.ReviewImage;
 import com.gotcha.domain.review.repository.ReviewImageRepository;
 import com.gotcha.domain.review.repository.ReviewLikeRepository;
 import com.gotcha.domain.review.repository.ReviewRepository;
 import com.gotcha.domain.shop.entity.Shop;
+import com.gotcha.domain.shop.repository.ShopReportRepository;
 import com.gotcha.domain.shop.repository.ShopRepository;
 import com.gotcha.domain.shop.service.ShopService;
 import com.gotcha.domain.user.dto.MyShopResponse;
@@ -53,9 +61,15 @@ public class UserService {
     private final CommentRepository commentRepository;
     private final FileStorageService fileStorageService;
     private final ShopRepository shopRepository;
+    private final ShopReportRepository shopReportRepository;
     private final ShopService shopService;
     private final SocialUnlinkService socialUnlinkService;
     private final ForbiddenWordService forbiddenWordService;
+    private final InquiryRepository inquiryRepository;
+    private final ChatRepository chatRepository;
+    private final ChatRoomRepository chatRoomRepository;
+    private final PostRepository postRepository;
+    private final PostCommentRepository postCommentRepository;
 
     @Value("${user.default-profile-image-url}")
     private String defaultProfileImageUrl;
@@ -199,17 +213,21 @@ public class UserService {
     }
 
     /**
-     * 회원 탈퇴
-     * 1. 소셜 계정 연결 끊기 (카카오)
+     * 회원 탈퇴 (애플 앱스토어 가이드라인 5.1.1 준수)
+     * 1. 소셜 계정 연결 끊기
      * 2. 탈퇴 설문 저장
      * 3. 찜 목록 삭제
      * 4. 사용자가 누른 리뷰 좋아요 삭제
      * 5. 리뷰 이미지 클라우드 스토리지 삭제 및 DB 삭제 + 사용자 리뷰에 달린 좋아요 삭제
      * 6. 리뷰 삭제
-     * 7. 댓글 삭제
+     * 7. 댓글 삭제 (Shop 댓글)
      * 8. 권한 동의 기록 삭제
      * 9. RefreshToken 삭제
-     * 10. 사용자 soft delete (개인정보 마스킹)
+     * 10. ShopReport 삭제
+     * 11. Inquiry 삭제
+     * 12. Chat/ChatRoom 삭제
+     * 13. Post/PostComment 삭제 (이미지 포함)
+     * 14. 사용자 soft delete (개인정보 마스킹, Shop createdBy FK 유지)
      *
      * @param request 탈퇴 설문 정보 (reason 필수, detail 선택)
      * @throws UserException 이미 탈퇴한 사용자인 경우 (U005)
@@ -256,7 +274,7 @@ public class UserService {
         reviewRepository.deleteByUserId(userId);
         log.info("Reviews deleted - userId: {}", userId);
 
-        // 7. 댓글 삭제
+        // 7. 댓글 삭제 (Shop 댓글)
         commentRepository.deleteByUserId(userId);
         log.info("Comments deleted - userId: {}", userId);
 
@@ -268,7 +286,21 @@ public class UserService {
         refreshTokenRepository.deleteByUserId(userId);
         log.info("RefreshToken deleted - userId: {}", userId);
 
-        // 10. 사용자 soft delete (개인정보 마스킹 포함)
+        // 10. ShopReport 삭제
+        shopReportRepository.deleteByReporterId(userId);
+        log.info("ShopReports deleted - userId: {}", userId);
+
+        // 11. Inquiry 삭제
+        inquiryRepository.deleteByUserId(userId);
+        log.info("Inquiries deleted - userId: {}", userId);
+
+        // 12. Chat/ChatRoom 삭제 (ChatRoom에 속한 Chat 먼저 삭제)
+        deleteUserChats(userId);
+
+        // 13. Post/PostComment 삭제 (이미지 포함)
+        deleteUserPosts(userId);
+
+        // 14. 사용자 soft delete (개인정보 마스킹 포함, Shop createdBy FK 유지)
         user.delete();
         userRepository.save(user);
         log.info("User soft deleted with masked info - userId: {}", userId);
@@ -310,5 +342,72 @@ public class UserService {
         // 리뷰 좋아요 삭제 (다른 사용자가 누른 좋아요 포함)
         reviewLikeRepository.deleteAllByReviewIdIn(reviewIds);
         log.info("Review likes deleted - userId: {}, reviewCount: {}", userId, reviewIds.size());
+    }
+
+    /**
+     * 사용자의 모든 채팅 관련 데이터 삭제
+     * - ChatRoom에 속한 Chat 먼저 삭제 (FK 제약)
+     * - ChatRoom 삭제
+     */
+    private void deleteUserChats(Long userId) {
+        // 사용자가 참여한 모든 채팅방 조회
+        List<ChatRoom> chatRooms = chatRoomRepository.findAllByUserId(userId);
+        if (chatRooms.isEmpty()) {
+            log.info("No chat rooms found for user - userId: {}", userId);
+            return;
+        }
+
+        List<Long> chatRoomIds = chatRooms.stream().map(ChatRoom::getId).toList();
+
+        // 채팅방에 속한 모든 채팅 메시지 삭제
+        chatRepository.deleteByChatRoomIdIn(chatRoomIds);
+        log.info("Chats deleted - userId: {}, chatRoomCount: {}", userId, chatRoomIds.size());
+
+        // 채팅방 삭제
+        chatRoomRepository.deleteByUserId(userId);
+        log.info("ChatRooms deleted - userId: {}", userId);
+    }
+
+    /**
+     * 사용자의 모든 게시글 관련 데이터 삭제
+     * - PostComment 먼저 삭제 (FK 제약)
+     * - Post 이미지 클라우드 스토리지에서 삭제
+     * - Post 삭제
+     */
+    private void deleteUserPosts(Long userId) {
+        // 사용자의 모든 게시글 조회
+        List<Post> userPosts = postRepository.findAllByUserId(userId);
+
+        if (!userPosts.isEmpty()) {
+            List<Long> postIds = userPosts.stream().map(Post::getId).toList();
+
+            // 게시글에 달린 모든 댓글 삭제 (다른 사용자의 댓글 포함)
+            postCommentRepository.deleteByPostIdIn(postIds);
+            log.info("PostComments on user's posts deleted - userId: {}, postCount: {}", userId, postIds.size());
+
+            // 게시글 이미지 클라우드 스토리지에서 삭제
+            for (Post post : userPosts) {
+                if (post.getPostImageUrl() != null) {
+                    try {
+                        fileStorageService.deleteFile(post.getPostImageUrl());
+                    } catch (Exception e) {
+                        log.warn("Failed to delete post image: {} - {}", post.getPostImageUrl(), e.getMessage());
+                    }
+                }
+            }
+            log.info("Post images deleted from storage - userId: {}", userId);
+        }
+
+        // 다른 사람 게시글에 단 사용자의 댓글에서 parent 참조 해제
+        postCommentRepository.clearParentByUserId(userId);
+        log.info("PostComment parent references cleared - userId: {}", userId);
+
+        // 다른 사람 게시글에 단 사용자의 댓글 삭제
+        postCommentRepository.deleteByUserId(userId);
+        log.info("User's PostComments deleted - userId: {}", userId);
+
+        // 게시글 삭제
+        postRepository.deleteByUserId(userId);
+        log.info("Posts deleted - userId: {}", userId);
     }
 }
