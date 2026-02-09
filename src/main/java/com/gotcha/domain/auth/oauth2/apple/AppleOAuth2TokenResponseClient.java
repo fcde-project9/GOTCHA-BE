@@ -1,5 +1,7 @@
 package com.gotcha.domain.auth.oauth2.apple;
 
+import java.util.HashMap;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
@@ -48,7 +50,23 @@ public class AppleOAuth2TokenResponseClient implements OAuth2AccessTokenResponse
     }
 
     @Override
-    public OAuth2AccessTokenResponse getTokenResponse(OAuth2AuthorizationCodeGrantRequest authorizationCodeGrantRequest) {
-        return delegate.getTokenResponse(authorizationCodeGrantRequest);
+    public OAuth2AccessTokenResponse getTokenResponse(
+            OAuth2AuthorizationCodeGrantRequest authorizationCodeGrantRequest) {
+        OAuth2AccessTokenResponse response = delegate.getTokenResponse(authorizationCodeGrantRequest);
+
+        // Apple의 경우 refresh_token을 additionalParameters에 복사
+        // Spring Security는 refresh_token을 표준 필드로 파싱하여 additionalParameters에 포함하지 않음
+        // OidcUserRequest.getAdditionalParameters()에서 접근 가능하도록 명시적으로 추가
+        String registrationId = authorizationCodeGrantRequest.getClientRegistration().getRegistrationId();
+        if ("apple".equalsIgnoreCase(registrationId) && response.getRefreshToken() != null) {
+            Map<String, Object> additionalParams = new HashMap<>(response.getAdditionalParameters());
+            additionalParams.put("refresh_token", response.getRefreshToken().getTokenValue());
+
+            return OAuth2AccessTokenResponse.withResponse(response)
+                    .additionalParameters(additionalParams)
+                    .build();
+        }
+
+        return response;
     }
 }
