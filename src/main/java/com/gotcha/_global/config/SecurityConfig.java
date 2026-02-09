@@ -142,10 +142,10 @@ public class SecurityConfig {
 
         // OAuth2 콜백 - Apple form_post는 Origin: https://appleid.apple.com으로 POST 요청
         CorsConfiguration callbackConfig = new CorsConfiguration();
-        callbackConfig.addAllowedOriginPattern("*");
+        callbackConfig.addAllowedOrigin("https://appleid.apple.com");
         callbackConfig.setAllowedMethods(List.of("GET", "POST"));
         callbackConfig.setAllowedHeaders(List.of("*"));
-        callbackConfig.setAllowCredentials(true);
+        callbackConfig.setAllowCredentials(false);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/auth/callback/*", callbackConfig);
