@@ -63,7 +63,7 @@ class CustomOAuth2UserTest {
         assertThat(customOAuth2User.getAuthorities())
                 .hasSize(1)
                 .extracting(GrantedAuthority::getAuthority)
-                .containsExactly("ROLE_USER");
+                .containsExactly("ROLE_NORMAL");
     }
 
     @Test

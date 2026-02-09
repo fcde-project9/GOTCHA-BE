@@ -90,7 +90,7 @@ public class CustomOidcUserService extends OidcUserService {
         // Apple은 token 응답에서 refresh_token을 제공함
         String refreshToken = (String) userRequest.getAdditionalParameters().get("refresh_token");
         if (refreshToken != null) {
-            user.updateOAuthAccessToken(refreshToken);
+            user.updateSocialRevokeToken(refreshToken);
             log.debug("Apple refresh token saved - userId: {}", user.getId());
         }
 

@@ -5,8 +5,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 
 import com.gotcha.domain.auth.exception.AuthErrorCode;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -65,10 +63,7 @@ class OAuth2AuthenticationFailureHandlerTest {
             verify(redirectStrategy).sendRedirect(any(), any(), urlCaptor.capture());
 
             String redirectUrl = urlCaptor.getValue();
-            String expectedMessage = URLEncoder.encode(
-                    AuthErrorCode.SOCIAL_LOGIN_FAILED.getMessage(), StandardCharsets.UTF_8);
-            assertThat(redirectUrl).contains("code=" + AuthErrorCode.SOCIAL_LOGIN_FAILED.getCode());
-            assertThat(redirectUrl).contains("message=" + expectedMessage);
+            assertThat(redirectUrl).contains("error=" + AuthErrorCode.SOCIAL_LOGIN_FAILED.getCode());
             // 내부 에러 메시지가 노출되지 않음을 확인
             assertThat(redirectUrl).doesNotContain("Internal");
         }
@@ -88,10 +83,7 @@ class OAuth2AuthenticationFailureHandlerTest {
             verify(redirectStrategy).sendRedirect(any(), any(), urlCaptor.capture());
 
             String redirectUrl = urlCaptor.getValue();
-            String expectedMessage = URLEncoder.encode(
-                    AuthErrorCode.OAUTH_ACCESS_DENIED.getMessage(), StandardCharsets.UTF_8);
-            assertThat(redirectUrl).contains("code=" + AuthErrorCode.OAUTH_ACCESS_DENIED.getCode());
-            assertThat(redirectUrl).contains("message=" + expectedMessage);
+            assertThat(redirectUrl).contains("error=" + AuthErrorCode.OAUTH_ACCESS_DENIED.getCode());
         }
 
         @Test
@@ -109,10 +101,7 @@ class OAuth2AuthenticationFailureHandlerTest {
             verify(redirectStrategy).sendRedirect(any(), any(), urlCaptor.capture());
 
             String redirectUrl = urlCaptor.getValue();
-            String expectedMessage = URLEncoder.encode(
-                    AuthErrorCode.OAUTH_INVALID_TOKEN.getMessage(), StandardCharsets.UTF_8);
-            assertThat(redirectUrl).contains("code=" + AuthErrorCode.OAUTH_INVALID_TOKEN.getCode());
-            assertThat(redirectUrl).contains("message=" + expectedMessage);
+            assertThat(redirectUrl).contains("error=" + AuthErrorCode.OAUTH_INVALID_TOKEN.getCode());
         }
 
         @Test
@@ -130,10 +119,7 @@ class OAuth2AuthenticationFailureHandlerTest {
             verify(redirectStrategy).sendRedirect(any(), any(), urlCaptor.capture());
 
             String redirectUrl = urlCaptor.getValue();
-            String expectedMessage = URLEncoder.encode(
-                    AuthErrorCode.SOCIAL_LOGIN_FAILED.getMessage(), StandardCharsets.UTF_8);
-            assertThat(redirectUrl).contains("code=" + AuthErrorCode.SOCIAL_LOGIN_FAILED.getCode());
-            assertThat(redirectUrl).contains("message=" + expectedMessage);
+            assertThat(redirectUrl).contains("error=" + AuthErrorCode.SOCIAL_LOGIN_FAILED.getCode());
             // OAuth2 표준 에러 상세 메시지가 노출되지 않음을 확인
             assertThat(redirectUrl).doesNotContain("authorization");
         }
@@ -153,13 +139,12 @@ class OAuth2AuthenticationFailureHandlerTest {
 
             String redirectUrl = urlCaptor.getValue();
             assertThat(redirectUrl).startsWith("http://localhost:3000/oauth/callback?");
-            assertThat(redirectUrl).contains("code=");
-            assertThat(redirectUrl).contains("message=");
+            assertThat(redirectUrl).contains("error=");
         }
 
         @Test
-        @DisplayName("한글 메시지가 올바르게 URL 인코딩됨")
-        void onAuthenticationFailure_koreanMessage_isProperlyEncoded() throws Exception {
+        @DisplayName("에러 코드만 포함하고 메시지는 포함하지 않음")
+        void onAuthenticationFailure_containsOnlyErrorCode_noMessage() throws Exception {
             // given
             OAuth2Error error = new OAuth2Error("access_denied", "User cancelled", null);
             OAuth2AuthenticationException exception = new OAuth2AuthenticationException(error);
@@ -172,14 +157,8 @@ class OAuth2AuthenticationFailureHandlerTest {
             verify(redirectStrategy).sendRedirect(any(), any(), urlCaptor.capture());
 
             String redirectUrl = urlCaptor.getValue();
-            String expectedMessage = AuthErrorCode.OAUTH_ACCESS_DENIED.getMessage();
-            String expectedEncoded = URLEncoder.encode(expectedMessage, StandardCharsets.UTF_8);
-
-            assertThat(redirectUrl).contains("message=" + expectedEncoded);
-            // 한글이 퍼센트 인코딩되었는지 확인 (원본 한글이 URL에 직접 포함되지 않음)
-            assertThat(redirectUrl).doesNotContain(expectedMessage);
-            // 인코딩된 형태(%XX)가 포함되어 있는지 확인
-            assertThat(expectedEncoded).containsPattern("%[0-9A-F]{2}");
+            assertThat(redirectUrl).contains("error=");
+            assertThat(redirectUrl).doesNotContain("message=");
         }
     }
 }

@@ -61,8 +61,8 @@ public class SocialUnlinkService {
 
         switch (socialType) {
             case KAKAO -> unlinkKakao(user.getId(), socialId);
-            case GOOGLE -> unlinkGoogle(user.getId(), user.getOauthAccessToken());
-            case APPLE -> unlinkApple(user.getId(), user.getOauthAccessToken());
+            case GOOGLE -> unlinkGoogle(user.getId(), user.getSocialRevokeToken());
+            case APPLE -> unlinkApple(user.getId(), user.getSocialRevokeToken());
             case NAVER -> logUnsupportedUnlink(user.getId(), socialType);
         }
     }

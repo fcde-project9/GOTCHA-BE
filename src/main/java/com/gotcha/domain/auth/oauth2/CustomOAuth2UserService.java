@@ -76,10 +76,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 })
                 .orElseGet(() -> registrationService.createNewUser(userInfo, socialType));
 
-        // 구글 로그인인 경우 OAuth2 access_token 저장 (탈퇴 시 연동 해제용)
+        // 구글 로그인인 경우 access_token 저장 (탈퇴 시 연동 해제용)
         if (socialType == SocialType.GOOGLE) {
-            String oauthAccessToken = userRequest.getAccessToken().getTokenValue();
-            user.updateOAuthAccessToken(oauthAccessToken);
+            String accessToken = userRequest.getAccessToken().getTokenValue();
+            user.updateSocialRevokeToken(accessToken);
             log.debug("Google OAuth access token saved - userId: {}", user.getId());
         }
 

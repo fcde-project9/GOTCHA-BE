@@ -42,8 +42,8 @@ spring:
             client-authentication-method: client_secret_post
             client-name: Naver
           apple:
-            client-id: ${APPLE_CLIENT_ID:dummy}
-            client-secret: ${APPLE_CLIENT_SECRET:dummy}
+            client-id: ${APPLE_CLIENT_ID}
+            client-secret: ${APPLE_CLIENT_SECRET}
             redirect-uri: "{baseUrl}/api/auth/callback/apple"
             authorization-grant-type: authorization_code
             client-authentication-method: client_secret_post
@@ -97,10 +97,10 @@ oauth2:
 # Apple OAuth2 Configuration
 apple:
   oauth2:
-    team-id: ${APPLE_TEAM_ID:dummy}
-    key-id: ${APPLE_KEY_ID:dummy}
-    client-id: ${APPLE_CLIENT_ID:dummy}
-    private-key: ${APPLE_PRIVATE_KEY:dummy}
+    team-id: ${APPLE_TEAM_ID}
+    key-id: ${APPLE_KEY_ID}
+    client-id: ${APPLE_CLIENT_ID}
+    private-key: ${APPLE_PRIVATE_KEY}
     token-validity: ${APPLE_TOKEN_VALIDITY:300000}
 
 # Springdoc OpenAPI Configuration

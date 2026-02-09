@@ -49,15 +49,15 @@ class SocialUnlinkServiceTest {
         return createUser(socialType, socialId, null);
     }
 
-    private User createUser(SocialType socialType, String socialId, String oauthAccessToken) {
+    private User createUser(SocialType socialType, String socialId, String socialRevokeToken) {
         User user = User.builder()
                 .socialType(socialType)
                 .socialId(socialId)
                 .nickname("테스트유저")
                 .build();
         setUserId(user, 1L);
-        if (oauthAccessToken != null) {
-            user.updateOAuthAccessToken(oauthAccessToken);
+        if (socialRevokeToken != null) {
+            user.updateSocialRevokeToken(socialRevokeToken);
         }
         return user;
     }
