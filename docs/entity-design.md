@@ -19,6 +19,7 @@
 | nickname | String | ex: 빨간캡슐#21 (탈퇴 시 "탈퇴한 사용자_{id}") |
 | email | String | 소셜 이메일 (탈퇴 시 null) |
 | profile_image_url | String | 프로필 이미지 URL (탈퇴 시 null) |
+| oauth_access_token | String (TEXT) | OAuth2 액세스 토큰 (구글 연동 해제용) |
 | is_deleted | Boolean | 탈퇴 여부 (soft delete) |
 | last_login_at | LocalDateTime | |
 | created_at, updated_at | LocalDateTime | BaseTimeEntity |
@@ -176,6 +177,21 @@
 | PRIVACY_CONCERN | 개인정보 보호를 위해 삭제할래요 |
 | HAS_OTHER_ACCOUNT | 다른 계정이 있어요 |
 | OTHER | 기타 |
+
+---
+
+## review_likes
+
+리뷰 좋아요
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | Long (PK) | |
+| user_id | Long (FK → users) | 좋아요한 사용자 |
+| review_id | Long (FK → reviews) | 대상 리뷰 |
+| created_at, updated_at | LocalDateTime | BaseTimeEntity |
+
+- UNIQUE(user_id, review_id)
 
 ---
 

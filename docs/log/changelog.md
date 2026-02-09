@@ -20,6 +20,19 @@
 
 ### 수정
 - `CLAUDE.md` - 삭제된 문서 참조 제거, architecture.md/security-checklist.md 추가
+- `docs/api-spec.md` - 코드 대조 동기화
+  - 변경: 파일 크기 제한 20MB → 50MB
+  - 변경: 파일 에러코드 I001~I004 → FL001~FL005
+  - 추가: UserResponse에 userType 필드 (GET /users/me, PATCH/DELETE /users/me/profile-image)
+  - 변경: GCS URL 예시 → S3 URL 형식으로 일괄 변경
+- `docs/business-rules.md` - 이미지 규칙 업데이트
+  - 변경: 최대 크기 10MB → 50MB
+  - 추가: 허용 확장자에 heic, heif (iOS 지원)
+- `docs/entity-design.md` - 누락 필드/테이블 추가
+  - 추가: users 테이블에 oauth_access_token 필드
+  - 추가: review_likes 테이블 스키마
+- `docs/auth-policy.md` - 리뷰 좋아요 API 권한 추가
+- `docs/error-codes.md` - FL004/FL005 설명 GCS → S3 변경
 
 ---
 

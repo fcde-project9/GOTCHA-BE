@@ -205,8 +205,8 @@ distance = haversine(lat1, lng1, lat2, lng2)
 
 | 항목 | 규칙 |
 |------|------|
-| 허용 확장자 | jpg, jpeg, png, webp |
-| 최대 크기 | 10MB |
+| 허용 확장자 | jpg, jpeg, png, webp, heic, heif |
+| 최대 크기 | 50MB |
 | 용도 구분 | shop (가게 사진), review (리뷰 사진) |
 
 ---
