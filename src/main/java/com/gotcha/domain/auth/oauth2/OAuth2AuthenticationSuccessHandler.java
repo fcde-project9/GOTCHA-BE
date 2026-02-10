@@ -21,7 +21,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthService authService;
     private final OAuthTokenCookieService oAuthTokenCacheService;
-    private final HttpCookieOAuth2AuthorizationRequestRepository cookieRepository;
+    private final InMemoryAuthorizationRequestRepository authorizationRequestRepository;
 
     // TODO: 프로덕션 배포 전 리다이렉트 URI 화이트리스트 검증 추가 필요
     @Value("${oauth2.redirect-uri:http://localhost:3000/oauth/callback}")
@@ -56,11 +56,10 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         String encryptedCode = oAuthTokenCacheService.encryptTokens(accessToken, refreshToken, isNewUser);
 
         // 프론트엔드에서 전달한 redirect_uri 사용, 없으면 기본값 사용
-        String redirectUri = cookieRepository.getRedirectUriFromCookie(request);
+        String redirectUri = authorizationRequestRepository.getRedirectUri(request);
         if (redirectUri == null || redirectUri.isBlank()) {
             redirectUri = defaultRedirectUri;
         }
-        cookieRepository.removeRedirectUriCookie(response);
 
         // 암호화된 토큰을 URL 파라미터로 전달 (프론트엔드가 POST /api/auth/token body에 포함)
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)

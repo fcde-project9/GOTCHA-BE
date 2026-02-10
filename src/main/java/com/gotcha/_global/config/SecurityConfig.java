@@ -4,7 +4,7 @@ import com.gotcha.domain.auth.jwt.JwtAuthenticationEntryPoint;
 import com.gotcha.domain.auth.jwt.JwtAuthenticationFilter;
 import com.gotcha.domain.auth.oauth2.CustomOAuth2UserService;
 import com.gotcha.domain.auth.oauth2.CustomOidcUserService;
-import com.gotcha.domain.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
+import com.gotcha.domain.auth.oauth2.InMemoryAuthorizationRequestRepository;
 import com.gotcha.domain.auth.oauth2.OAuth2AuthenticationFailureHandler;
 import com.gotcha.domain.auth.oauth2.OAuth2AuthenticationSuccessHandler;
 import com.gotcha.domain.auth.oauth2.apple.AppleOAuth2AuthorizationRequestResolver;
@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -29,6 +30,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
+@EnableScheduling
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -38,7 +40,7 @@ public class SecurityConfig {
     private final CustomOidcUserService customOidcUserService;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
     private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
-    private final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
+    private final InMemoryAuthorizationRequestRepository inMemoryAuthorizationRequestRepository;
     private final AppleOAuth2AuthorizationRequestResolver appleOAuth2AuthorizationRequestResolver;
     private final AppleOAuth2TokenResponseClient appleOAuth2TokenResponseClient;
 
@@ -100,7 +102,7 @@ public class SecurityConfig {
                         .authorizationEndpoint(authorization ->
                                 authorization.baseUri("/oauth2/authorize")
                                         .authorizationRequestResolver(appleOAuth2AuthorizationRequestResolver)
-                                        .authorizationRequestRepository(httpCookieOAuth2AuthorizationRequestRepository))
+                                        .authorizationRequestRepository(inMemoryAuthorizationRequestRepository))
                         .redirectionEndpoint(redirection ->
                                 redirection.baseUri("/api/auth/callback/*"))
                         .tokenEndpoint(token ->
