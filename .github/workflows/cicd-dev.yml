@@ -110,6 +110,9 @@ jobs:
             USER_PROFILE_IMG=$(aws ssm get-parameter --name "/gotcha/dev/user/default-profile-image-url" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
             SHOP_IMG=$(aws ssm get-parameter --name "/gotcha/dev/shop/default-image-url" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
 
+            # Loki Logging
+            LOKI_URL=$(aws ssm get-parameter --name "/gotcha/dev/loki/url" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }} 2>/dev/null || echo "")
+
             echo "Parameters fetched successfully ✅"
 
             # 기존 컨테이너 중지 및 제거
@@ -159,6 +162,7 @@ jobs:
               -e USER_DEFAULT_PROFILE_IMAGE_URL="$USER_PROFILE_IMG" \
               -e SHOP_DEFAULT_IMAGE_URL="$SHOP_IMG" \
               -e OAUTH2_COOKIE_ENCRYPTION_KEY="$OAUTH_COOKIE_KEY" \
+              -e LOKI_URL="$LOKI_URL" \
               ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_DEV }}:${{ github.sha }}
 
             # 컨테이너 상태 확인 (10초 대기 후 확인)
