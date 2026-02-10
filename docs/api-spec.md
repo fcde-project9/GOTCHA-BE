@@ -1202,7 +1202,7 @@ Authorization: Bearer {accessToken}
 {
   "targetType": "REVIEW",
   "targetId": 1,
-  "reason": "ABUSE",
+  "reason": "REVIEW_ABUSE",
   "detail": "욕설이 포함되어 있습니다"
 }
 ```
@@ -1211,24 +1211,46 @@ Authorization: Bearer {accessToken}
 | 값 | 설명 |
 |---|------|
 | REVIEW | 리뷰 신고 |
+| SHOP | 가게 신고 |
 | USER | 유저 신고 |
 
-**reason 값**
+**reason 값** (targetType별로 해당 prefix 사유만 사용 가능)
+
+*리뷰 신고 (REVIEW_*)*
 | 값 | 설명 |
 |---|------|
-| ABUSE | 욕설/비방 |
-| OBSCENE | 음란물 |
-| SPAM | 광고/스팸 |
-| PRIVACY | 개인정보 노출 |
-| OTHER | 기타 (detail 필수) |
+| REVIEW_SPAM | 도배/광고성 글이에요 |
+| REVIEW_COPYRIGHT | 저작권을 침해해요 |
+| REVIEW_DEFAMATION | 명예를 훼손하는 내용이에요 |
+| REVIEW_ABUSE | 욕설이나 비방이 심해요 |
+| REVIEW_OBSCENE | 외설적인 내용이 포함돼있어요 |
+| REVIEW_PRIVACY | 개인정보가 노출되어 있어요 |
+| REVIEW_OTHER | 기타 (detail 필수) |
+
+*가게 신고 (SHOP_*)*
+| 값 | 설명 |
+|---|------|
+| SHOP_WRONG_ADDRESS | 잘못된 주소예요 |
+| SHOP_CLOSED | 영업 종료/폐업된 업체예요 |
+| SHOP_INAPPROPRIATE | 부적절한 업체(불법/유해 업소)예요 |
+| SHOP_DUPLICATE | 중복 제보된 업체예요 |
+| SHOP_OTHER | 기타 (detail 필수) |
+
+*사용자 신고 (USER_*)*
+| 값 | 설명 |
+|---|------|
+| USER_INAPPROPRIATE_NICKNAME | 부적절한 닉네임이에요 |
+| USER_INAPPROPRIATE_PROFILE | 부적절한 프로필 사진이에요 |
+| USER_PRIVACY | 개인정보가 노출되어 있어요 |
+| USER_OTHER | 기타 (detail 필수) |
 
 **Validation**
 | 필드 | 규칙 |
 |------|------|
 | targetType | 필수 |
 | targetId | 필수 |
-| reason | 필수 |
-| detail | reason이 OTHER일 때 필수 |
+| reason | 필수, targetType과 prefix 일치 필요 |
+| detail | reason이 *_OTHER일 때 필수 |
 
 **Response (201)**
 ```json
@@ -1238,7 +1260,7 @@ Authorization: Bearer {accessToken}
     "id": 1,
     "targetType": "REVIEW",
     "targetId": 1,
-    "reason": "ABUSE",
+    "reason": "REVIEW_ABUSE",
     "detail": "욕설이 포함되어 있습니다",
     "status": "PENDING",
     "createdAt": "2025-01-08T12:00:00"
@@ -1252,6 +1274,7 @@ Authorization: Bearer {accessToken}
 | RP002 | 이미 신고한 대상 |
 | RP003 | 신고 대상을 찾을 수 없음 |
 | RP004 | 본인을 신고할 수 없음 |
+| RP009 | targetType과 reason prefix 불일치 |
 | RP005 | 기타 사유 선택 시 상세 내용 필수 |
 
 ---
@@ -1274,7 +1297,7 @@ Authorization: Bearer {accessToken}
       "id": 1,
       "targetType": "REVIEW",
       "targetId": 1,
-      "reason": "ABUSE",
+      "reason": "REVIEW_ABUSE",
       "detail": "욕설이 포함되어 있습니다",
       "status": "PENDING",
       "createdAt": "2025-01-08T12:00:00"
@@ -1325,7 +1348,7 @@ Authorization: Bearer {accessToken}
 **Query Parameters**
 | 파라미터 | 타입 | 필수 | 기본값 | 설명 |
 |---------|------|------|--------|------|
-| targetType | String | X | - | REVIEW, USER |
+| targetType | String | X | - | REVIEW, SHOP, USER |
 | status | String | X | - | PENDING, ACCEPTED, REJECTED, CANCELLED |
 | page | Integer | X | 0 | |
 | size | Integer | X | 20 | |
@@ -1342,8 +1365,8 @@ Authorization: Bearer {accessToken}
         "reporterNickname": "신고자#21",
         "targetType": "REVIEW",
         "targetId": 1,
-        "reason": "ABUSE",
-        "reasonDescription": "욕설/비방",
+        "reason": "REVIEW_ABUSE",
+        "reasonDescription": "욕설이나 비방이 심해요",
         "detail": "욕설이 포함되어 있습니다",
         "status": "PENDING",
         "statusDescription": "처리 대기",
@@ -1386,8 +1409,8 @@ Authorization: Bearer {accessToken}
     "reporterNickname": "신고자#21",
     "targetType": "REVIEW",
     "targetId": 1,
-    "reason": "ABUSE",
-    "reasonDescription": "욕설/비방",
+    "reason": "REVIEW_ABUSE",
+    "reasonDescription": "욕설이나 비방이 심해요",
     "detail": "욕설이 포함되어 있습니다",
     "status": "PENDING",
     "statusDescription": "처리 대기",
@@ -1437,8 +1460,8 @@ Authorization: Bearer {accessToken}
     "reporterNickname": "신고자#21",
     "targetType": "REVIEW",
     "targetId": 1,
-    "reason": "ABUSE",
-    "reasonDescription": "욕설/비방",
+    "reason": "REVIEW_ABUSE",
+    "reasonDescription": "욕설이나 비방이 심해요",
     "detail": "욕설이 포함되어 있습니다",
     "status": "ACCEPTED",
     "statusDescription": "승인",

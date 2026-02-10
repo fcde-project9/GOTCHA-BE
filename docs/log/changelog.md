@@ -7,6 +7,22 @@
 ## 2026-02-10
 
 ### 수정
+- `src/main/java/com/gotcha/domain/report/entity/ReportTargetType.java` - SHOP 타입 추가
+- `src/main/java/com/gotcha/domain/report/entity/ReportReason.java` - prefix 방식으로 전면 변경
+  - 리뷰: REVIEW_SPAM, REVIEW_COPYRIGHT, REVIEW_DEFAMATION, REVIEW_ABUSE, REVIEW_OBSCENE, REVIEW_PRIVACY, REVIEW_OTHER
+  - 가게: SHOP_WRONG_ADDRESS, SHOP_CLOSED, SHOP_INAPPROPRIATE, SHOP_DUPLICATE, SHOP_OTHER
+  - 사용자: USER_INAPPROPRIATE_NICKNAME, USER_INAPPROPRIATE_PROFILE, USER_PRIVACY, USER_OTHER
+  - 추가: getTargetType() 메서드 (prefix로 targetType 추출)
+- `src/main/java/com/gotcha/domain/report/exception/ReportErrorCode.java` - RP009 추가 (targetType-reason 불일치)
+- `src/main/java/com/gotcha/domain/report/exception/ReportException.java` - invalidReasonForTarget() 메서드 추가
+- `src/main/java/com/gotcha/domain/report/service/ReportService.java` - 가게 신고 및 유효성 검증 추가
+  - 추가: ShopRepository 의존성
+  - 추가: reason.getTargetType() != targetType 검증
+  - 추가: validateShopTarget() 메서드
+- `src/main/java/com/gotcha/domain/report/repository/ReportRepository.java` - 취소된 신고 목록 제외
+- `docs/entity-design.md` - ReportTargetType에 SHOP 추가, ReportReason 전면 업데이트
+- `docs/api-spec.md` - 신고 API reason 값 및 예시 전면 업데이트
+- `docs/error-codes.md` - RP009 추가, RP003/RP005 설명 수정
 - `src/main/java/com/gotcha/_global/filter/RateLimitFilter.java` - CodeRabbit 리뷰 반영
   - 변경: waitTimeSeconds 계산 시 `Math.max(1, ...)` 적용 (최소 1초 보장)
   - 변경: 나노초→초 변환 시 `TimeUnit.NANOSECONDS.toSeconds()` 사용 (가독성 개선)

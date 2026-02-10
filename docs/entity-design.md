@@ -234,17 +234,40 @@
 | 값 | 설명 |
 |----|------|
 | REVIEW | 리뷰 신고 |
+| SHOP | 가게 신고 |
 | USER | 유저 신고 |
 
 ### ReportReason (Enum)
 
+> 신고 대상 타입별로 prefix가 붙은 사유만 사용 가능 (예: REVIEW 신고 시 REVIEW_* 사유만 허용)
+
+**리뷰 신고 사유 (REVIEW_*)**
 | 값 | 설명 |
 |----|------|
-| ABUSE | 욕설/비방 |
-| OBSCENE | 음란물 |
-| SPAM | 광고/스팸 |
-| PRIVACY | 개인정보 노출 |
-| OTHER | 기타 (detail 필수) |
+| REVIEW_SPAM | 도배/광고성 글이에요 |
+| REVIEW_COPYRIGHT | 저작권을 침해해요 |
+| REVIEW_DEFAMATION | 명예를 훼손하는 내용이에요 |
+| REVIEW_ABUSE | 욕설이나 비방이 심해요 |
+| REVIEW_OBSCENE | 외설적인 내용이 포함돼있어요 |
+| REVIEW_PRIVACY | 개인정보가 노출되어 있어요 |
+| REVIEW_OTHER | 기타 (detail 필수) |
+
+**가게 신고 사유 (SHOP_*)**
+| 값 | 설명 |
+|----|------|
+| SHOP_WRONG_ADDRESS | 잘못된 주소예요 |
+| SHOP_CLOSED | 영업 종료/폐업된 업체예요 |
+| SHOP_INAPPROPRIATE | 부적절한 업체(불법/유해 업소)예요 |
+| SHOP_DUPLICATE | 중복 제보된 업체예요 |
+| SHOP_OTHER | 기타 (detail 필수) |
+
+**사용자 신고 사유 (USER_*)**
+| 값 | 설명 |
+|----|------|
+| USER_INAPPROPRIATE_NICKNAME | 부적절한 닉네임이에요 |
+| USER_INAPPROPRIATE_PROFILE | 부적절한 프로필 사진이에요 |
+| USER_PRIVACY | 개인정보가 노출되어 있어요 |
+| USER_OTHER | 기타 (detail 필수) |
 
 ### ReportStatus (Enum)
 
