@@ -52,4 +52,8 @@ public class ReportException extends BusinessException {
     public static ReportException adminOnly() {
         return new ReportException(ReportErrorCode.ADMIN_ONLY);
     }
+
+    public static ReportException invalidReasonForTarget() {
+        return new ReportException(ReportErrorCode.INVALID_REASON_FOR_TARGET);
+    }
 }

@@ -10,6 +10,7 @@ import com.gotcha.domain.report.exception.ReportException;
 import com.gotcha.domain.report.repository.ReportRepository;
 import com.gotcha.domain.review.entity.Review;
 import com.gotcha.domain.review.repository.ReviewRepository;
+import com.gotcha.domain.shop.repository.ShopRepository;
 import com.gotcha.domain.user.entity.User;
 import com.gotcha.domain.user.repository.UserRepository;
 import java.util.List;
@@ -27,12 +28,14 @@ public class ReportService {
 
     private final ReportRepository reportRepository;
     private final ReviewRepository reviewRepository;
+    private final ShopRepository shopRepository;
     private final UserRepository userRepository;
     private final SecurityUtil securityUtil;
 
     /**
-     * 리뷰 신고 또는 유저 신고 생성
-     * - 본인 신고 불가
+     * 리뷰, 가게, 유저 신고 생성
+     * - 신고 사유가 신고 대상 타입과 일치해야 함
+     * - 본인 신고 불가 (리뷰, 유저)
      * - 동일 대상 중복 신고 불가
      * - 기타(OTHER) 사유 선택 시 상세 내용 필수
      */
@@ -97,10 +100,16 @@ public class ReportService {
     }
 
     /**
-     * 기타(OTHER) 사유 선택 시, 상세 내용이 입력되었는지 검증
+     * 요청 검증
+     * - 신고 사유가 신고 대상 타입과 일치하는지 검증
+     * - 기타(OTHER) 사유 선택 시, 상세 내용이 입력되었는지 검증
      */
     private void validateRequest(CreateReportRequest request) {
-        if (request.reason() == ReportReason.OTHER &&
+        if (request.reason().getTargetType() != request.targetType()) {
+            throw ReportException.invalidReasonForTarget();
+        }
+
+        if (request.reason().name().endsWith("_OTHER") &&
                 (request.detail() == null || request.detail().isBlank())) {
             throw ReportException.detailRequiredForOther();
         }
@@ -112,6 +121,7 @@ public class ReportService {
     private void validateTarget(ReportTargetType targetType, Long targetId, Long reporterId) {
         switch (targetType) {
             case REVIEW -> validateReviewTarget(targetId, reporterId);
+            case SHOP -> validateShopTarget(targetId);
             case USER -> validateUserTarget(targetId, reporterId);
         }
     }
@@ -125,6 +135,15 @@ public class ReportService {
 
         if (review.getUser().getId().equals(reporterId)) {
             throw ReportException.cannotReportSelf();
+        }
+    }
+
+    /**
+     * 가게 신고 대상 검증 (가게 존재 여부)
+     */
+    private void validateShopTarget(Long shopId) {
+        if (!shopRepository.existsById(shopId)) {
+            throw ReportException.targetNotFound("SHOP", shopId);
         }
     }
 
