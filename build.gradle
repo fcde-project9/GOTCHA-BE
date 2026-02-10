@@ -50,6 +50,8 @@ dependencies {
 	implementation 'io.micrometer:micrometer-registry-prometheus'
 	// Loki logging
 	implementation 'com.github.loki4j:loki-logback-appender:2.0.3'
+	// Logback conditional (for <if> in logback-spring.xml)
+	implementation 'org.codehaus.janino:janino'
 }
 
 tasks.named('test') {
