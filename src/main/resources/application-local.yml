@@ -48,3 +48,9 @@ user:
 # Shop Configuration
 shop:
   default-image-url: ${SHOP_DEFAULT_IMAGE_URL}
+
+# Logging Configuration (Local)
+logging:
+  loki:
+    url: ${LOKI_URL:http://localhost:3100/loki/api/v1/push}
+    enabled: ${LOKI_ENABLED:false}

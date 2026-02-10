@@ -130,4 +130,5 @@ rate-limit:
 # Logging Configuration
 logging:
   loki:
-    url: ${LOKI_URL:http://localhost:3100/loki/api/v1/push}
+    url: ${LOKI_URL:}
+    enabled: ${LOKI_ENABLED:false}
