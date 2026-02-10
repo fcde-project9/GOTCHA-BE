@@ -91,7 +91,7 @@ class ReportRepositoryTest {
                     .reporter(reporter)
                     .targetType(ReportTargetType.REVIEW)
                     .targetId(review.getId())
-                    .reason(ReportReason.ABUSE)
+                    .reason(ReportReason.REVIEW_ABUSE)
                     .build());
 
             // when
@@ -121,7 +121,7 @@ class ReportRepositoryTest {
                     .reporter(reporter)
                     .targetType(ReportTargetType.REVIEW)
                     .targetId(review.getId())
-                    .reason(ReportReason.ABUSE)
+                    .reason(ReportReason.REVIEW_ABUSE)
                     .build());
 
             // when
@@ -145,14 +145,14 @@ class ReportRepositoryTest {
                     .reporter(reporter)
                     .targetType(ReportTargetType.REVIEW)
                     .targetId(review.getId())
-                    .reason(ReportReason.ABUSE)
+                    .reason(ReportReason.REVIEW_ABUSE)
                     .build());
 
             reportRepository.save(Report.builder()
                     .reporter(reporter)
                     .targetType(ReportTargetType.USER)
                     .targetId(targetUser.getId())
-                    .reason(ReportReason.SPAM)
+                    .reason(ReportReason.USER_PRIVACY)
                     .build());
 
             // when
@@ -185,7 +185,7 @@ class ReportRepositoryTest {
                     .reporter(reporter)
                     .targetType(ReportTargetType.REVIEW)
                     .targetId(review.getId())
-                    .reason(ReportReason.ABUSE)
+                    .reason(ReportReason.REVIEW_ABUSE)
                     .detail("욕설이 포함되어 있습니다")
                     .build());
 
@@ -219,14 +219,14 @@ class ReportRepositoryTest {
                     .reporter(reporter)
                     .targetType(ReportTargetType.REVIEW)
                     .targetId(review.getId())
-                    .reason(ReportReason.ABUSE)
+                    .reason(ReportReason.REVIEW_ABUSE)
                     .build());
 
             Report acceptedReport = Report.builder()
                     .reporter(reporter)
                     .targetType(ReportTargetType.USER)
                     .targetId(targetUser.getId())
-                    .reason(ReportReason.SPAM)
+                    .reason(ReportReason.USER_PRIVACY)
                     .build();
             acceptedReport.updateStatus(ReportStatus.ACCEPTED);
             reportRepository.save(acceptedReport);
@@ -311,7 +311,7 @@ class ReportRepositoryTest {
                     .reporter(reporter)
                     .targetType(ReportTargetType.REVIEW)
                     .targetId(review.getId())
-                    .reason(ReportReason.ABUSE)
+                    .reason(ReportReason.REVIEW_ABUSE)
                     .build());
 
             // when
@@ -331,7 +331,7 @@ class ReportRepositoryTest {
                     .reporter(reporter)
                     .targetType(ReportTargetType.REVIEW)
                     .targetId(review.getId())
-                    .reason(ReportReason.ABUSE)
+                    .reason(ReportReason.REVIEW_ABUSE)
                     .build());
 
             // when
@@ -351,14 +351,14 @@ class ReportRepositoryTest {
                     .reporter(reporter)
                     .targetType(ReportTargetType.REVIEW)
                     .targetId(review.getId())
-                    .reason(ReportReason.ABUSE)
+                    .reason(ReportReason.REVIEW_ABUSE)
                     .build();
 
             Report acceptedReport = Report.builder()
                     .reporter(reporter)
                     .targetType(ReportTargetType.USER)
                     .targetId(targetUser.getId())
-                    .reason(ReportReason.SPAM)
+                    .reason(ReportReason.USER_PRIVACY)
                     .build();
             acceptedReport.updateStatus(ReportStatus.ACCEPTED);
 
@@ -375,7 +375,7 @@ class ReportRepositoryTest {
                     .reporter(reporter)
                     .targetType(ReportTargetType.REVIEW)
                     .targetId(review.getId())
-                    .reason(ReportReason.ABUSE)
+                    .reason(ReportReason.REVIEW_ABUSE)
                     .build());
 
             // then

@@ -18,6 +18,7 @@ import com.gotcha.domain.report.repository.ReportRepository;
 import com.gotcha.domain.review.entity.Review;
 import com.gotcha.domain.review.repository.ReviewRepository;
 import com.gotcha.domain.shop.entity.Shop;
+import com.gotcha.domain.shop.repository.ShopRepository;
 import com.gotcha.domain.user.entity.SocialType;
 import com.gotcha.domain.user.entity.User;
 import com.gotcha.domain.user.repository.UserRepository;
@@ -42,6 +43,9 @@ class ReportServiceTest {
 
     @Mock
     private ReviewRepository reviewRepository;
+
+    @Mock
+    private ShopRepository shopRepository;
 
     @Mock
     private UserRepository userRepository;
@@ -101,7 +105,7 @@ class ReportServiceTest {
             CreateReportRequest request = new CreateReportRequest(
                     ReportTargetType.REVIEW,
                     review.getId(),
-                    ReportReason.ABUSE,
+                    ReportReason.REVIEW_ABUSE,
                     null
             );
 
@@ -121,7 +125,7 @@ class ReportServiceTest {
             // then
             assertThat(response.targetType()).isEqualTo(ReportTargetType.REVIEW);
             assertThat(response.targetId()).isEqualTo(review.getId());
-            assertThat(response.reason()).isEqualTo(ReportReason.ABUSE);
+            assertThat(response.reason()).isEqualTo(ReportReason.REVIEW_ABUSE);
             assertThat(response.status()).isEqualTo(ReportStatus.PENDING);
 
             ArgumentCaptor<Report> captor = ArgumentCaptor.forClass(Report.class);
@@ -137,7 +141,7 @@ class ReportServiceTest {
             CreateReportRequest request = new CreateReportRequest(
                     ReportTargetType.USER,
                     targetUser.getId(),
-                    ReportReason.SPAM,
+                    ReportReason.USER_PRIVACY,
                     "스팸 메시지를 보냅니다"
             );
 
@@ -166,7 +170,7 @@ class ReportServiceTest {
             CreateReportRequest request = new CreateReportRequest(
                     ReportTargetType.REVIEW,
                     review.getId(),
-                    ReportReason.OTHER,
+                    ReportReason.REVIEW_OTHER,
                     null
             );
 
@@ -185,7 +189,7 @@ class ReportServiceTest {
             CreateReportRequest request = new CreateReportRequest(
                     ReportTargetType.REVIEW,
                     review.getId(),
-                    ReportReason.OTHER,
+                    ReportReason.REVIEW_OTHER,
                     "   "
             );
 
@@ -211,7 +215,7 @@ class ReportServiceTest {
             CreateReportRequest request = new CreateReportRequest(
                     ReportTargetType.REVIEW,
                     myReview.getId(),
-                    ReportReason.ABUSE,
+                    ReportReason.REVIEW_ABUSE,
                     null
             );
 
@@ -231,7 +235,7 @@ class ReportServiceTest {
             CreateReportRequest request = new CreateReportRequest(
                     ReportTargetType.USER,
                     reporter.getId(),
-                    ReportReason.ABUSE,
+                    ReportReason.USER_INAPPROPRIATE_NICKNAME,
                     null
             );
 
@@ -250,7 +254,7 @@ class ReportServiceTest {
             CreateReportRequest request = new CreateReportRequest(
                     ReportTargetType.REVIEW,
                     review.getId(),
-                    ReportReason.ABUSE,
+                    ReportReason.REVIEW_ABUSE,
                     null
             );
 
@@ -272,7 +276,7 @@ class ReportServiceTest {
             CreateReportRequest request = new CreateReportRequest(
                     ReportTargetType.REVIEW,
                     999L,
-                    ReportReason.ABUSE,
+                    ReportReason.REVIEW_ABUSE,
                     null
             );
 
@@ -292,7 +296,7 @@ class ReportServiceTest {
             CreateReportRequest request = new CreateReportRequest(
                     ReportTargetType.USER,
                     999L,
-                    ReportReason.ABUSE,
+                    ReportReason.USER_INAPPROPRIATE_NICKNAME,
                     null
             );
 
@@ -318,7 +322,7 @@ class ReportServiceTest {
                     .reporter(reporter)
                     .targetType(ReportTargetType.REVIEW)
                     .targetId(review.getId())
-                    .reason(ReportReason.ABUSE)
+                    .reason(ReportReason.REVIEW_ABUSE)
                     .build();
             ReflectionTestUtils.setField(report1, "id", 1L);
 
@@ -326,7 +330,7 @@ class ReportServiceTest {
                     .reporter(reporter)
                     .targetType(ReportTargetType.USER)
                     .targetId(targetUser.getId())
-                    .reason(ReportReason.SPAM)
+                    .reason(ReportReason.USER_PRIVACY)
                     .build();
             ReflectionTestUtils.setField(report2, "id", 2L);
 
@@ -369,7 +373,7 @@ class ReportServiceTest {
                     .reporter(reporter)
                     .targetType(ReportTargetType.REVIEW)
                     .targetId(review.getId())
-                    .reason(ReportReason.ABUSE)
+                    .reason(ReportReason.REVIEW_ABUSE)
                     .build();
             ReflectionTestUtils.setField(report, "id", 1L);
 
@@ -404,7 +408,7 @@ class ReportServiceTest {
                     .reporter(targetUser)
                     .targetType(ReportTargetType.REVIEW)
                     .targetId(review.getId())
-                    .reason(ReportReason.ABUSE)
+                    .reason(ReportReason.REVIEW_ABUSE)
                     .build();
             ReflectionTestUtils.setField(report, "id", 1L);
 
@@ -425,7 +429,7 @@ class ReportServiceTest {
                     .reporter(reporter)
                     .targetType(ReportTargetType.REVIEW)
                     .targetId(review.getId())
-                    .reason(ReportReason.ABUSE)
+                    .reason(ReportReason.REVIEW_ABUSE)
                     .build();
             report.updateStatus(ReportStatus.ACCEPTED);
             ReflectionTestUtils.setField(report, "id", 1L);

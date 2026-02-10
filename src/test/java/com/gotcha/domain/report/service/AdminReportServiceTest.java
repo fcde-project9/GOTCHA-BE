@@ -57,7 +57,7 @@ class AdminReportServiceTest {
                 .reporter(reporter)
                 .targetType(ReportTargetType.REVIEW)
                 .targetId(1L)
-                .reason(ReportReason.ABUSE)
+                .reason(ReportReason.REVIEW_ABUSE)
                 .detail("욕설 포함")
                 .build();
         ReflectionTestUtils.setField(report, "id", 1L);
@@ -158,8 +158,8 @@ class AdminReportServiceTest {
             assertThat(response.reporterId()).isEqualTo(reporter.getId());
             assertThat(response.reporterNickname()).isEqualTo("신고자");
             assertThat(response.targetType()).isEqualTo(ReportTargetType.REVIEW);
-            assertThat(response.reason()).isEqualTo(ReportReason.ABUSE);
-            assertThat(response.reasonDescription()).isEqualTo("욕설/비방");
+            assertThat(response.reason()).isEqualTo(ReportReason.REVIEW_ABUSE);
+            assertThat(response.reasonDescription()).isEqualTo("욕설이나 비방이 심해요");
             assertThat(response.detail()).isEqualTo("욕설 포함");
             assertThat(response.status()).isEqualTo(ReportStatus.PENDING);
             assertThat(response.statusDescription()).isEqualTo("처리 대기");
