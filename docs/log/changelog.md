@@ -4,6 +4,27 @@
 
 ---
 
+## 2026-02-10
+
+### 수정
+- `src/main/java/com/gotcha/_global/filter/RateLimitFilter.java` - CodeRabbit 리뷰 반영
+  - 변경: waitTimeSeconds 계산 시 `Math.max(1, ...)` 적용 (최소 1초 보장)
+  - 변경: 나노초→초 변환 시 `TimeUnit.NANOSECONDS.toSeconds()` 사용 (가독성 개선)
+- `src/main/resources/logback-spring.xml` - CodeRabbit 리뷰 반영
+  - 변경: LOKI_URL 조건부 appender 적용 (`<if condition>` 추가)
+  - 변경: LOKI_URL이 빈 문자열일 때 appender 생성하지 않음 (불필요한 연결 시도 방지)
+  - 변경: message 패턴 → `JsonLayout` 클래스 사용 (JSON 특수문자 이스케이프 자동 처리)
+  - 변경: timestamp 타임존 UTC 명시 (`<timeZone>UTC</timeZone>`)
+  - 변경: dev/prod 프로파일에 ASYNC_LOKI 조건부 참조 추가
+- `src/main/resources/application.yml` - CodeRabbit 리뷰 반영
+  - 변경: `logging.loki.url` 기본값 제거 (`${LOKI_URL:}` 빈 문자열)
+  - 추가: `logging.loki.enabled` 설정 (`${LOKI_ENABLED:false}`)
+- `src/main/resources/application-local.yml` - 로컬 환경 Loki 설정 추가
+  - 추가: `logging.loki.url` 기본값 (`http://localhost:3100/loki/api/v1/push`)
+  - 추가: `logging.loki.enabled` 기본값 (`false`)
+
+---
+
 ## 2026-02-09
 
 ### 추가
