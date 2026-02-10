@@ -11,15 +11,23 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.gotcha._global.util.SecurityUtil;
 import com.gotcha.domain.auth.repository.RefreshTokenRepository;
 import com.gotcha.domain.auth.service.SocialUnlinkService;
+import com.gotcha.domain.chat.repository.ChatRepository;
+import com.gotcha.domain.chat.repository.ChatRoomRepository;
 import com.gotcha.domain.comment.repository.CommentRepository;
 import com.gotcha.domain.favorite.repository.FavoriteRepository;
 import com.gotcha.domain.file.service.FileStorageService;
+import com.gotcha.domain.inquiry.repository.InquiryRepository;
+import com.gotcha.domain.post.repository.PostCommentRepository;
+import com.gotcha.domain.post.repository.PostRepository;
 import com.gotcha.domain.review.entity.Review;
 import com.gotcha.domain.review.entity.ReviewImage;
 import com.gotcha.domain.review.repository.ReviewImageRepository;
 import com.gotcha.domain.review.repository.ReviewLikeRepository;
 import com.gotcha.domain.review.repository.ReviewRepository;
 import com.gotcha.domain.shop.entity.Shop;
+import com.gotcha.domain.shop.repository.ShopReportRepository;
+import com.gotcha.domain.shop.repository.ShopRepository;
+import com.gotcha.domain.shop.service.ShopService;
 import com.gotcha.domain.user.dto.UserResponse;
 import com.gotcha.domain.user.dto.WithdrawalRequest;
 import com.gotcha.domain.user.entity.SocialType;
@@ -79,6 +87,33 @@ class UserServiceTest {
 
     @Mock
     private SocialUnlinkService socialUnlinkService;
+
+    @Mock
+    private ShopRepository shopRepository;
+
+    @Mock
+    private ShopReportRepository shopReportRepository;
+
+    @Mock
+    private ShopService shopService;
+
+    @Mock
+    private ForbiddenWordService forbiddenWordService;
+
+    @Mock
+    private InquiryRepository inquiryRepository;
+
+    @Mock
+    private ChatRepository chatRepository;
+
+    @Mock
+    private ChatRoomRepository chatRoomRepository;
+
+    @Mock
+    private PostRepository postRepository;
+
+    @Mock
+    private PostCommentRepository postCommentRepository;
 
     @InjectMocks
     private UserService userService;
@@ -217,6 +252,8 @@ class UserServiceTest {
             when(securityUtil.getCurrentUserId()).thenReturn(testUser.getId());
             when(userRepository.findById(testUser.getId())).thenReturn(java.util.Optional.of(testUser));
             when(reviewRepository.findAllByUserId(testUser.getId())).thenReturn(Collections.emptyList());
+            when(chatRoomRepository.findAllByUserId(testUser.getId())).thenReturn(Collections.emptyList());
+            when(postRepository.findAllByUserId(testUser.getId())).thenReturn(Collections.emptyList());
             WithdrawalRequest request = new WithdrawalRequest(
                     List.of(WithdrawalReason.LOW_USAGE, WithdrawalReason.INSUFFICIENT_INFO),
                     "사용 빈도가 낮아서");
@@ -243,6 +280,11 @@ class UserServiceTest {
             verify(commentRepository).deleteByUserId(testUser.getId());
             verify(userPermissionRepository).deleteByUserId(testUser.getId());
             verify(refreshTokenRepository).deleteByUserId(testUser.getId());
+            verify(shopReportRepository).deleteByReporterId(testUser.getId());
+            verify(inquiryRepository).deleteByUserId(testUser.getId());
+            verify(postCommentRepository).clearParentByUserId(testUser.getId());
+            verify(postCommentRepository).deleteByUserId(testUser.getId());
+            verify(postRepository).deleteByUserId(testUser.getId());
 
             // then - soft delete 및 마스킹 검증
             assertThat(testUser.getIsDeleted()).isTrue();
@@ -260,6 +302,8 @@ class UserServiceTest {
             when(securityUtil.getCurrentUserId()).thenReturn(testUser.getId());
             when(userRepository.findById(testUser.getId())).thenReturn(java.util.Optional.of(testUser));
             when(reviewRepository.findAllByUserId(testUser.getId())).thenReturn(Collections.emptyList());
+            when(chatRoomRepository.findAllByUserId(testUser.getId())).thenReturn(Collections.emptyList());
+            when(postRepository.findAllByUserId(testUser.getId())).thenReturn(Collections.emptyList());
             WithdrawalRequest request = new WithdrawalRequest(List.of(WithdrawalReason.INSUFFICIENT_INFO), null);
 
             // when
@@ -321,6 +365,8 @@ class UserServiceTest {
             when(reviewRepository.findAllByUserId(testUser.getId())).thenReturn(List.of(mockReview));
             when(reviewImageRepository.findAllByReviewIdInOrderByReviewIdAscDisplayOrderAsc(List.of(100L)))
                     .thenReturn(List.of(mockImage1, mockImage2));
+            when(chatRoomRepository.findAllByUserId(testUser.getId())).thenReturn(Collections.emptyList());
+            when(postRepository.findAllByUserId(testUser.getId())).thenReturn(Collections.emptyList());
 
             WithdrawalRequest request = new WithdrawalRequest(List.of(WithdrawalReason.LOW_USAGE), null);
 

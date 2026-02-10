@@ -1,20 +1,24 @@
 package com.gotcha._global.config;
 
+import com.gotcha._global.filter.RateLimitFilter;
 import com.gotcha.domain.auth.jwt.JwtAuthenticationEntryPoint;
 import com.gotcha.domain.auth.jwt.JwtAuthenticationFilter;
 import com.gotcha.domain.auth.oauth2.CustomOAuth2UserService;
 import com.gotcha.domain.auth.oauth2.CustomOidcUserService;
-import com.gotcha.domain.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
+import com.gotcha.domain.auth.oauth2.InMemoryAuthorizationRequestRepository;
 import com.gotcha.domain.auth.oauth2.OAuth2AuthenticationFailureHandler;
 import com.gotcha.domain.auth.oauth2.OAuth2AuthenticationSuccessHandler;
+import com.gotcha.domain.auth.oauth2.apple.AppleOAuth2AuthorizationRequestResolver;
 import com.gotcha.domain.auth.oauth2.apple.AppleOAuth2TokenResponseClient;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -28,16 +32,19 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
+@EnableScheduling
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private final RateLimitFilter rateLimitFilter;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final CustomOidcUserService customOidcUserService;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
     private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
-    private final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
+    private final InMemoryAuthorizationRequestRepository inMemoryAuthorizationRequestRepository;
+    private final AppleOAuth2AuthorizationRequestResolver appleOAuth2AuthorizationRequestResolver;
     private final AppleOAuth2TokenResponseClient appleOAuth2TokenResponseClient;
 
     @Value("${cors.allowed-origins}")
@@ -100,7 +107,8 @@ public class SecurityConfig {
                 .oauth2Login(oauth2 -> oauth2
                         .authorizationEndpoint(authorization ->
                                 authorization.baseUri("/oauth2/authorize")
-                                        .authorizationRequestRepository(httpCookieOAuth2AuthorizationRequestRepository))
+                                        .authorizationRequestResolver(appleOAuth2AuthorizationRequestResolver)
+                                        .authorizationRequestRepository(inMemoryAuthorizationRequestRepository))
                         .redirectionEndpoint(redirection ->
                                 redirection.baseUri("/api/auth/callback/*"))
                         .tokenEndpoint(token ->
@@ -112,6 +120,7 @@ public class SecurityConfig {
                         .failureHandler(oAuth2AuthenticationFailureHandler)
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(rateLimitFilter, jwtAuthenticationFilter.getClass())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .build();
     }
@@ -140,8 +149,27 @@ public class SecurityConfig {
         configuration.setExposedHeaders(List.of("Authorization"));
         configuration.setMaxAge(3600L);  // preflight 캐시 1시간
 
+        // OAuth2 콜백 - Apple form_post는 Origin: https://appleid.apple.com으로 POST 요청
+        CorsConfiguration callbackConfig = new CorsConfiguration();
+        callbackConfig.addAllowedOrigin("https://appleid.apple.com");
+        callbackConfig.setAllowedMethods(List.of("GET", "POST"));
+        callbackConfig.setAllowedHeaders(List.of("*"));
+        callbackConfig.setAllowCredentials(false);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/auth/callback/*", callbackConfig);
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    /**
+     * RateLimitFilter의 서블릿 컨테이너 자동 등록을 비활성화합니다.
+     * Security Filter Chain에서만 실행되도록 하여 중복 실행을 방지합니다.
+     */
+    @Bean
+    public FilterRegistrationBean<RateLimitFilter> rateLimitFilterRegistration(RateLimitFilter filter) {
+        FilterRegistrationBean<RateLimitFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
     }
 }

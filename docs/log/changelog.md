@@ -4,6 +4,31 @@
 
 ---
 
+## 2026-02-10
+
+### 수정
+- `src/main/java/com/gotcha/_global/filter/RateLimitFilter.java` - CodeRabbit 리뷰 반영
+  - 변경: waitTimeSeconds 계산 시 `Math.max(1, ...)` 적용 (최소 1초 보장)
+  - 변경: 나노초→초 변환 시 `TimeUnit.NANOSECONDS.toSeconds()` 사용 (가독성 개선)
+- `src/main/resources/logback-spring.xml` - CodeRabbit 리뷰 반영
+  - 변경: LOKI_URL 조건부 appender 적용 (`<if condition>` 추가)
+  - 변경: LOKI_URL이 빈 문자열일 때 appender 생성하지 않음 (불필요한 연결 시도 방지)
+  - 변경: message 패턴 → `JsonLayout` 클래스 사용 (JSON 특수문자 이스케이프 자동 처리)
+  - 변경: timestamp 타임존 UTC 명시 (`<timeZone>UTC</timeZone>`)
+  - 변경: dev/prod 프로파일에 ASYNC_LOKI 조건부 참조 추가
+- `src/main/resources/application.yml` - CodeRabbit 리뷰 반영
+  - 변경: `logging.loki.url` 기본값 제거 (`${LOKI_URL:}` 빈 문자열)
+  - 추가: `logging.loki.enabled` 설정 (`${LOKI_ENABLED:false}`)
+- `src/main/resources/application-local.yml` - 로컬 환경 Loki 설정 추가
+  - 추가: `logging.loki.url` 기본값 (`http://localhost:3100/loki/api/v1/push`)
+  - 추가: `logging.loki.enabled` 기본값 (`false`)
+- `src/main/java/com/gotcha/_global/config/SecurityConfig.java` - RateLimitFilter 중복 실행 방지
+  - 추가: `FilterRegistrationBean<RateLimitFilter>` 빈 등록
+  - 변경: 서블릿 컨테이너 자동 등록 비활성화 (`registration.setEnabled(false)`)
+  - 효과: Security Filter Chain에서만 1회 실행 (기존 2회 → 1회)
+
+---
+
 ## 2026-02-09
 
 ### 추가
@@ -28,12 +53,26 @@
 - `src/test/java/com/gotcha/domain/report/repository/ReportRepositoryTest.java` - Repository 테스트
 - `src/test/java/com/gotcha/domain/report/service/ReportServiceTest.java` - Service 테스트
 - `src/test/java/com/gotcha/domain/report/service/AdminReportServiceTest.java` - AdminService 테스트
+- `src/main/java/com/gotcha/_global/config/RateLimitProperties.java` - Rate Limit 설정 Properties 클래스
+- `src/main/java/com/gotcha/_global/filter/RateLimitFilter.java` - Rate Limiting 필터 (Bucket4j 기반, IP당 60초/100요청)
+- `src/main/resources/logback-spring.xml` - Loki 로깅 설정 (프로파일별: local/dev/prod)
+- `build.gradle` - 라이브러리 추가
+  - 추가: com.bucket4j:bucket4j-core:8.10.1 (Rate Limiting)
+  - 추가: com.github.loki4j:loki-logback-appender:1.5.2 (Loki 로깅)
 
 ### 수정
-- `src/main/java/com/gotcha/_global/config/SecurityConfig.java` - 신고 API 인증 설정 추가
+- `src/main/java/com/gotcha/_global/config/SecurityConfig.java` - 신고 API 인증 설정 및 Rate Limit 필터 통합
+  - 추가: RateLimitFilter 의존성 주입
+  - 추가: addFilterBefore(rateLimitFilter, jwtAuthenticationFilter) 필터 체인 등록
 - `docs/entity-design.md` - reports 테이블 스키마 추가
 - `docs/api-spec.md` - 신고 API 및 관리자 API 명세 추가
 - `docs/error-codes.md` - RP 도메인 및 RP001-RP008 에러코드 추가
+- `src/main/resources/application.yml` - Rate Limit, Loki 설정 추가
+  - 추가: rate-limit.enabled, capacity, refill-tokens, refill-duration-seconds
+  - 추가: logging.loki.url
+- `.github/workflows/cicd-dev.yml` - LOKI_URL 환경변수 추가
+  - 추가: AWS SSM에서 /gotcha/dev/loki/url 파라미터 조회
+  - 추가: Docker run 시 LOKI_URL 환경변수 전달
 
 ### 삭제
 - `docs/api-design.md` - api-spec.md와 중복
