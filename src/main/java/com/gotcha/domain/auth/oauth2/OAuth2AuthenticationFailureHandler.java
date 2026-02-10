@@ -18,7 +18,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 @RequiredArgsConstructor
 public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationFailureHandler {
 
-    private final HttpCookieOAuth2AuthorizationRequestRepository cookieRepository;
+    private final InMemoryAuthorizationRequestRepository authorizationRequestRepository;
 
     @Value("${oauth2.redirect-uri:http://localhost:3000/oauth/callback}")
     private String defaultRedirectUri;
@@ -31,11 +31,10 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
         AuthErrorCode errorCode = resolveErrorCode(exception);
 
         // 프론트엔드에서 전달한 redirect_uri 사용, 없으면 기본값 사용
-        String redirectUri = cookieRepository.getRedirectUriFromCookie(request);
+        String redirectUri = authorizationRequestRepository.getRedirectUri(request);
         if (redirectUri == null || redirectUri.isBlank()) {
             redirectUri = defaultRedirectUri;
         }
-        cookieRepository.removeRedirectUriCookie(response);
 
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
                 .queryParam("error", errorCode.getCode())

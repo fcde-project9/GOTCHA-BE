@@ -420,10 +420,10 @@ Authorization: Bearer {accessToken}
     "reviewCount": 42,
     "totalReviewImageCount": 25,
     "recentReviewImages": [
-      "https://storage.googleapis.com/.../image1.jpg",
-      "https://storage.googleapis.com/.../image2.jpg",
-      "https://storage.googleapis.com/.../image3.jpg",
-      "https://storage.googleapis.com/.../image4.jpg"
+      "https://s3.ap-northeast-2.amazonaws.com/.../image1.jpg",
+      "https://s3.ap-northeast-2.amazonaws.com/.../image2.jpg",
+      "https://s3.ap-northeast-2.amazonaws.com/.../image3.jpg",
+      "https://s3.ap-northeast-2.amazonaws.com/.../image4.jpg"
     ]
   }
 }
@@ -681,8 +681,8 @@ Authorization: Bearer {accessToken}
         "id": 1,
         "content": "원하는 캐릭터 뽑았어요!",
         "imageUrls": [
-          "https://storage.googleapis.com/.../image1.jpg",
-          "https://storage.googleapis.com/.../image2.jpg"
+          "https://s3.ap-northeast-2.amazonaws.com/.../image1.jpg",
+          "https://s3.ap-northeast-2.amazonaws.com/.../image2.jpg"
         ],
         "author": {
           "id": 1,
@@ -717,8 +717,8 @@ Authorization: Bearer {accessToken}
 {
   "content": "원하는 캐릭터 뽑았어요!",
   "imageUrls": [
-    "https://storage.googleapis.com/.../image1.jpg",
-    "https://storage.googleapis.com/.../image2.jpg"
+    "https://s3.ap-northeast-2.amazonaws.com/.../image1.jpg",
+    "https://s3.ap-northeast-2.amazonaws.com/.../image2.jpg"
   ]
 }
 ```
@@ -737,8 +737,8 @@ Authorization: Bearer {accessToken}
     "id": 1,
     "content": "원하는 캐릭터 뽑았어요!",
     "imageUrls": [
-      "https://storage.googleapis.com/.../image1.jpg",
-      "https://storage.googleapis.com/.../image2.jpg"
+      "https://s3.ap-northeast-2.amazonaws.com/.../image1.jpg",
+      "https://s3.ap-northeast-2.amazonaws.com/.../image2.jpg"
     ],
     "author": {
       "id": 1,
@@ -767,8 +767,8 @@ Authorization: Bearer {accessToken}
 {
   "content": "수정된 리뷰 내용입니다!",
   "imageUrls": [
-    "https://storage.googleapis.com/.../new-image1.jpg",
-    "https://storage.googleapis.com/.../new-image2.jpg"
+    "https://s3.ap-northeast-2.amazonaws.com/.../new-image1.jpg",
+    "https://s3.ap-northeast-2.amazonaws.com/.../new-image2.jpg"
   ]
 }
 ```
@@ -787,8 +787,8 @@ Authorization: Bearer {accessToken}
     "id": 1,
     "content": "수정된 리뷰 내용입니다!",
     "imageUrls": [
-      "https://storage.googleapis.com/.../new-image1.jpg",
-      "https://storage.googleapis.com/.../new-image2.jpg"
+      "https://s3.ap-northeast-2.amazonaws.com/.../new-image1.jpg",
+      "https://s3.ap-northeast-2.amazonaws.com/.../new-image2.jpg"
     ],
     "author": {
       "id": 1,
@@ -855,9 +855,9 @@ Authorization: Bearer {accessToken}
   "data": {
     "totalCount": 25,
     "imageUrls": [
-      "https://storage.googleapis.com/.../image1.jpg",
-      "https://storage.googleapis.com/.../image2.jpg",
-      "https://storage.googleapis.com/.../image3.jpg"
+      "https://s3.ap-northeast-2.amazonaws.com/.../image1.jpg",
+      "https://s3.ap-northeast-2.amazonaws.com/.../image2.jpg",
+      "https://s3.ap-northeast-2.amazonaws.com/.../image3.jpg"
     ]
   }
 }
@@ -895,7 +895,8 @@ Authorization: Bearer {accessToken}
     "nickname": "빨간캡슐#21",
     "email": "user@example.com",
     "profileImageUrl": null,
-    "socialType": "KAKAO"
+    "socialType": "KAKAO",
+    "userType": "NORMAL"
   }
 }
 ```
@@ -953,14 +954,14 @@ Authorization: Bearer {accessToken}
 **Request Body**
 ```json
 {
-  "profileImageUrl": "https://storage.googleapis.com/gotcha-dev-files/profiles/abc-123.webp"
+  "profileImageUrl": "https://s3.ap-northeast-2.amazonaws.com/gotcha-dev-files/profiles/abc-123.webp"
 }
 ```
 
 **Validation**
 | 필드 | 규칙 |
 |------|------|
-| profileImageUrl | 필수, GCS URL 형식 (https://storage.googleapis.com/...) |
+| profileImageUrl | 필수, S3 URL 형식 (https://{bucket}.s3.{region}.amazonaws.com/...) |
 
 **Response (200)**
 ```json
@@ -970,8 +971,9 @@ Authorization: Bearer {accessToken}
     "id": 1,
     "nickname": "빨간캡슐#21",
     "email": "user@example.com",
-    "profileImageUrl": "https://storage.googleapis.com/gotcha-dev-files/profiles/abc-123.webp",
-    "socialType": "KAKAO"
+    "profileImageUrl": "https://s3.ap-northeast-2.amazonaws.com/gotcha-dev-files/profiles/abc-123.webp",
+    "socialType": "KAKAO",
+    "userType": "NORMAL"
   }
 }
 ```
@@ -984,7 +986,7 @@ Authorization: Bearer {accessToken}
 
 **참고**
 - 먼저 `/api/files/upload`로 이미지를 업로드한 후 반환된 URL 사용
-- 기존 커스텀 이미지는 GCS에서 자동 삭제됨
+- 기존 커스텀 이미지는 S3에서 자동 삭제됨
 - 기본 프로필 이미지는 삭제되지 않음 (공유 리소스)
 
 ---
@@ -1009,8 +1011,9 @@ Authorization: Bearer {accessToken}
     "id": 1,
     "nickname": "빨간캡슐#21",
     "email": "user@example.com",
-    "profileImageUrl": "https://storage.googleapis.com/gotcha-dev-files/defaults/profile-default-join.png",
-    "socialType": "KAKAO"
+    "profileImageUrl": "https://s3.ap-northeast-2.amazonaws.com/gotcha-dev-files/defaults/profile-default-join.png",
+    "socialType": "KAKAO",
+    "userType": "NORMAL"
   }
 }
 ```
@@ -1022,7 +1025,7 @@ Authorization: Bearer {accessToken}
 
 **참고**
 - 프로필 이미지를 삭제하고 자동으로 기본 프로필 이미지로 복구
-- 기존 커스텀 이미지는 GCS에서 자동 삭제됨
+- 기존 커스텀 이미지는 S3에서 자동 삭제됨
 - 기본 프로필 이미지를 사용 중인 경우 변화 없음
 
 ---
@@ -1128,7 +1131,7 @@ Authorization: Bearer {accessToken}
 
 ### POST /files/upload
 
-이미지 파일을 Google Cloud Storage에 업로드
+이미지 파일을 AWS S3에 업로드
 
 **Headers**
 ```
@@ -1144,7 +1147,7 @@ Content-Type: multipart/form-data
 
 **Validation**
 - 허용 형식: jpg, jpeg, png, webp, heic, heif
-- 최대 크기: 20MB
+- 최대 크기: 50MB
 - 허용 폴더: reviews, shops, profiles
 
 **Response (201)**
@@ -1152,7 +1155,7 @@ Content-Type: multipart/form-data
 {
   "success": true,
   "data": {
-    "url": "https://storage.googleapis.com/gotcha-bucket/reviews/abc123-def456.jpg",
+    "url": "https://s3.ap-northeast-2.amazonaws.com/gotcha-bucket/reviews/abc123-def456.jpg",
     "originalFilename": "my-photo.jpg",
     "size": 1024000,
     "contentType": "image/jpeg"
@@ -1163,10 +1166,11 @@ Content-Type: multipart/form-data
 **Error Responses**
 | 코드 | 상황 |
 |------|------|
-| I001 | 지원하지 않는 파일 형식 |
-| I002 | 파일 크기 초과 (20MB) |
-| I003 | 파일 업로드 실패 |
-| I004 | 잘못된 폴더명 |
+| FL001 | 파일이 비어있습니다 |
+| FL002 | 파일 크기 초과 (50MB) |
+| FL003 | 지원하지 않는 파일 형식 |
+| FL004 | 파일 업로드 실패 |
+| FL005 | 잘못된 폴더명 |
 
 **사용 예시**
 ```bash

@@ -36,6 +36,7 @@ dependencies {
 	implementation 'software.amazon.awssdk:s3:2.41.4'
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.4'
 	implementation 'com.github.ben-manes.caffeine:caffeine'
+	implementation 'com.bucket4j:bucket4j_jdk17-core:8.16.1'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'org.postgresql:postgresql:42.7.7'
 	annotationProcessor 'org.projectlombok:lombok'
@@ -47,6 +48,10 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'io.micrometer:micrometer-registry-prometheus'
+	// Loki logging
+	implementation 'com.github.loki4j:loki-logback-appender:2.0.3'
+	// Logback conditional (for <if> in logback-spring.xml)
+	implementation 'org.codehaus.janino:janino'
 }
 
 tasks.named('test') {

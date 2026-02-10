@@ -44,7 +44,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
     private OAuthTokenCookieService oAuthTokenCacheService;
 
     @Mock
-    private HttpCookieOAuth2AuthorizationRequestRepository cookieRepository;
+    private InMemoryAuthorizationRequestRepository authorizationRequestRepository;
 
     @Mock
     private Authentication authentication;
@@ -249,7 +249,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
             given(jwtTokenProvider.generateRefreshToken(any(User.class))).willReturn("refresh-token");
             given(oAuthTokenCacheService.encryptTokens(eq("access-token"), eq("refresh-token"), eq(true)))
                     .willReturn(tempCode);
-            given(cookieRepository.getRedirectUriFromCookie(request)).willReturn(customRedirectUri);
+            given(authorizationRequestRepository.getRedirectUri(request)).willReturn(customRedirectUri);
 
             // when
             successHandler.onAuthenticationSuccess(request, response, authentication);
@@ -259,7 +259,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
             assertThat(redirectUrl).startsWith(customRedirectUri);
             assertThat(redirectUrl).contains("code=" + tempCode);
             assertThat(redirectUrl).doesNotContain("accessToken=");
-            verify(cookieRepository).removeRedirectUriCookie(response);
+
         }
 
         @Test
@@ -275,7 +275,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
             given(jwtTokenProvider.generateRefreshToken(any(User.class))).willReturn("refresh-token");
             given(oAuthTokenCacheService.encryptTokens(eq("access-token"), eq("refresh-token"), eq(true)))
                     .willReturn(tempCode);
-            given(cookieRepository.getRedirectUriFromCookie(request)).willReturn(null);
+            given(authorizationRequestRepository.getRedirectUri(request)).willReturn(null);
 
             // when
             successHandler.onAuthenticationSuccess(request, response, authentication);
@@ -284,7 +284,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
             String redirectUrl = response.getRedirectedUrl();
             assertThat(redirectUrl).startsWith("http://localhost:3000/oauth/callback");
             assertThat(redirectUrl).contains("code=" + tempCode);
-            verify(cookieRepository).removeRedirectUriCookie(response);
+
         }
 
         @Test
@@ -300,7 +300,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
             given(jwtTokenProvider.generateRefreshToken(any(User.class))).willReturn("refresh-token");
             given(oAuthTokenCacheService.encryptTokens(eq("access-token"), eq("refresh-token"), eq(true)))
                     .willReturn(tempCode);
-            given(cookieRepository.getRedirectUriFromCookie(request)).willReturn("   ");
+            given(authorizationRequestRepository.getRedirectUri(request)).willReturn("   ");
 
             // when
             successHandler.onAuthenticationSuccess(request, response, authentication);
