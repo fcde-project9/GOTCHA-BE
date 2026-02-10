@@ -36,11 +36,11 @@ class OAuth2AuthenticationFailureHandlerTest {
     private RedirectStrategy redirectStrategy;
 
     @Mock
-    private HttpCookieOAuth2AuthorizationRequestRepository cookieRepository;
+    private InMemoryAuthorizationRequestRepository authorizationRequestRepository;
 
     @BeforeEach
     void setUp() {
-        handler = new OAuth2AuthenticationFailureHandler(cookieRepository);
+        handler = new OAuth2AuthenticationFailureHandler(authorizationRequestRepository);
         ReflectionTestUtils.setField(handler, "defaultRedirectUri", "http://localhost:3000/oauth/callback");
         handler.setRedirectStrategy(redirectStrategy);
     }
