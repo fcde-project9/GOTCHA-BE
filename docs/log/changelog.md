@@ -6,6 +6,35 @@
 
 ## 2026-02-09
 
+### 추가
+- `src/main/java/com/gotcha/domain/report/entity/Report.java` - 신고 Entity (reporter, targetType, targetId, reason, detail, status)
+- `src/main/java/com/gotcha/domain/report/entity/ReportTargetType.java` - 신고 대상 타입 Enum (REVIEW, USER)
+- `src/main/java/com/gotcha/domain/report/entity/ReportReason.java` - 신고 사유 Enum (ABUSE, OBSCENE, SPAM, PRIVACY, OTHER)
+- `src/main/java/com/gotcha/domain/report/entity/ReportStatus.java` - 신고 상태 Enum (PENDING, ACCEPTED, REJECTED, CANCELLED)
+- `src/main/java/com/gotcha/domain/report/exception/ReportErrorCode.java` - 신고 에러코드 (RP001-RP008)
+- `src/main/java/com/gotcha/domain/report/exception/ReportException.java` - 신고 예외 클래스
+- `src/main/java/com/gotcha/domain/report/repository/ReportRepository.java` - 신고 Repository (중복 체크, 필터링 쿼리)
+- `src/main/java/com/gotcha/domain/report/dto/CreateReportRequest.java` - 신고 생성 Request DTO
+- `src/main/java/com/gotcha/domain/report/dto/UpdateReportStatusRequest.java` - 신고 상태 변경 Request DTO
+- `src/main/java/com/gotcha/domain/report/dto/ReportResponse.java` - 신고 응답 DTO
+- `src/main/java/com/gotcha/domain/report/dto/ReportDetailResponse.java` - 신고 상세 응답 DTO (관리자용)
+- `src/main/java/com/gotcha/domain/report/dto/AdminReportListResponse.java` - 관리자용 신고 목록 응답 DTO
+- `src/main/java/com/gotcha/domain/report/service/ReportService.java` - 신고 Service (생성, 취소, 목록)
+- `src/main/java/com/gotcha/domain/report/service/AdminReportService.java` - 관리자용 신고 Service (조회, 상태변경)
+- `src/main/java/com/gotcha/domain/report/controller/ReportController.java` - 일반 사용자 신고 API
+- `src/main/java/com/gotcha/domain/report/controller/ReportControllerApi.java` - 일반 사용자 신고 API Swagger 인터페이스
+- `src/main/java/com/gotcha/domain/report/controller/AdminReportController.java` - 관리자 신고 API
+- `src/main/java/com/gotcha/domain/report/controller/AdminReportControllerApi.java` - 관리자 신고 API Swagger 인터페이스
+- `src/test/java/com/gotcha/domain/report/repository/ReportRepositoryTest.java` - Repository 테스트
+- `src/test/java/com/gotcha/domain/report/service/ReportServiceTest.java` - Service 테스트
+- `src/test/java/com/gotcha/domain/report/service/AdminReportServiceTest.java` - AdminService 테스트
+
+### 수정
+- `src/main/java/com/gotcha/_global/config/SecurityConfig.java` - 신고 API 인증 설정 추가
+- `docs/entity-design.md` - reports 테이블 스키마 추가
+- `docs/api-spec.md` - 신고 API 및 관리자 API 명세 추가
+- `docs/error-codes.md` - RP 도메인 및 RP001-RP008 에러코드 추가
+
 ### 삭제
 - `docs/api-design.md` - api-spec.md와 중복
 - `docs/decisions.md` - architecture.md에 동일 내용 포함

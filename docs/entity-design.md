@@ -2,7 +2,7 @@
 
 ## 개요
 
-- **MVP (V1)**: users, refresh_tokens, shops, shop_reports, favorites, comments, reviews, withdrawal_surveys
+- **MVP (V1)**: users, refresh_tokens, shops, shop_reports, favorites, comments, reviews, withdrawal_surveys, reports
 - **V2**: post_types, posts, post_comments, chat_rooms, chats, inquiries
 
 ---
@@ -209,6 +209,51 @@
 | created_at, updated_at | LocalDateTime | BaseTimeEntity |
 
 - UNIQUE(user_id, permission_type): 중복 방지
+
+---
+
+## reports
+
+리뷰/유저 신고
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | Long (PK) | AUTO_INCREMENT |
+| reporter_id | Long (FK → users) | 신고자 |
+| target_type | Enum | REVIEW, USER |
+| target_id | Long | 신고 대상 ID (리뷰 ID 또는 유저 ID) |
+| reason | Enum | ABUSE, OBSCENE, SPAM, PRIVACY, OTHER |
+| detail | String (TEXT) | 상세 내용 (OTHER 선택 시 필수) |
+| status | Enum | PENDING, ACCEPTED, REJECTED, CANCELLED |
+| created_at, updated_at | LocalDateTime | BaseTimeEntity |
+
+- UNIQUE(reporter_id, target_type, target_id): 동일 대상 중복 신고 방지
+
+### ReportTargetType (Enum)
+
+| 값 | 설명 |
+|----|------|
+| REVIEW | 리뷰 신고 |
+| USER | 유저 신고 |
+
+### ReportReason (Enum)
+
+| 값 | 설명 |
+|----|------|
+| ABUSE | 욕설/비방 |
+| OBSCENE | 음란물 |
+| SPAM | 광고/스팸 |
+| PRIVACY | 개인정보 노출 |
+| OTHER | 기타 (detail 필수) |
+
+### ReportStatus (Enum)
+
+| 값 | 설명 |
+|----|------|
+| PENDING | 처리 대기 |
+| ACCEPTED | 승인 |
+| REJECTED | 반려 |
+| CANCELLED | 취소 (신고자가 취소) |
 
 ---
 

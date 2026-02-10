@@ -1183,3 +1183,273 @@ curl -X POST /api/files/upload \
 **참고**
 - 상세한 사용법은 `docs/file-upload-guide.md` 참고
 - 업로드된 URL을 리뷰/가게 API에 전달하여 사용
+
+---
+
+## 신고 API
+
+### POST /reports
+
+리뷰 또는 유저 신고
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Request Body**
+```json
+{
+  "targetType": "REVIEW",
+  "targetId": 1,
+  "reason": "ABUSE",
+  "detail": "욕설이 포함되어 있습니다"
+}
+```
+
+**targetType 값**
+| 값 | 설명 |
+|---|------|
+| REVIEW | 리뷰 신고 |
+| USER | 유저 신고 |
+
+**reason 값**
+| 값 | 설명 |
+|---|------|
+| ABUSE | 욕설/비방 |
+| OBSCENE | 음란물 |
+| SPAM | 광고/스팸 |
+| PRIVACY | 개인정보 노출 |
+| OTHER | 기타 (detail 필수) |
+
+**Validation**
+| 필드 | 규칙 |
+|------|------|
+| targetType | 필수 |
+| targetId | 필수 |
+| reason | 필수 |
+| detail | reason이 OTHER일 때 필수 |
+
+**Response (201)**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "targetType": "REVIEW",
+    "targetId": 1,
+    "reason": "ABUSE",
+    "detail": "욕설이 포함되어 있습니다",
+    "status": "PENDING",
+    "createdAt": "2025-01-08T12:00:00"
+  }
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| RP002 | 이미 신고한 대상 |
+| RP003 | 신고 대상을 찾을 수 없음 |
+| RP004 | 본인을 신고할 수 없음 |
+| RP005 | 기타 사유 선택 시 상세 내용 필수 |
+
+---
+
+### GET /users/me/reports
+
+본인 신고 목록 조회
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "targetType": "REVIEW",
+      "targetId": 1,
+      "reason": "ABUSE",
+      "detail": "욕설이 포함되어 있습니다",
+      "status": "PENDING",
+      "createdAt": "2025-01-08T12:00:00"
+    }
+  ]
+}
+```
+
+---
+
+### DELETE /reports/{reportId}
+
+신고 취소 (PENDING 상태에서만 가능)
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": null
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| RP001 | 신고를 찾을 수 없음 |
+| RP006 | 본인의 신고만 취소 가능 |
+| RP007 | 이미 처리된 신고는 취소 불가 |
+
+---
+
+## 관리자 API
+
+### GET /admin/reports
+
+신고 목록 조회 (관리자)
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Query Parameters**
+| 파라미터 | 타입 | 필수 | 기본값 | 설명 |
+|---------|------|------|--------|------|
+| targetType | String | X | - | REVIEW, USER |
+| status | String | X | - | PENDING, ACCEPTED, REJECTED, CANCELLED |
+| page | Integer | X | 0 | |
+| size | Integer | X | 20 | |
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "reports": [
+      {
+        "id": 1,
+        "reporterId": 1,
+        "reporterNickname": "신고자#21",
+        "targetType": "REVIEW",
+        "targetId": 1,
+        "reason": "ABUSE",
+        "reasonDescription": "욕설/비방",
+        "detail": "욕설이 포함되어 있습니다",
+        "status": "PENDING",
+        "statusDescription": "처리 대기",
+        "createdAt": "2025-01-08T12:00:00",
+        "updatedAt": "2025-01-08T12:00:00"
+      }
+    ],
+    "page": 0,
+    "size": 20,
+    "totalElements": 100,
+    "totalPages": 5,
+    "last": false
+  }
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| A002 | 관리자 권한 필요 |
+
+---
+
+### GET /admin/reports/{reportId}
+
+신고 상세 조회 (관리자)
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "reporterId": 1,
+    "reporterNickname": "신고자#21",
+    "targetType": "REVIEW",
+    "targetId": 1,
+    "reason": "ABUSE",
+    "reasonDescription": "욕설/비방",
+    "detail": "욕설이 포함되어 있습니다",
+    "status": "PENDING",
+    "statusDescription": "처리 대기",
+    "createdAt": "2025-01-08T12:00:00",
+    "updatedAt": "2025-01-08T12:00:00"
+  }
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| RP001 | 신고를 찾을 수 없음 |
+| A002 | 관리자 권한 필요 |
+
+---
+
+### PATCH /admin/reports/{reportId}/status
+
+신고 상태 변경 (관리자)
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Request Body**
+```json
+{
+  "status": "ACCEPTED"
+}
+```
+
+**status 값**
+| 값 | 설명 |
+|---|------|
+| ACCEPTED | 승인 |
+| REJECTED | 반려 |
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "reporterId": 1,
+    "reporterNickname": "신고자#21",
+    "targetType": "REVIEW",
+    "targetId": 1,
+    "reason": "ABUSE",
+    "reasonDescription": "욕설/비방",
+    "detail": "욕설이 포함되어 있습니다",
+    "status": "ACCEPTED",
+    "statusDescription": "승인",
+    "createdAt": "2025-01-08T12:00:00",
+    "updatedAt": "2025-01-08T14:00:00"
+  }
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| RP001 | 신고를 찾을 수 없음 |
+| A002 | 관리자 권한 필요 |
