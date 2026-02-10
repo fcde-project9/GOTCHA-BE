@@ -21,7 +21,6 @@ import org.springframework.stereotype.Component;
  * 쿠키 기반 저장소의 한계(Apple form_post에서 브라우저가 cross-site 쿠키 차단)를 해결하기 위해
  * ConcurrentHashMap에 state를 키로 인가 요청을 저장합니다.
  */
-// [AI:unreviewed]
 @Slf4j
 @Component
 public class InMemoryAuthorizationRequestRepository
@@ -35,8 +34,7 @@ public class InMemoryAuthorizationRequestRepository
     @Value("${oauth2.allowed-redirect-uris:http://localhost:3000/oauth/callback}")
     private String allowedRedirectUrisString;
 
-    // [AI:unreviewed]
-    @Override
+        @Override
     public OAuth2AuthorizationRequest loadAuthorizationRequest(HttpServletRequest request) {
         String state = request.getParameter("state");
         if (state == null) {
@@ -59,8 +57,7 @@ public class InMemoryAuthorizationRequestRepository
         return stored.authorizationRequest();
     }
 
-    // [AI:unreviewed]
-    @Override
+        @Override
     public void saveAuthorizationRequest(OAuth2AuthorizationRequest authorizationRequest,
                                          HttpServletRequest request, HttpServletResponse response) {
         if (authorizationRequest == null) {
@@ -82,8 +79,7 @@ public class InMemoryAuthorizationRequestRepository
         log.debug("Saved authorization request with state: {}", state);
     }
 
-    // [AI:unreviewed]
-    @Override
+        @Override
     public OAuth2AuthorizationRequest removeAuthorizationRequest(HttpServletRequest request,
                                                                   HttpServletResponse response) {
         String state = request.getParameter("state");
@@ -108,8 +104,7 @@ public class InMemoryAuthorizationRequestRepository
     /**
      * 콜백 시 저장된 redirect_uri를 조회 (state 파라미터 기반)
      */
-    // [AI:unreviewed]
-    public String getRedirectUri(HttpServletRequest request) {
+        public String getRedirectUri(HttpServletRequest request) {
         String state = request.getParameter("state");
         if (state == null) {
             return null;
@@ -126,8 +121,7 @@ public class InMemoryAuthorizationRequestRepository
     /**
      * redirect_uri가 화이트리스트에 포함되어 있는지 검증
      */
-    // [AI:unreviewed]
-    boolean isValidRedirectUri(String redirectUri) {
+        boolean isValidRedirectUri(String redirectUri) {
         if (redirectUri == null || redirectUri.isBlank()) {
             return false;
         }
@@ -138,8 +132,7 @@ public class InMemoryAuthorizationRequestRepository
     /**
      * 만료된 항목을 주기적으로 정리 (60초마다)
      */
-    // [AI:unreviewed]
-    @Scheduled(fixedRate = 60_000)
+        @Scheduled(fixedRate = 60_000)
     public void evictExpiredEntries() {
         int before = store.size();
         Iterator<Map.Entry<String, StoredRequest>> it = store.entrySet().iterator();
