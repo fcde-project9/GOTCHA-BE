@@ -22,6 +22,10 @@
 - `src/main/resources/application-local.yml` - 로컬 환경 Loki 설정 추가
   - 추가: `logging.loki.url` 기본값 (`http://localhost:3100/loki/api/v1/push`)
   - 추가: `logging.loki.enabled` 기본값 (`false`)
+- `src/main/java/com/gotcha/_global/config/SecurityConfig.java` - RateLimitFilter 중복 실행 방지
+  - 추가: `FilterRegistrationBean<RateLimitFilter>` 빈 등록
+  - 변경: 서블릿 컨테이너 자동 등록 비활성화 (`registration.setEnabled(false)`)
+  - 효과: Security Filter Chain에서만 1회 실행 (기존 2회 → 1회)
 
 ---
 
