@@ -79,19 +79,21 @@ public class InMemoryAuthorizationRequestRepository
         String redirectUri = resolveRedirectUri(request);
 
         store.put(state, new StoredRequest(authorizationRequest, redirectUri, Instant.now()));
-        log.debug("Saved authorization request with state: {}", state);
+        log.info("Saved authorization request with state: {}, storeSize: {}", state, store.size());
     }
 
         @Override
     public OAuth2AuthorizationRequest removeAuthorizationRequest(HttpServletRequest request,
                                                                   HttpServletResponse response) {
         String state = request.getParameter("state");
+        log.info("removeAuthorizationRequest called - state: {}, storeSize: {}", state, store.size());
         if (state == null) {
             return null;
         }
 
         StoredRequest stored = store.remove(state);
         if (stored == null) {
+            log.info("No authorization request found in store for state: {}, storeKeys: {}", state, store.keySet());
             return null;
         }
 
