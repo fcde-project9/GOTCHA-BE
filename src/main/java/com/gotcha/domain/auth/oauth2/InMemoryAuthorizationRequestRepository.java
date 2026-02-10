@@ -70,6 +70,9 @@ public class InMemoryAuthorizationRequestRepository
 
         if (store.size() >= MAX_ENTRIES) {
             evictExpiredEntries();
+            if (store.size() >= MAX_ENTRIES) {
+                log.warn("Authorization request store is full ({} entries)", store.size());
+            }
         }
 
         String state = authorizationRequest.getState();
@@ -97,6 +100,11 @@ public class InMemoryAuthorizationRequestRepository
             return null;
         }
 
+        // 핸들러에서 redirect_uri를 조회할 수 있도록 request attribute에 저장
+        if (stored.redirectUri() != null) {
+            request.setAttribute("oauth2_redirect_uri", stored.redirectUri());
+        }
+
         log.debug("Removed authorization request with state: {}", state);
         return stored.authorizationRequest();
     }
@@ -105,6 +113,12 @@ public class InMemoryAuthorizationRequestRepository
      * 콜백 시 저장된 redirect_uri를 조회 (state 파라미터 기반)
      */
         public String getRedirectUri(HttpServletRequest request) {
+        // removeAuthorizationRequest에서 저장한 attribute 우선 조회
+        String attrUri = (String) request.getAttribute("oauth2_redirect_uri");
+        if (attrUri != null) {
+            return attrUri;
+        }
+
         String state = request.getParameter("state");
         if (state == null) {
             return null;
