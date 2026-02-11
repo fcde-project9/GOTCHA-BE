@@ -213,6 +213,44 @@ class AdminReportServiceTest {
         }
 
         @Test
+        @DisplayName("이미 처리된 신고 상태 변경 시 실패")
+        void updateStatus_AlreadyProcessed_Fail() {
+            // given
+            report.updateStatus(ReportStatus.ACCEPTED);
+            UpdateReportStatusRequest request = new UpdateReportStatusRequest(ReportStatus.REJECTED);
+            when(reportRepository.findByIdWithReporter(1L)).thenReturn(Optional.of(report));
+
+            // when & then
+            assertThatThrownBy(() -> adminReportService.updateReportStatus(1L, request))
+                    .isInstanceOf(ReportException.class)
+                    .hasMessageContaining("이미 처리된 신고는 취소할 수 없습니다");
+        }
+
+        @Test
+        @DisplayName("허용되지 않는 상태(PENDING)로 변경 시 실패")
+        void updateStatus_InvalidStatus_Pending_Fail() {
+            // given
+            UpdateReportStatusRequest request = new UpdateReportStatusRequest(ReportStatus.PENDING);
+
+            // when & then
+            assertThatThrownBy(() -> adminReportService.updateReportStatus(1L, request))
+                    .isInstanceOf(ReportException.class)
+                    .hasMessageContaining("허용되지 않는 상태 변경입니다");
+        }
+
+        @Test
+        @DisplayName("허용되지 않는 상태(CANCELLED)로 변경 시 실패")
+        void updateStatus_InvalidStatus_Cancelled_Fail() {
+            // given
+            UpdateReportStatusRequest request = new UpdateReportStatusRequest(ReportStatus.CANCELLED);
+
+            // when & then
+            assertThatThrownBy(() -> adminReportService.updateReportStatus(1L, request))
+                    .isInstanceOf(ReportException.class)
+                    .hasMessageContaining("허용되지 않는 상태 변경입니다");
+        }
+
+        @Test
         @DisplayName("존재하지 않는 신고 상태 변경 시 실패")
         void updateStatus_NotFound_Fail() {
             // given

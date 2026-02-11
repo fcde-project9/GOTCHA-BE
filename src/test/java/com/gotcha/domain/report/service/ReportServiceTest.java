@@ -111,8 +111,11 @@ class ReportServiceTest {
 
             when(securityUtil.getCurrentUser()).thenReturn(reporter);
             when(reviewRepository.findById(review.getId())).thenReturn(Optional.of(review));
-            when(reportRepository.existsByReporterIdAndTargetTypeAndTargetId(
-                    reporter.getId(), ReportTargetType.REVIEW, review.getId())).thenReturn(false);
+            when(reportRepository.existsByReporterIdAndTargetTypeAndTargetIdAndStatusNot(
+                    reporter.getId(), ReportTargetType.REVIEW, review.getId(), ReportStatus.CANCELLED)).thenReturn(false);
+            when(reportRepository.findByReporterIdAndTargetTypeAndTargetIdAndStatus(
+                    reporter.getId(), ReportTargetType.REVIEW, review.getId(), ReportStatus.CANCELLED))
+                    .thenReturn(Optional.empty());
             when(reportRepository.save(any(Report.class))).thenAnswer(invocation -> {
                 Report saved = invocation.getArgument(0);
                 ReflectionTestUtils.setField(saved, "id", 1L);
@@ -147,8 +150,11 @@ class ReportServiceTest {
 
             when(securityUtil.getCurrentUser()).thenReturn(reporter);
             when(userRepository.existsById(targetUser.getId())).thenReturn(true);
-            when(reportRepository.existsByReporterIdAndTargetTypeAndTargetId(
-                    reporter.getId(), ReportTargetType.USER, targetUser.getId())).thenReturn(false);
+            when(reportRepository.existsByReporterIdAndTargetTypeAndTargetIdAndStatusNot(
+                    reporter.getId(), ReportTargetType.USER, targetUser.getId(), ReportStatus.CANCELLED)).thenReturn(false);
+            when(reportRepository.findByReporterIdAndTargetTypeAndTargetIdAndStatus(
+                    reporter.getId(), ReportTargetType.USER, targetUser.getId(), ReportStatus.CANCELLED))
+                    .thenReturn(Optional.empty());
             when(reportRepository.save(any(Report.class))).thenAnswer(invocation -> {
                 Report saved = invocation.getArgument(0);
                 ReflectionTestUtils.setField(saved, "id", 1L);
@@ -260,8 +266,8 @@ class ReportServiceTest {
 
             when(securityUtil.getCurrentUser()).thenReturn(reporter);
             when(reviewRepository.findById(review.getId())).thenReturn(Optional.of(review));
-            when(reportRepository.existsByReporterIdAndTargetTypeAndTargetId(
-                    reporter.getId(), ReportTargetType.REVIEW, review.getId())).thenReturn(true);
+            when(reportRepository.existsByReporterIdAndTargetTypeAndTargetIdAndStatusNot(
+                    reporter.getId(), ReportTargetType.REVIEW, review.getId(), ReportStatus.CANCELLED)).thenReturn(true);
 
             // when & then
             assertThatThrownBy(() -> reportService.createReport(request))
@@ -287,6 +293,116 @@ class ReportServiceTest {
             assertThatThrownBy(() -> reportService.createReport(request))
                     .isInstanceOf(ReportException.class)
                     .hasMessageContaining("신고 대상을 찾을 수 없습니다");
+        }
+
+        @Test
+        @DisplayName("가게 신고 성공")
+        void createShopReport_Success() {
+            // given
+            CreateReportRequest request = new CreateReportRequest(
+                    ReportTargetType.SHOP,
+                    shop.getId(),
+                    ReportReason.SHOP_WRONG_ADDRESS,
+                    null
+            );
+
+            when(securityUtil.getCurrentUser()).thenReturn(reporter);
+            when(shopRepository.existsById(shop.getId())).thenReturn(true);
+            when(reportRepository.existsByReporterIdAndTargetTypeAndTargetIdAndStatusNot(
+                    reporter.getId(), ReportTargetType.SHOP, shop.getId(), ReportStatus.CANCELLED)).thenReturn(false);
+            when(reportRepository.findByReporterIdAndTargetTypeAndTargetIdAndStatus(
+                    reporter.getId(), ReportTargetType.SHOP, shop.getId(), ReportStatus.CANCELLED))
+                    .thenReturn(Optional.empty());
+            when(reportRepository.save(any(Report.class))).thenAnswer(invocation -> {
+                Report saved = invocation.getArgument(0);
+                ReflectionTestUtils.setField(saved, "id", 1L);
+                return saved;
+            });
+
+            // when
+            ReportResponse response = reportService.createReport(request);
+
+            // then
+            assertThat(response.targetType()).isEqualTo(ReportTargetType.SHOP);
+            assertThat(response.targetId()).isEqualTo(shop.getId());
+            assertThat(response.reason()).isEqualTo(ReportReason.SHOP_WRONG_ADDRESS);
+            assertThat(response.status()).isEqualTo(ReportStatus.PENDING);
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 가게 신고 불가")
+        void createReport_ShopNotFound_Fail() {
+            // given
+            CreateReportRequest request = new CreateReportRequest(
+                    ReportTargetType.SHOP,
+                    999L,
+                    ReportReason.SHOP_CLOSED,
+                    null
+            );
+
+            when(securityUtil.getCurrentUser()).thenReturn(reporter);
+            when(shopRepository.existsById(999L)).thenReturn(false);
+
+            // when & then
+            assertThatThrownBy(() -> reportService.createReport(request))
+                    .isInstanceOf(ReportException.class)
+                    .hasMessageContaining("신고 대상을 찾을 수 없습니다");
+        }
+
+        @Test
+        @DisplayName("신고 대상 타입과 사유 불일치 시 실패")
+        void createReport_InvalidReasonForTarget_Fail() {
+            // given
+            CreateReportRequest request = new CreateReportRequest(
+                    ReportTargetType.REVIEW,
+                    review.getId(),
+                    ReportReason.USER_PRIVACY,
+                    null
+            );
+
+            when(securityUtil.getCurrentUser()).thenReturn(reporter);
+
+            // when & then
+            assertThatThrownBy(() -> reportService.createReport(request))
+                    .isInstanceOf(ReportException.class)
+                    .hasMessageContaining("해당 신고 대상에 사용할 수 없는 사유입니다");
+        }
+
+        @Test
+        @DisplayName("취소된 신고 재신고 시 기존 레코드 재활용")
+        void createReport_ReopenCancelledReport_Success() {
+            // given
+            Report cancelledReport = Report.builder()
+                    .reporter(reporter)
+                    .targetType(ReportTargetType.REVIEW)
+                    .targetId(review.getId())
+                    .reason(ReportReason.REVIEW_ABUSE)
+                    .build();
+            cancelledReport.cancel();
+            ReflectionTestUtils.setField(cancelledReport, "id", 1L);
+
+            CreateReportRequest request = new CreateReportRequest(
+                    ReportTargetType.REVIEW,
+                    review.getId(),
+                    ReportReason.REVIEW_SPAM,
+                    null
+            );
+
+            when(securityUtil.getCurrentUser()).thenReturn(reporter);
+            when(reviewRepository.findById(review.getId())).thenReturn(Optional.of(review));
+            when(reportRepository.existsByReporterIdAndTargetTypeAndTargetIdAndStatusNot(
+                    reporter.getId(), ReportTargetType.REVIEW, review.getId(), ReportStatus.CANCELLED)).thenReturn(false);
+            when(reportRepository.findByReporterIdAndTargetTypeAndTargetIdAndStatus(
+                    reporter.getId(), ReportTargetType.REVIEW, review.getId(), ReportStatus.CANCELLED))
+                    .thenReturn(Optional.of(cancelledReport));
+
+            // when
+            ReportResponse response = reportService.createReport(request);
+
+            // then
+            assertThat(response.id()).isEqualTo(1L);
+            assertThat(response.reason()).isEqualTo(ReportReason.REVIEW_SPAM);
+            assertThat(response.status()).isEqualTo(ReportStatus.PENDING);
         }
 
         @Test
@@ -335,7 +451,7 @@ class ReportServiceTest {
             ReflectionTestUtils.setField(report2, "id", 2L);
 
             when(securityUtil.getCurrentUserId()).thenReturn(reporter.getId());
-            when(reportRepository.findAllByReporterIdWithReporter(reporter.getId()))
+            when(reportRepository.findAllByReporterIdWithReporter(reporter.getId(), ReportStatus.CANCELLED))
                     .thenReturn(List.of(report1, report2));
 
             // when
@@ -350,7 +466,7 @@ class ReportServiceTest {
         void getMyReports_Empty() {
             // given
             when(securityUtil.getCurrentUserId()).thenReturn(reporter.getId());
-            when(reportRepository.findAllByReporterIdWithReporter(reporter.getId()))
+            when(reportRepository.findAllByReporterIdWithReporter(reporter.getId(), ReportStatus.CANCELLED))
                     .thenReturn(List.of());
 
             // when

@@ -95,8 +95,8 @@ class ReportRepositoryTest {
                     .build());
 
             // when
-            boolean exists = reportRepository.existsByReporterIdAndTargetTypeAndTargetId(
-                    reporter.getId(), ReportTargetType.REVIEW, review.getId());
+            boolean exists = reportRepository.existsByReporterIdAndTargetTypeAndTargetIdAndStatusNot(
+                    reporter.getId(), ReportTargetType.REVIEW, review.getId(), ReportStatus.CANCELLED);
 
             // then
             assertThat(exists).isTrue();
@@ -106,8 +106,8 @@ class ReportRepositoryTest {
         @DisplayName("신고가 없으면 false 반환")
         void notExistsReport() {
             // when
-            boolean exists = reportRepository.existsByReporterIdAndTargetTypeAndTargetId(
-                    reporter.getId(), ReportTargetType.REVIEW, review.getId());
+            boolean exists = reportRepository.existsByReporterIdAndTargetTypeAndTargetIdAndStatusNot(
+                    reporter.getId(), ReportTargetType.REVIEW, review.getId(), ReportStatus.CANCELLED);
 
             // then
             assertThat(exists).isFalse();
@@ -125,8 +125,29 @@ class ReportRepositoryTest {
                     .build());
 
             // when
-            boolean exists = reportRepository.existsByReporterIdAndTargetTypeAndTargetId(
-                    reporter.getId(), ReportTargetType.USER, review.getId());
+            boolean exists = reportRepository.existsByReporterIdAndTargetTypeAndTargetIdAndStatusNot(
+                    reporter.getId(), ReportTargetType.USER, review.getId(), ReportStatus.CANCELLED);
+
+            // then
+            assertThat(exists).isFalse();
+        }
+
+        @Test
+        @DisplayName("취소된 신고는 중복이 아님")
+        void cancelledReport_NotDuplicate() {
+            // given
+            Report report = reportRepository.save(Report.builder()
+                    .reporter(reporter)
+                    .targetType(ReportTargetType.REVIEW)
+                    .targetId(review.getId())
+                    .reason(ReportReason.REVIEW_ABUSE)
+                    .build());
+            report.cancel();
+            reportRepository.save(report);
+
+            // when
+            boolean exists = reportRepository.existsByReporterIdAndTargetTypeAndTargetIdAndStatusNot(
+                    reporter.getId(), ReportTargetType.REVIEW, review.getId(), ReportStatus.CANCELLED);
 
             // then
             assertThat(exists).isFalse();
@@ -156,7 +177,7 @@ class ReportRepositoryTest {
                     .build());
 
             // when
-            List<Report> reports = reportRepository.findAllByReporterIdWithReporter(reporter.getId());
+            List<Report> reports = reportRepository.findAllByReporterIdWithReporter(reporter.getId(), ReportStatus.CANCELLED);
 
             // then
             assertThat(reports).hasSize(2);
@@ -166,7 +187,7 @@ class ReportRepositoryTest {
         @DisplayName("신고 없으면 빈 리스트 반환")
         void findMyReports_Empty() {
             // when
-            List<Report> reports = reportRepository.findAllByReporterIdWithReporter(reporter.getId());
+            List<Report> reports = reportRepository.findAllByReporterIdWithReporter(reporter.getId(), ReportStatus.CANCELLED);
 
             // then
             assertThat(reports).isEmpty();
