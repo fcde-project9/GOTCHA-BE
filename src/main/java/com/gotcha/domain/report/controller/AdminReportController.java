@@ -8,6 +8,8 @@ import com.gotcha.domain.report.entity.ReportStatus;
 import com.gotcha.domain.report.entity.ReportTargetType;
 import com.gotcha.domain.report.service.AdminReportService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -34,8 +36,8 @@ public class AdminReportController implements AdminReportControllerApi {
     public ApiResponse<AdminReportListResponse> getReports(
             @RequestParam(required = false) ReportTargetType targetType,
             @RequestParam(required = false) ReportStatus status,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         AdminReportListResponse response = adminReportService.getReports(targetType, status, pageable);

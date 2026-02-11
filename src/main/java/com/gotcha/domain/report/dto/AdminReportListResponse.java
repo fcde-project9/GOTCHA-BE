@@ -24,14 +24,14 @@ public record AdminReportListResponse(
     @Schema(description = "마지막 페이지 여부", example = "false")
     boolean last
 ) {
-    public static AdminReportListResponse from(Page<ReportDetailResponse> page) {
+    public static AdminReportListResponse from(Page<ReportDetailResponse> reportPage) {
         return new AdminReportListResponse(
-            page.getContent(),
-            page.getNumber(),
-            page.getSize(),
-            page.getTotalElements(),
-            page.getTotalPages(),
-            page.isLast()
+            reportPage.getContent(),
+            reportPage.getNumber(),
+            reportPage.getSize(),
+            reportPage.getTotalElements(),
+            reportPage.getTotalPages(),
+            reportPage.isLast()
         );
     }
 }

@@ -19,7 +19,7 @@ public interface ReportControllerApi {
 
     @Operation(
             summary = "신고 생성",
-            description = "리뷰 또는 유저를 신고합니다. 기타(OTHER) 사유 선택 시 detail 필수",
+            description = "리뷰, 가게 또는 유저를 신고합니다. 기타(OTHER) 사유 선택 시 detail 필수",
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses({

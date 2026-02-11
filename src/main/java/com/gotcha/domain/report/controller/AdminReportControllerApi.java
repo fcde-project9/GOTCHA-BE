@@ -14,6 +14,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -43,17 +45,17 @@ public interface AdminReportControllerApi {
             )
     })
     ApiResponse<AdminReportListResponse> getReports(
-            @Parameter(description = "신고 대상 타입 필터 (REVIEW, USER)")
+            @Parameter(description = "신고 대상 타입 필터 (REVIEW, SHOP, USER)")
             @RequestParam(required = false) ReportTargetType targetType,
 
             @Parameter(description = "신고 상태 필터 (PENDING, ACCEPTED, REJECTED, CANCELLED)")
             @RequestParam(required = false) ReportStatus status,
 
             @Parameter(description = "페이지 번호 (0부터 시작)")
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
 
-            @Parameter(description = "페이지 크기")
-            @RequestParam(defaultValue = "20") int size
+            @Parameter(description = "페이지 크기 (1-100)")
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
     );
 
     @Operation(

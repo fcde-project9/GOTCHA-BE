@@ -15,7 +15,7 @@ public record CreateReportRequest(
     @NotNull(message = "신고 대상 ID는 필수입니다")
     Long targetId,
 
-    @Schema(description = "신고 사유", example = "ABUSE")
+    @Schema(description = "신고 사유", example = "REVIEW_ABUSE")
     @NotNull(message = "신고 사유는 필수입니다")
     ReportReason reason,
 

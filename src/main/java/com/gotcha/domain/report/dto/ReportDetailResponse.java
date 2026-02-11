@@ -24,7 +24,7 @@ public record ReportDetailResponse(
     @Schema(description = "신고 대상 ID", example = "1")
     Long targetId,
 
-    @Schema(description = "신고 사유", example = "ABUSE")
+    @Schema(description = "신고 사유", example = "REVIEW_ABUSE")
     ReportReason reason,
 
     @Schema(description = "신고 사유 설명", example = "욕설/비방")
