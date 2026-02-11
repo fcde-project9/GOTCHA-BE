@@ -4,6 +4,34 @@
 
 ---
 
+## 2026-02-11
+
+### 수정
+- `src/main/java/com/gotcha/domain/report/entity/Report.java` - reason 컬럼 length 20→30 변경 (USER_INAPPROPRIATE_* 저장 불가 버그 수정), reopen() 메서드 추가
+- `src/main/java/com/gotcha/domain/report/repository/ReportRepository.java` - 중복 체크 시 CANCELLED 제외, 취소된 신고 조회 메서드 추가, findAllWithFilters countQuery 분리
+- `src/main/java/com/gotcha/domain/report/service/ReportService.java` - 취소 후 재신고 지원 (reopenOrCreate), 중복 체크에서 CANCELLED 제외
+- `src/main/java/com/gotcha/domain/report/service/AdminReportService.java` - 상태 변경 검증 추가 (ACCEPTED/REJECTED만 허용, PENDING 상태에서만 변경 가능)
+- `src/main/java/com/gotcha/domain/report/exception/ReportErrorCode.java` - RP010 추가 (허용되지 않는 상태 변경)
+- `src/main/java/com/gotcha/domain/report/exception/ReportException.java` - invalidStatusTransition() 메서드 추가
+- `src/main/java/com/gotcha/domain/report/controller/ReportControllerApi.java` - Swagger description에 SHOP 추가
+- `src/main/java/com/gotcha/domain/report/controller/AdminReportControllerApi.java` - Swagger parameter에 SHOP 추가
+- `src/main/java/com/gotcha/domain/report/dto/CreateReportRequest.java` - Swagger example ABUSE→REVIEW_ABUSE
+- `src/main/java/com/gotcha/domain/report/dto/ReportResponse.java` - Swagger example ABUSE→REVIEW_ABUSE
+- `src/main/java/com/gotcha/domain/report/dto/ReportDetailResponse.java` - Swagger example ABUSE→REVIEW_ABUSE
+- `src/test/java/com/gotcha/domain/report/service/ReportServiceTest.java` - SHOP 신고 테스트, reason-targetType 불일치 테스트, 취소 후 재신고 테스트 추가
+- `src/test/java/com/gotcha/domain/report/service/AdminReportServiceTest.java` - 상태 변경 검증 테스트 추가 (이미 처리된 신고, 허용되지 않는 상태)
+- `docs/business-rules.md` - 신고 섹션 전면 업데이트 (prefix 기반 사유, 신고 규칙, 처리 프로세스)
+- `docs/error-codes.md` - RP010 추가
+- `src/main/java/com/gotcha/domain/report/service/ReportService.java` - race condition 방지 (DataIntegrityViolationException → RP002), switch default case 추가
+- `src/main/java/com/gotcha/domain/report/entity/ReportReason.java` - prefix 파싱(split) 대신 명시적 targetType 필드로 변경
+- `src/main/java/com/gotcha/domain/report/repository/ReportRepository.java` - JPQL 문자열 리터럴('CANCELLED') → 파라미터 바인딩으로 변경
+- `src/main/java/com/gotcha/domain/report/controller/AdminReportController.java` - page/size 검증 추가 (@Min/@Max)
+- `src/main/java/com/gotcha/domain/report/controller/AdminReportControllerApi.java` - page/size 검증 추가 (@Min/@Max)
+- `src/main/java/com/gotcha/domain/report/dto/AdminReportListResponse.java` - from() 파라미터명 page→reportPage (record 필드 충돌 해소)
+- `docs/entity-design.md` - reports 테이블 SHOP 추가, reason 설명 prefix 기반으로 수정, 마크다운 테이블 포맷 수정
+
+---
+
 ## 2026-02-10
 
 ### 수정

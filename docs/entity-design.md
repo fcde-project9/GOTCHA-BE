@@ -214,16 +214,16 @@
 
 ## reports
 
-리뷰/유저 신고
+리뷰/가게/유저 신고
 
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | id | Long (PK) | AUTO_INCREMENT |
 | reporter_id | Long (FK → users) | 신고자 |
-| target_type | Enum | REVIEW, USER |
-| target_id | Long | 신고 대상 ID (리뷰 ID 또는 유저 ID) |
-| reason | Enum | ABUSE, OBSCENE, SPAM, PRIVACY, OTHER |
-| detail | String (TEXT) | 상세 내용 (OTHER 선택 시 필수) |
+| target_type | Enum | REVIEW, SHOP, USER |
+| target_id | Long | 신고 대상 ID (리뷰/가게/유저 ID) |
+| reason | Enum | 신고 사유 (prefix 기반: REVIEW_*, SHOP_*, USER_*) |
+| detail | String (TEXT) | 상세 내용 (*_OTHER 선택 시 필수) |
 | status | Enum | PENDING, ACCEPTED, REJECTED, CANCELLED |
 | created_at, updated_at | LocalDateTime | BaseTimeEntity |
 
@@ -242,6 +242,7 @@
 > 신고 대상 타입별로 prefix가 붙은 사유만 사용 가능 (예: REVIEW 신고 시 REVIEW_* 사유만 허용)
 
 **리뷰 신고 사유 (REVIEW_*)**
+
 | 값 | 설명 |
 |----|------|
 | REVIEW_SPAM | 도배/광고성 글이에요 |
@@ -253,6 +254,7 @@
 | REVIEW_OTHER | 기타 (detail 필수) |
 
 **가게 신고 사유 (SHOP_*)**
+
 | 값 | 설명 |
 |----|------|
 | SHOP_WRONG_ADDRESS | 잘못된 주소예요 |
@@ -262,6 +264,7 @@
 | SHOP_OTHER | 기타 (detail 필수) |
 
 **사용자 신고 사유 (USER_*)**
+
 | 값 | 설명 |
 |----|------|
 | USER_INAPPROPRIATE_NICKNAME | 부적절한 닉네임이에요 |
