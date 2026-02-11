@@ -43,7 +43,7 @@ public class Report extends BaseTimeEntity {
     private Long targetId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 30)
     private ReportReason reason;
 
     @Column(columnDefinition = "TEXT")
@@ -69,6 +69,12 @@ public class Report extends BaseTimeEntity {
 
     public void cancel() {
         this.status = ReportStatus.CANCELLED;
+    }
+
+    public void reopen(ReportReason reason, String detail) {
+        this.reason = reason;
+        this.detail = detail;
+        this.status = ReportStatus.PENDING;
     }
 
     public boolean isPending() {

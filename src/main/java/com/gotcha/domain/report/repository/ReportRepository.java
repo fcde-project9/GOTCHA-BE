@@ -13,15 +13,22 @@ import org.springframework.data.repository.query.Param;
 
 public interface ReportRepository extends JpaRepository<Report, Long> {
 
-    boolean existsByReporterIdAndTargetTypeAndTargetId(Long reporterId, ReportTargetType targetType, Long targetId);
+    boolean existsByReporterIdAndTargetTypeAndTargetIdAndStatusNot(
+            Long reporterId, ReportTargetType targetType, Long targetId, ReportStatus status);
 
-    @Query("SELECT r FROM Report r JOIN FETCH r.reporter WHERE r.reporter.id = :reporterId AND r.status != 'CANCELLED' ORDER BY r.createdAt DESC")
-    List<Report> findAllByReporterIdWithReporter(@Param("reporterId") Long reporterId);
+    Optional<Report> findByReporterIdAndTargetTypeAndTargetIdAndStatus(
+            Long reporterId, ReportTargetType targetType, Long targetId, ReportStatus status);
+
+    @Query("SELECT r FROM Report r JOIN FETCH r.reporter WHERE r.reporter.id = :reporterId AND r.status != :excludedStatus ORDER BY r.createdAt DESC")
+    List<Report> findAllByReporterIdWithReporter(@Param("reporterId") Long reporterId, @Param("excludedStatus") ReportStatus excludedStatus);
 
     @Query("SELECT r FROM Report r JOIN FETCH r.reporter WHERE r.id = :id")
     Optional<Report> findByIdWithReporter(@Param("id") Long id);
 
-    @Query("SELECT r FROM Report r JOIN FETCH r.reporter " +
+    @Query(value = "SELECT r FROM Report r JOIN FETCH r.reporter " +
+           "WHERE (:targetType IS NULL OR r.targetType = :targetType) " +
+           "AND (:status IS NULL OR r.status = :status)",
+           countQuery = "SELECT COUNT(r) FROM Report r " +
            "WHERE (:targetType IS NULL OR r.targetType = :targetType) " +
            "AND (:status IS NULL OR r.status = :status)")
     Page<Report> findAllWithFilters(

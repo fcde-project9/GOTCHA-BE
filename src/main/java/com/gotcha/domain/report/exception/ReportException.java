@@ -56,4 +56,8 @@ public class ReportException extends BusinessException {
     public static ReportException invalidReasonForTarget() {
         return new ReportException(ReportErrorCode.INVALID_REASON_FOR_TARGET);
     }
+
+    public static ReportException invalidStatusTransition() {
+        return new ReportException(ReportErrorCode.INVALID_STATUS_TRANSITION);
+    }
 }

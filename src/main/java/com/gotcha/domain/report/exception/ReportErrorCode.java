@@ -22,7 +22,8 @@ public enum ReportErrorCode implements ErrorCode {
     UNAUTHORIZED_CANCEL(FORBIDDEN, "RP006", "본인의 신고만 취소할 수 있습니다"),
     ALREADY_PROCESSED(BAD_REQUEST, "RP007", "이미 처리된 신고는 취소할 수 없습니다"),
     ADMIN_ONLY(FORBIDDEN, "RP008", "관리자만 접근할 수 있습니다"),
-    INVALID_REASON_FOR_TARGET(BAD_REQUEST, "RP009", "해당 신고 대상에 사용할 수 없는 사유입니다");
+    INVALID_REASON_FOR_TARGET(BAD_REQUEST, "RP009", "해당 신고 대상에 사용할 수 없는 사유입니다"),
+    INVALID_STATUS_TRANSITION(BAD_REQUEST, "RP010", "허용되지 않는 상태 변경입니다");
 
     private final HttpStatus status;
     private final String code;

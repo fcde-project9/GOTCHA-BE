@@ -5,6 +5,7 @@ import com.gotcha.domain.report.dto.CreateReportRequest;
 import com.gotcha.domain.report.dto.ReportResponse;
 import com.gotcha.domain.report.entity.Report;
 import com.gotcha.domain.report.entity.ReportReason;
+import com.gotcha.domain.report.entity.ReportStatus;
 import com.gotcha.domain.report.entity.ReportTargetType;
 import com.gotcha.domain.report.exception.ReportException;
 import com.gotcha.domain.report.repository.ReportRepository;
@@ -14,9 +15,11 @@ import com.gotcha.domain.shop.repository.ShopRepository;
 import com.gotcha.domain.user.entity.User;
 import com.gotcha.domain.user.repository.UserRepository;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,15 +50,7 @@ public class ReportService {
         validateTarget(request.targetType(), request.targetId(), reporter.getId());
         validateNotAlreadyReported(reporter.getId(), request.targetType(), request.targetId());
 
-        Report report = Report.builder()
-                .reporter(reporter)
-                .targetType(request.targetType())
-                .targetId(request.targetId())
-                .reason(request.reason())
-                .detail(request.detail())
-                .build();
-
-        reportRepository.save(report);
+        Report report = reopenOrCreate(reporter, request);
 
         log.info("Report created - reportId: {}, reporterId: {}, targetType: {}, targetId: {}",
                 report.getId(), reporter.getId(), request.targetType(), request.targetId());
@@ -69,7 +64,7 @@ public class ReportService {
     public List<ReportResponse> getMyReports() {
         Long userId = securityUtil.getCurrentUserId();
 
-        return reportRepository.findAllByReporterIdWithReporter(userId).stream()
+        return reportRepository.findAllByReporterIdWithReporter(userId, ReportStatus.CANCELLED).stream()
                 .map(ReportResponse::from)
                 .collect(Collectors.toList());
     }
@@ -123,6 +118,7 @@ public class ReportService {
             case REVIEW -> validateReviewTarget(targetId, reporterId);
             case SHOP -> validateShopTarget(targetId);
             case USER -> validateUserTarget(targetId, reporterId);
+            default -> throw new IllegalArgumentException("Unsupported target type: " + targetType);
         }
     }
 
@@ -161,10 +157,41 @@ public class ReportService {
     }
 
     /**
-     * 동일 대상에 대한 중복 신고 여부 검증
+     * 동일 대상에 대한 중복 신고 여부 검증 (취소된 신고는 제외)
      */
     private void validateNotAlreadyReported(Long reporterId, ReportTargetType targetType, Long targetId) {
-        if (reportRepository.existsByReporterIdAndTargetTypeAndTargetId(reporterId, targetType, targetId)) {
+        if (reportRepository.existsByReporterIdAndTargetTypeAndTargetIdAndStatusNot(
+                reporterId, targetType, targetId, ReportStatus.CANCELLED)) {
+            throw ReportException.alreadyReported();
+        }
+    }
+
+    /**
+     * 취소된 신고가 있으면 재활용(reopen), 없으면 새로 생성
+     * - 동시 요청으로 인한 UNIQUE 제약 위반 시 비즈니스 예외로 변환
+     */
+    private Report reopenOrCreate(User reporter, CreateReportRequest request) {
+        Optional<Report> cancelledReport = reportRepository
+                .findByReporterIdAndTargetTypeAndTargetIdAndStatus(
+                        reporter.getId(), request.targetType(), request.targetId(), ReportStatus.CANCELLED);
+
+        if (cancelledReport.isPresent()) {
+            Report report = cancelledReport.get();
+            report.reopen(request.reason(), request.detail());
+            return report;
+        }
+
+        Report report = Report.builder()
+                .reporter(reporter)
+                .targetType(request.targetType())
+                .targetId(request.targetId())
+                .reason(request.reason())
+                .detail(request.detail())
+                .build();
+
+        try {
+            return reportRepository.save(report);
+        } catch (DataIntegrityViolationException e) {
             throw ReportException.alreadyReported();
         }
     }

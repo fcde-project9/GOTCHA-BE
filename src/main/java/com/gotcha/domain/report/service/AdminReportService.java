@@ -50,17 +50,30 @@ public class AdminReportService {
      * 신고 상태 변경 (관리자 전용)
      * - ACCEPTED: 신고 승인
      * - REJECTED: 신고 반려
+     * - PENDING 상태의 신고만 변경 가능
      * (추후 승인 시 자동 제재 로직 추가 가능)
      */
     @Transactional
     public ReportDetailResponse updateReportStatus(Long reportId, UpdateReportStatusRequest request) {
+        validateStatusTransition(request.status());
+
         Report report = reportRepository.findByIdWithReporter(reportId)
                 .orElseThrow(() -> ReportException.notFound(reportId));
+
+        if (!report.isPending()) {
+            throw ReportException.alreadyProcessed();
+        }
 
         report.updateStatus(request.status());
 
         log.info("Report status updated - reportId: {}, newStatus: {}", reportId, request.status());
 
         return ReportDetailResponse.from(report);
+    }
+
+    private void validateStatusTransition(ReportStatus status) {
+        if (status != ReportStatus.ACCEPTED && status != ReportStatus.REJECTED) {
+            throw ReportException.invalidStatusTransition();
+        }
     }
 }
