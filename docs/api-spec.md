@@ -1183,3 +1183,296 @@ curl -X POST /api/files/upload \
 **참고**
 - 상세한 사용법은 `docs/file-upload-guide.md` 참고
 - 업로드된 URL을 리뷰/가게 API에 전달하여 사용
+
+---
+
+## 신고 API
+
+### POST /reports
+
+리뷰 또는 유저 신고
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Request Body**
+```json
+{
+  "targetType": "REVIEW",
+  "targetId": 1,
+  "reason": "REVIEW_ABUSE",
+  "detail": "욕설이 포함되어 있습니다"
+}
+```
+
+**targetType 값**
+| 값 | 설명 |
+|---|------|
+| REVIEW | 리뷰 신고 |
+| SHOP | 가게 신고 |
+| USER | 유저 신고 |
+
+**reason 값** (targetType별로 해당 prefix 사유만 사용 가능)
+
+*리뷰 신고 (REVIEW_*)*
+| 값 | 설명 |
+|---|------|
+| REVIEW_SPAM | 도배/광고성 글이에요 |
+| REVIEW_COPYRIGHT | 저작권을 침해해요 |
+| REVIEW_DEFAMATION | 명예를 훼손하는 내용이에요 |
+| REVIEW_ABUSE | 욕설이나 비방이 심해요 |
+| REVIEW_OBSCENE | 외설적인 내용이 포함돼있어요 |
+| REVIEW_PRIVACY | 개인정보가 노출되어 있어요 |
+| REVIEW_OTHER | 기타 (detail 필수) |
+
+*가게 신고 (SHOP_*)*
+| 값 | 설명 |
+|---|------|
+| SHOP_WRONG_ADDRESS | 잘못된 주소예요 |
+| SHOP_CLOSED | 영업 종료/폐업된 업체예요 |
+| SHOP_INAPPROPRIATE | 부적절한 업체(불법/유해 업소)예요 |
+| SHOP_DUPLICATE | 중복 제보된 업체예요 |
+| SHOP_OTHER | 기타 (detail 필수) |
+
+*사용자 신고 (USER_*)*
+| 값 | 설명 |
+|---|------|
+| USER_INAPPROPRIATE_NICKNAME | 부적절한 닉네임이에요 |
+| USER_INAPPROPRIATE_PROFILE | 부적절한 프로필 사진이에요 |
+| USER_PRIVACY | 개인정보가 노출되어 있어요 |
+| USER_OTHER | 기타 (detail 필수) |
+
+**Validation**
+| 필드 | 규칙 |
+|------|------|
+| targetType | 필수 |
+| targetId | 필수 |
+| reason | 필수, targetType과 prefix 일치 필요 |
+| detail | reason이 *_OTHER일 때 필수 |
+
+**Response (201)**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "targetType": "REVIEW",
+    "targetId": 1,
+    "reason": "REVIEW_ABUSE",
+    "detail": "욕설이 포함되어 있습니다",
+    "status": "PENDING",
+    "createdAt": "2025-01-08T12:00:00"
+  }
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| RP002 | 이미 신고한 대상 |
+| RP003 | 신고 대상을 찾을 수 없음 |
+| RP004 | 본인을 신고할 수 없음 |
+| RP009 | targetType과 reason prefix 불일치 |
+| RP005 | 기타 사유 선택 시 상세 내용 필수 |
+
+---
+
+### GET /users/me/reports
+
+본인 신고 목록 조회
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "targetType": "REVIEW",
+      "targetId": 1,
+      "reason": "REVIEW_ABUSE",
+      "detail": "욕설이 포함되어 있습니다",
+      "status": "PENDING",
+      "createdAt": "2025-01-08T12:00:00"
+    }
+  ]
+}
+```
+
+---
+
+### DELETE /reports/{reportId}
+
+신고 취소 (PENDING 상태에서만 가능)
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": null
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| RP001 | 신고를 찾을 수 없음 |
+| RP006 | 본인의 신고만 취소 가능 |
+| RP007 | 이미 처리된 신고는 취소 불가 |
+
+---
+
+## 관리자 API
+
+### GET /admin/reports
+
+신고 목록 조회 (관리자)
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Query Parameters**
+| 파라미터 | 타입 | 필수 | 기본값 | 설명 |
+|---------|------|------|--------|------|
+| targetType | String | X | - | REVIEW, SHOP, USER |
+| status | String | X | - | PENDING, ACCEPTED, REJECTED, CANCELLED |
+| page | Integer | X | 0 | |
+| size | Integer | X | 20 | |
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "reports": [
+      {
+        "id": 1,
+        "reporterId": 1,
+        "reporterNickname": "신고자#21",
+        "targetType": "REVIEW",
+        "targetId": 1,
+        "reason": "REVIEW_ABUSE",
+        "reasonDescription": "욕설이나 비방이 심해요",
+        "detail": "욕설이 포함되어 있습니다",
+        "status": "PENDING",
+        "statusDescription": "처리 대기",
+        "createdAt": "2025-01-08T12:00:00",
+        "updatedAt": "2025-01-08T12:00:00"
+      }
+    ],
+    "page": 0,
+    "size": 20,
+    "totalElements": 100,
+    "totalPages": 5,
+    "last": false
+  }
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| A002 | 관리자 권한 필요 |
+
+---
+
+### GET /admin/reports/{reportId}
+
+신고 상세 조회 (관리자)
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "reporterId": 1,
+    "reporterNickname": "신고자#21",
+    "targetType": "REVIEW",
+    "targetId": 1,
+    "reason": "REVIEW_ABUSE",
+    "reasonDescription": "욕설이나 비방이 심해요",
+    "detail": "욕설이 포함되어 있습니다",
+    "status": "PENDING",
+    "statusDescription": "처리 대기",
+    "createdAt": "2025-01-08T12:00:00",
+    "updatedAt": "2025-01-08T12:00:00"
+  }
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| RP001 | 신고를 찾을 수 없음 |
+| A002 | 관리자 권한 필요 |
+
+---
+
+### PATCH /admin/reports/{reportId}/status
+
+신고 상태 변경 (관리자)
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Request Body**
+```json
+{
+  "status": "ACCEPTED"
+}
+```
+
+**status 값**
+| 값 | 설명 |
+|---|------|
+| ACCEPTED | 승인 |
+| REJECTED | 반려 |
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "reporterId": 1,
+    "reporterNickname": "신고자#21",
+    "targetType": "REVIEW",
+    "targetId": 1,
+    "reason": "REVIEW_ABUSE",
+    "reasonDescription": "욕설이나 비방이 심해요",
+    "detail": "욕설이 포함되어 있습니다",
+    "status": "ACCEPTED",
+    "statusDescription": "승인",
+    "createdAt": "2025-01-08T12:00:00",
+    "updatedAt": "2025-01-08T14:00:00"
+  }
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| RP001 | 신고를 찾을 수 없음 |
+| A002 | 관리자 권한 필요 |

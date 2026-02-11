@@ -4,9 +4,53 @@
 
 ---
 
+## 2026-02-11
+
+### 수정
+- `src/main/java/com/gotcha/domain/report/entity/Report.java` - reason 컬럼 length 20→30 변경 (USER_INAPPROPRIATE_* 저장 불가 버그 수정), reopen() 메서드 추가
+- `src/main/java/com/gotcha/domain/report/repository/ReportRepository.java` - 중복 체크 시 CANCELLED 제외, 취소된 신고 조회 메서드 추가, findAllWithFilters countQuery 분리
+- `src/main/java/com/gotcha/domain/report/service/ReportService.java` - 취소 후 재신고 지원 (reopenOrCreate), 중복 체크에서 CANCELLED 제외
+- `src/main/java/com/gotcha/domain/report/service/AdminReportService.java` - 상태 변경 검증 추가 (ACCEPTED/REJECTED만 허용, PENDING 상태에서만 변경 가능)
+- `src/main/java/com/gotcha/domain/report/exception/ReportErrorCode.java` - RP010 추가 (허용되지 않는 상태 변경)
+- `src/main/java/com/gotcha/domain/report/exception/ReportException.java` - invalidStatusTransition() 메서드 추가
+- `src/main/java/com/gotcha/domain/report/controller/ReportControllerApi.java` - Swagger description에 SHOP 추가
+- `src/main/java/com/gotcha/domain/report/controller/AdminReportControllerApi.java` - Swagger parameter에 SHOP 추가
+- `src/main/java/com/gotcha/domain/report/dto/CreateReportRequest.java` - Swagger example ABUSE→REVIEW_ABUSE
+- `src/main/java/com/gotcha/domain/report/dto/ReportResponse.java` - Swagger example ABUSE→REVIEW_ABUSE
+- `src/main/java/com/gotcha/domain/report/dto/ReportDetailResponse.java` - Swagger example ABUSE→REVIEW_ABUSE
+- `src/test/java/com/gotcha/domain/report/service/ReportServiceTest.java` - SHOP 신고 테스트, reason-targetType 불일치 테스트, 취소 후 재신고 테스트 추가
+- `src/test/java/com/gotcha/domain/report/service/AdminReportServiceTest.java` - 상태 변경 검증 테스트 추가 (이미 처리된 신고, 허용되지 않는 상태)
+- `docs/business-rules.md` - 신고 섹션 전면 업데이트 (prefix 기반 사유, 신고 규칙, 처리 프로세스)
+- `docs/error-codes.md` - RP010 추가
+- `src/main/java/com/gotcha/domain/report/service/ReportService.java` - race condition 방지 (DataIntegrityViolationException → RP002), switch default case 추가
+- `src/main/java/com/gotcha/domain/report/entity/ReportReason.java` - prefix 파싱(split) 대신 명시적 targetType 필드로 변경
+- `src/main/java/com/gotcha/domain/report/repository/ReportRepository.java` - JPQL 문자열 리터럴('CANCELLED') → 파라미터 바인딩으로 변경
+- `src/main/java/com/gotcha/domain/report/controller/AdminReportController.java` - page/size 검증 추가 (@Min/@Max)
+- `src/main/java/com/gotcha/domain/report/controller/AdminReportControllerApi.java` - page/size 검증 추가 (@Min/@Max)
+- `src/main/java/com/gotcha/domain/report/dto/AdminReportListResponse.java` - from() 파라미터명 page→reportPage (record 필드 충돌 해소)
+- `docs/entity-design.md` - reports 테이블 SHOP 추가, reason 설명 prefix 기반으로 수정, 마크다운 테이블 포맷 수정
+
+---
+
 ## 2026-02-10
 
 ### 수정
+- `src/main/java/com/gotcha/domain/report/entity/ReportTargetType.java` - SHOP 타입 추가
+- `src/main/java/com/gotcha/domain/report/entity/ReportReason.java` - prefix 방식으로 전면 변경
+  - 리뷰: REVIEW_SPAM, REVIEW_COPYRIGHT, REVIEW_DEFAMATION, REVIEW_ABUSE, REVIEW_OBSCENE, REVIEW_PRIVACY, REVIEW_OTHER
+  - 가게: SHOP_WRONG_ADDRESS, SHOP_CLOSED, SHOP_INAPPROPRIATE, SHOP_DUPLICATE, SHOP_OTHER
+  - 사용자: USER_INAPPROPRIATE_NICKNAME, USER_INAPPROPRIATE_PROFILE, USER_PRIVACY, USER_OTHER
+  - 추가: getTargetType() 메서드 (prefix로 targetType 추출)
+- `src/main/java/com/gotcha/domain/report/exception/ReportErrorCode.java` - RP009 추가 (targetType-reason 불일치)
+- `src/main/java/com/gotcha/domain/report/exception/ReportException.java` - invalidReasonForTarget() 메서드 추가
+- `src/main/java/com/gotcha/domain/report/service/ReportService.java` - 가게 신고 및 유효성 검증 추가
+  - 추가: ShopRepository 의존성
+  - 추가: reason.getTargetType() != targetType 검증
+  - 추가: validateShopTarget() 메서드
+- `src/main/java/com/gotcha/domain/report/repository/ReportRepository.java` - 취소된 신고 목록 제외
+- `docs/entity-design.md` - ReportTargetType에 SHOP 추가, ReportReason 전면 업데이트
+- `docs/api-spec.md` - 신고 API reason 값 및 예시 전면 업데이트
+- `docs/error-codes.md` - RP009 추가, RP003/RP005 설명 수정
 - `src/main/java/com/gotcha/_global/filter/RateLimitFilter.java` - CodeRabbit 리뷰 반영
   - 변경: waitTimeSeconds 계산 시 `Math.max(1, ...)` 적용 (최소 1초 보장)
   - 변경: 나노초→초 변환 시 `TimeUnit.NANOSECONDS.toSeconds()` 사용 (가독성 개선)
@@ -32,6 +76,27 @@
 ## 2026-02-09
 
 ### 추가
+- `src/main/java/com/gotcha/domain/report/entity/Report.java` - 신고 Entity (reporter, targetType, targetId, reason, detail, status)
+- `src/main/java/com/gotcha/domain/report/entity/ReportTargetType.java` - 신고 대상 타입 Enum (REVIEW, USER)
+- `src/main/java/com/gotcha/domain/report/entity/ReportReason.java` - 신고 사유 Enum (ABUSE, OBSCENE, SPAM, PRIVACY, OTHER)
+- `src/main/java/com/gotcha/domain/report/entity/ReportStatus.java` - 신고 상태 Enum (PENDING, ACCEPTED, REJECTED, CANCELLED)
+- `src/main/java/com/gotcha/domain/report/exception/ReportErrorCode.java` - 신고 에러코드 (RP001-RP008)
+- `src/main/java/com/gotcha/domain/report/exception/ReportException.java` - 신고 예외 클래스
+- `src/main/java/com/gotcha/domain/report/repository/ReportRepository.java` - 신고 Repository (중복 체크, 필터링 쿼리)
+- `src/main/java/com/gotcha/domain/report/dto/CreateReportRequest.java` - 신고 생성 Request DTO
+- `src/main/java/com/gotcha/domain/report/dto/UpdateReportStatusRequest.java` - 신고 상태 변경 Request DTO
+- `src/main/java/com/gotcha/domain/report/dto/ReportResponse.java` - 신고 응답 DTO
+- `src/main/java/com/gotcha/domain/report/dto/ReportDetailResponse.java` - 신고 상세 응답 DTO (관리자용)
+- `src/main/java/com/gotcha/domain/report/dto/AdminReportListResponse.java` - 관리자용 신고 목록 응답 DTO
+- `src/main/java/com/gotcha/domain/report/service/ReportService.java` - 신고 Service (생성, 취소, 목록)
+- `src/main/java/com/gotcha/domain/report/service/AdminReportService.java` - 관리자용 신고 Service (조회, 상태변경)
+- `src/main/java/com/gotcha/domain/report/controller/ReportController.java` - 일반 사용자 신고 API
+- `src/main/java/com/gotcha/domain/report/controller/ReportControllerApi.java` - 일반 사용자 신고 API Swagger 인터페이스
+- `src/main/java/com/gotcha/domain/report/controller/AdminReportController.java` - 관리자 신고 API
+- `src/main/java/com/gotcha/domain/report/controller/AdminReportControllerApi.java` - 관리자 신고 API Swagger 인터페이스
+- `src/test/java/com/gotcha/domain/report/repository/ReportRepositoryTest.java` - Repository 테스트
+- `src/test/java/com/gotcha/domain/report/service/ReportServiceTest.java` - Service 테스트
+- `src/test/java/com/gotcha/domain/report/service/AdminReportServiceTest.java` - AdminService 테스트
 - `src/main/java/com/gotcha/_global/config/RateLimitProperties.java` - Rate Limit 설정 Properties 클래스
 - `src/main/java/com/gotcha/_global/filter/RateLimitFilter.java` - Rate Limiting 필터 (Bucket4j 기반, IP당 60초/100요청)
 - `src/main/resources/logback-spring.xml` - Loki 로깅 설정 (프로파일별: local/dev/prod)
@@ -40,9 +105,12 @@
   - 추가: com.github.loki4j:loki-logback-appender:1.5.2 (Loki 로깅)
 
 ### 수정
-- `src/main/java/com/gotcha/_global/config/SecurityConfig.java` - Rate Limit 필터 통합
+- `src/main/java/com/gotcha/_global/config/SecurityConfig.java` - 신고 API 인증 설정 및 Rate Limit 필터 통합
   - 추가: RateLimitFilter 의존성 주입
   - 추가: addFilterBefore(rateLimitFilter, jwtAuthenticationFilter) 필터 체인 등록
+- `docs/entity-design.md` - reports 테이블 스키마 추가
+- `docs/api-spec.md` - 신고 API 및 관리자 API 명세 추가
+- `docs/error-codes.md` - RP 도메인 및 RP001-RP008 에러코드 추가
 - `src/main/resources/application.yml` - Rate Limit, Loki 설정 추가
   - 추가: rate-limit.enabled, capacity, refill-tokens, refill-duration-seconds
   - 추가: logging.loki.url

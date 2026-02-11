@@ -211,25 +211,65 @@ distance = haversine(lat1, lng1, lat2, lng2)
 
 ---
 
-## 신고 (추후 구현)
+## 신고 (Report)
 
-### 신고 사유
+### 신고 대상
 
-```
-- 허위 정보
-- 중복 등록
-- 폐업/이전
-- 부적절한 내용
-- 기타
-```
+| 대상 | 설명 |
+|------|------|
+| REVIEW | 리뷰 신고 |
+| SHOP | 가게 신고 |
+| USER | 유저 신고 |
+
+### 신고 사유 (prefix 기반)
+
+신고 대상 타입별로 해당 prefix 사유만 사용 가능
+
+**리뷰 신고 (REVIEW_*)**
+| 값 | 설명 |
+|----|------|
+| REVIEW_SPAM | 도배/광고성 글이에요 |
+| REVIEW_COPYRIGHT | 저작권을 침해해요 |
+| REVIEW_DEFAMATION | 명예를 훼손하는 내용이에요 |
+| REVIEW_ABUSE | 욕설이나 비방이 심해요 |
+| REVIEW_OBSCENE | 외설적인 내용이 포함돼있어요 |
+| REVIEW_PRIVACY | 개인정보가 노출되어 있어요 |
+| REVIEW_OTHER | 기타 (detail 필수) |
+
+**가게 신고 (SHOP_*)**
+| 값 | 설명 |
+|----|------|
+| SHOP_WRONG_ADDRESS | 잘못된 주소예요 |
+| SHOP_CLOSED | 영업 종료/폐업된 업체예요 |
+| SHOP_INAPPROPRIATE | 부적절한 업체(불법/유해 업소)예요 |
+| SHOP_DUPLICATE | 중복 제보된 업체예요 |
+| SHOP_OTHER | 기타 (detail 필수) |
+
+**사용자 신고 (USER_*)**
+| 값 | 설명 |
+|----|------|
+| USER_INAPPROPRIATE_NICKNAME | 부적절한 닉네임이에요 |
+| USER_INAPPROPRIATE_PROFILE | 부적절한 프로필 사진이에요 |
+| USER_PRIVACY | 개인정보가 노출되어 있어요 |
+| USER_OTHER | 기타 (detail 필수) |
+
+### 신고 규칙
+
+| 항목 | 규칙 |
+|------|------|
+| 본인 신고 | 불가 (리뷰, 유저) |
+| 중복 신고 | 동일 대상 중복 신고 불가 (취소 후 재신고는 가능) |
+| 기타 사유 | *_OTHER 선택 시 detail 필수 |
+| 사유-대상 일치 | reason prefix와 targetType 일치 필요 |
 
 ### 처리 프로세스
 
 ```
-1. 사용자 신고
-2. 관리자 검토
-3. 승인 시: 숨김/삭제 처리
-4. 반려 시: 유지
+1. 사용자 신고 → 상태: PENDING
+2. 관리자 검토 (GET /admin/reports)
+3. 승인(ACCEPTED) 시: 숨김/삭제 처리 (추후)
+4. 반려(REJECTED) 시: 유지
+5. 사용자 취소: PENDING 상태에서만 가능 → 상태: CANCELLED
 ```
 
 ---

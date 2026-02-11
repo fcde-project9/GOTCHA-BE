@@ -2,7 +2,7 @@
 
 ## 개요
 
-- **MVP (V1)**: users, refresh_tokens, shops, shop_reports, favorites, comments, reviews, withdrawal_surveys
+- **MVP (V1)**: users, refresh_tokens, shops, shop_reports, favorites, comments, reviews, withdrawal_surveys, reports
 - **V2**: post_types, posts, post_comments, chat_rooms, chats, inquiries
 
 ---
@@ -209,6 +209,77 @@
 | created_at, updated_at | LocalDateTime | BaseTimeEntity |
 
 - UNIQUE(user_id, permission_type): 중복 방지
+
+---
+
+## reports
+
+리뷰/가게/유저 신고
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | Long (PK) | AUTO_INCREMENT |
+| reporter_id | Long (FK → users) | 신고자 |
+| target_type | Enum | REVIEW, SHOP, USER |
+| target_id | Long | 신고 대상 ID (리뷰/가게/유저 ID) |
+| reason | Enum | 신고 사유 (prefix 기반: REVIEW_*, SHOP_*, USER_*) |
+| detail | String (TEXT) | 상세 내용 (*_OTHER 선택 시 필수) |
+| status | Enum | PENDING, ACCEPTED, REJECTED, CANCELLED |
+| created_at, updated_at | LocalDateTime | BaseTimeEntity |
+
+- UNIQUE(reporter_id, target_type, target_id): 동일 대상 중복 신고 방지
+
+### ReportTargetType (Enum)
+
+| 값 | 설명 |
+|----|------|
+| REVIEW | 리뷰 신고 |
+| SHOP | 가게 신고 |
+| USER | 유저 신고 |
+
+### ReportReason (Enum)
+
+> 신고 대상 타입별로 prefix가 붙은 사유만 사용 가능 (예: REVIEW 신고 시 REVIEW_* 사유만 허용)
+
+**리뷰 신고 사유 (REVIEW_*)**
+
+| 값 | 설명 |
+|----|------|
+| REVIEW_SPAM | 도배/광고성 글이에요 |
+| REVIEW_COPYRIGHT | 저작권을 침해해요 |
+| REVIEW_DEFAMATION | 명예를 훼손하는 내용이에요 |
+| REVIEW_ABUSE | 욕설이나 비방이 심해요 |
+| REVIEW_OBSCENE | 외설적인 내용이 포함돼있어요 |
+| REVIEW_PRIVACY | 개인정보가 노출되어 있어요 |
+| REVIEW_OTHER | 기타 (detail 필수) |
+
+**가게 신고 사유 (SHOP_*)**
+
+| 값 | 설명 |
+|----|------|
+| SHOP_WRONG_ADDRESS | 잘못된 주소예요 |
+| SHOP_CLOSED | 영업 종료/폐업된 업체예요 |
+| SHOP_INAPPROPRIATE | 부적절한 업체(불법/유해 업소)예요 |
+| SHOP_DUPLICATE | 중복 제보된 업체예요 |
+| SHOP_OTHER | 기타 (detail 필수) |
+
+**사용자 신고 사유 (USER_*)**
+
+| 값 | 설명 |
+|----|------|
+| USER_INAPPROPRIATE_NICKNAME | 부적절한 닉네임이에요 |
+| USER_INAPPROPRIATE_PROFILE | 부적절한 프로필 사진이에요 |
+| USER_PRIVACY | 개인정보가 노출되어 있어요 |
+| USER_OTHER | 기타 (detail 필수) |
+
+### ReportStatus (Enum)
+
+| 값 | 설명 |
+|----|------|
+| PENDING | 처리 대기 |
+| ACCEPTED | 승인 |
+| REJECTED | 반려 |
+| CANCELLED | 취소 (신고자가 취소) |
 
 ---
 

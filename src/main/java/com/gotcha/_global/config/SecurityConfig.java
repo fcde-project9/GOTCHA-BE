@@ -96,6 +96,9 @@ public class SecurityConfig {
                         // Authenticated - 리뷰 좋아요
                         .requestMatchers(HttpMethod.POST, "/api/shops/reviews/*/like").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/shops/reviews/*/like").authenticated()
+                        // Authenticated - 신고
+                        .requestMatchers(HttpMethod.POST, "/api/reports").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/reports/*").authenticated()
                         // Admin
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         // 그 외는 전부 인증 필요
