@@ -6,7 +6,30 @@
 
 ## 2026-02-12
 
+### 추가
+- `src/main/java/com/gotcha/domain/user/controller/AdminUserController.java` - 관리자 사용자 관리 API (목록/상세/상태변경)
+- `src/main/java/com/gotcha/domain/user/controller/AdminUserControllerApi.java` - 관리자 사용자 관리 API Swagger 인터페이스
+- `src/main/java/com/gotcha/domain/user/service/AdminUserService.java` - 관리자 사용자 관리 Service (제재/해제)
+- `src/main/java/com/gotcha/domain/user/dto/UpdateUserStatusRequest.java` - 사용자 상태 변경 Request DTO
+- `src/main/java/com/gotcha/domain/user/dto/AdminUserResponse.java` - 관리자용 사용자 정보 Response DTO
+- `src/main/java/com/gotcha/domain/user/dto/AdminUserListResponse.java` - 관리자용 사용자 목록 Response DTO
+- `src/test/java/com/gotcha/domain/user/service/AdminUserServiceTest.java` - AdminUserService 단위 테스트
+
 ### 수정
+- `src/main/java/com/gotcha/domain/user/entity/User.java` - suspendedUntil 필드 추가, suspend(LocalDateTime) 시그니처 변경, isSuspended/isBanned/checkAndRestoreIfSuspensionExpired 메서드 추가
+- `src/main/java/com/gotcha/domain/user/repository/UserRepository.java` - findAllWithStatusFilter() 메서드 추가
+- `src/main/java/com/gotcha/domain/user/exception/UserErrorCode.java` - U006 추가 (허용되지 않는 정지 기간)
+- `src/main/java/com/gotcha/domain/user/exception/UserException.java` - invalidSuspensionHours() 팩토리 메서드 추가
+- `src/main/java/com/gotcha/domain/auth/exception/AuthErrorCode.java` - A014 (정지된 사용자), A015 (차단된 사용자) 추가
+- `src/main/java/com/gotcha/domain/auth/exception/AuthException.java` - userSuspended(), userBanned() 팩토리 메서드 추가
+- `src/main/java/com/gotcha/_global/util/SecurityUtil.java` - SUSPENDED/BANNED 사용자 접근 차단, 정지 기간 만료 시 자동 복구
+- `src/main/java/com/gotcha/domain/auth/oauth2/CustomOAuth2UserService.java` - SUSPENDED/BANNED 사용자 로그인 차단
+- `src/main/java/com/gotcha/domain/auth/oauth2/CustomOidcUserService.java` - SUSPENDED/BANNED 사용자 로그인 차단 (Apple)
+- `docs/api-spec.md` - 관리자 사용자 관리 API 명세 추가 (GET /admin/users, GET /admin/users/{userId}, PATCH /admin/users/{userId}/status)
+- `docs/error-codes.md` - A013, A014, A015, U006 에러코드 추가
+- `docs/entity-design.md` - users 테이블에 suspended_until 필드 추가
+- `docs/auth-policy.md` - 관리자 사용자 관리 API 권한 매트릭스, 제재 사용자 접근 차단 정책 추가
+- `docs/business-rules.md` - 사용자 제재 섹션 추가 (제재 유형, 정지 기간 옵션, 자동 복구 정책)
 - `docs/api-spec.md` - 신고 사유 누락 항목 추가 (REVIEW_VIOLENCE, USER_IMPERSONATION)
 - `docs/business-rules.md` - 신고 사유 누락 항목 추가 (REVIEW_VIOLENCE, USER_IMPERSONATION)
 - `docs/entity-design.md` - 신고 사유 누락 항목 추가 (REVIEW_VIOLENCE, USER_IMPERSONATION)
