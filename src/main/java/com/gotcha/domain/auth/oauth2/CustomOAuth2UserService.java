@@ -87,7 +87,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                                     existingUser.getId(), existingUser.getSuspendedUntil());
                             throw new OAuth2AuthenticationException(
                                     new OAuth2Error(AuthErrorCode.USER_SUSPENDED.getCode(),
-                                            AuthErrorCode.USER_SUSPENDED.getMessage(), null));
+                                            AuthErrorCode.USER_SUSPENDED.getMessage(),
+                                            String.valueOf(existingUser.getSuspendedUntil())));
                         }
                     }
                     return registrationService.updateExistingUser(existingUser, userInfo);
