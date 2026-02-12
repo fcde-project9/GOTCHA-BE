@@ -232,6 +232,7 @@ distance = haversine(lat1, lng1, lat2, lng2)
 | REVIEW_COPYRIGHT | 저작권을 침해해요 |
 | REVIEW_DEFAMATION | 명예를 훼손하는 내용이에요 |
 | REVIEW_ABUSE | 욕설이나 비방이 심해요 |
+| REVIEW_VIOLENCE | 폭력적이거나 위협적인 내용이에요 |
 | REVIEW_OBSCENE | 외설적인 내용이 포함돼있어요 |
 | REVIEW_PRIVACY | 개인정보가 노출되어 있어요 |
 | REVIEW_HATE_SPEECH | 혐오 표현이 포함돼있어요 |
@@ -254,6 +255,7 @@ distance = haversine(lat1, lng1, lat2, lng2)
 | USER_INAPPROPRIATE_NICKNAME | 부적절한 닉네임이에요 |
 | USER_INAPPROPRIATE_PROFILE | 부적절한 프로필 사진이에요 |
 | USER_PRIVACY | 개인정보가 노출되어 있어요 |
+| USER_IMPERSONATION | 다른 사람을 사칭하고 있어요 |
 | USER_HATE_SPEECH | 혐오 표현이 포함돼있어요 |
 | USER_OTHER | 기타 (detail 필수) |
 

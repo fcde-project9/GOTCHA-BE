@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-02-12
+
+### 수정
+- `docs/api-spec.md` - 신고 사유 누락 항목 추가 (REVIEW_VIOLENCE, USER_IMPERSONATION)
+- `docs/business-rules.md` - 신고 사유 누락 항목 추가 (REVIEW_VIOLENCE, USER_IMPERSONATION)
+- `docs/entity-design.md` - 신고 사유 누락 항목 추가 (REVIEW_VIOLENCE, USER_IMPERSONATION)
+
+---
+
 ## 2026-02-11
 
 ### 수정
