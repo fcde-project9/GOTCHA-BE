@@ -251,6 +251,8 @@
 | REVIEW_ABUSE | 욕설이나 비방이 심해요 |
 | REVIEW_OBSCENE | 외설적인 내용이 포함돼있어요 |
 | REVIEW_PRIVACY | 개인정보가 노출되어 있어요 |
+| REVIEW_HATE_SPEECH | 혐오 표현이 포함돼있어요 |
+| REVIEW_FALSE_INFO | 허위/거짓 정보예요 |
 | REVIEW_OTHER | 기타 (detail 필수) |
 
 **가게 신고 사유 (SHOP_*)**
@@ -261,6 +263,7 @@
 | SHOP_CLOSED | 영업 종료/폐업된 업체예요 |
 | SHOP_INAPPROPRIATE | 부적절한 업체(불법/유해 업소)예요 |
 | SHOP_DUPLICATE | 중복 제보된 업체예요 |
+| SHOP_FALSE_INFO | 허위/거짓 정보예요 |
 | SHOP_OTHER | 기타 (detail 필수) |
 
 **사용자 신고 사유 (USER_*)**
@@ -270,6 +273,7 @@
 | USER_INAPPROPRIATE_NICKNAME | 부적절한 닉네임이에요 |
 | USER_INAPPROPRIATE_PROFILE | 부적절한 프로필 사진이에요 |
 | USER_PRIVACY | 개인정보가 노출되어 있어요 |
+| USER_HATE_SPEECH | 혐오 표현이 포함돼있어요 |
 | USER_OTHER | 기타 (detail 필수) |
 
 ### ReportStatus (Enum)
