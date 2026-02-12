@@ -115,6 +115,9 @@ public class User extends BaseTimeEntity {
     }
 
     public void suspend(LocalDateTime until) {
+        if (until == null) {
+            throw new IllegalArgumentException("Suspension end time must not be null");
+        }
         this.status = UserStatus.SUSPENDED;
         this.suspendedUntil = until;
     }
