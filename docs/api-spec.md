@@ -1589,3 +1589,142 @@ Authorization: Bearer {accessToken}
 |------|------|
 | RP001 | 신고를 찾을 수 없음 |
 | A002 | 관리자 권한 필요 |
+
+---
+
+### GET /admin/users
+
+사용자 목록 조회 (관리자)
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Query Parameters**
+| 파라미터 | 타입 | 필수 | 기본값 | 설명 |
+|---------|------|------|--------|------|
+| status | String | X | - | ACTIVE, SUSPENDED, BANNED |
+| page | Integer | X | 0 | |
+| size | Integer | X | 20 | |
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "users": [
+      {
+        "id": 1,
+        "nickname": "빨간캡슐#21",
+        "email": "user@example.com",
+        "profileImageUrl": "https://...",
+        "socialType": "KAKAO",
+        "userType": "NORMAL",
+        "status": "ACTIVE",
+        "suspendedUntil": null,
+        "lastLoginAt": "2026-01-08T12:00:00",
+        "createdAt": "2025-12-01T10:00:00"
+      }
+    ],
+    "page": 0,
+    "size": 20,
+    "totalElements": 100,
+    "totalPages": 5,
+    "last": false
+  }
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| A002 | 관리자 권한 필요 |
+
+---
+
+### GET /admin/users/{userId}
+
+사용자 상세 조회 (관리자)
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "nickname": "빨간캡슐#21",
+    "email": "user@example.com",
+    "profileImageUrl": "https://...",
+    "socialType": "KAKAO",
+    "userType": "NORMAL",
+    "status": "SUSPENDED",
+    "suspendedUntil": "2026-02-15T12:00:00",
+    "lastLoginAt": "2026-01-08T12:00:00",
+    "createdAt": "2025-12-01T10:00:00"
+  }
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| U004 | 사용자를 찾을 수 없음 |
+| A002 | 관리자 권한 필요 |
+
+---
+
+### PATCH /admin/users/{userId}/status
+
+사용자 상태 변경 — 제재/해제 (관리자)
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Request Body**
+```json
+{
+  "status": "SUSPENDED",
+  "suspensionHours": 24
+}
+```
+
+**status 값**
+| 값 | 설명 | suspensionHours |
+|---|------|-----------------|
+| SUSPENDED | 기간 정지 | 필수 (1, 12, 24, 72, 120, 168, 336, 720) |
+| BANNED | 영구 차단 | 불필요 |
+| ACTIVE | 제재 해제 | 불필요 |
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "nickname": "빨간캡슐#21",
+    "email": "user@example.com",
+    "profileImageUrl": "https://...",
+    "socialType": "KAKAO",
+    "userType": "NORMAL",
+    "status": "SUSPENDED",
+    "suspendedUntil": "2026-02-13T12:00:00",
+    "lastLoginAt": "2026-01-08T12:00:00",
+    "createdAt": "2025-12-01T10:00:00"
+  }
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| U004 | 사용자를 찾을 수 없음 |
+| U006 | 허용되지 않는 정지 기간 |
+| A002 | 관리자 권한 필요 |

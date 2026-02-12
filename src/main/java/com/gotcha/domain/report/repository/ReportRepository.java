@@ -42,4 +42,10 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
     long countWithFilters(
             @Param("targetType") ReportTargetType targetType,
             @Param("status") ReportStatus status);
+
+    @Query("SELECT r FROM Report r WHERE r.targetType = :targetType AND r.targetId = :targetId AND r.status = :status")
+    List<Report> findAllByTargetTypeAndTargetIdAndStatus(
+            @Param("targetType") ReportTargetType targetType,
+            @Param("targetId") Long targetId,
+            @Param("status") ReportStatus status);
 }

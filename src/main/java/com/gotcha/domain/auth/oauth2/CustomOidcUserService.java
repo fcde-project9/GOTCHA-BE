@@ -82,6 +82,24 @@ public class CustomOidcUserService extends OidcUserService {
                                 new OAuth2Error(AuthErrorCode.USER_DELETED.getCode(),
                                         AuthErrorCode.USER_DELETED.getMessage(), null));
                     }
+                    // 차단된 사용자 로그인 차단
+                    if (existingUser.isBanned()) {
+                        log.warn("Banned user attempted Apple login - userId: {}", existingUser.getId());
+                        throw new OAuth2AuthenticationException(
+                                new OAuth2Error(AuthErrorCode.USER_BANNED.getCode(),
+                                        AuthErrorCode.USER_BANNED.getMessage(), null));
+                    }
+                    // 정지된 사용자: 기간 만료 시 자동 복구, 미만료 시 차단
+                    if (existingUser.isSuspended()) {
+                        if (!existingUser.checkAndRestoreIfSuspensionExpired()) {
+                            log.warn("Suspended user attempted Apple login - userId: {}, suspendedUntil: {}",
+                                    existingUser.getId(), existingUser.getSuspendedUntil());
+                            throw new OAuth2AuthenticationException(
+                                    new OAuth2Error(AuthErrorCode.USER_SUSPENDED.getCode(),
+                                            AuthErrorCode.USER_SUSPENDED.getMessage(),
+                                            String.valueOf(existingUser.getSuspendedUntil())));
+                        }
+                    }
                     return registrationService.updateExistingUser(existingUser, userInfo);
                 })
                 .orElseGet(() -> registrationService.createNewUser(userInfo, socialType));

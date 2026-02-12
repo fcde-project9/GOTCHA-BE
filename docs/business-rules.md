@@ -273,10 +273,55 @@ distance = haversine(lat1, lng1, lat2, lng2)
 ```
 1. 사용자 신고 → 상태: PENDING
 2. 관리자 검토 (GET /admin/reports)
-3. 승인(ACCEPTED) 시: 숨김/삭제 처리 (추후)
+3. 승인(ACCEPTED) 시: 관리자가 사용자 제재 판단 (PATCH /admin/users/{id}/status)
 4. 반려(REJECTED) 시: 유지
 5. 사용자 취소: PENDING 상태에서만 가능 → 상태: CANCELLED
 ```
+
+---
+
+## 사용자 제재 (User Sanction)
+
+### 제재 유형
+
+| 유형 | 설명 | 해제 방식 |
+|------|------|----------|
+| SUSPENDED | 기간 지정 정지 | 자동 (기간 만료 시 lazy check) |
+| BANNED | 영구 차단 | 관리자 수동 해제 |
+
+### 정지 기간 옵션
+
+| 시간 | 설명 |
+|------|------|
+| 1 | 1시간 |
+| 12 | 12시간 |
+| 24 | 24시간 (1일) |
+| 72 | 3일 |
+| 120 | 5일 |
+| 168 | 7일 |
+| 336 | 14일 |
+| 720 | 30일 |
+
+### 제재 효과
+
+| 항목 | 제한 |
+|------|------|
+| 로그인 | 불가 (OAuth2 로그인 시 차단) |
+| API 접근 | 불가 (SecurityUtil에서 차단) |
+| 기존 토큰 | 다음 API 호출 시 차단 (lazy check) |
+
+### 자동 복구 (Lazy Check)
+
+- SUSPENDED 상태에서 `suspended_until`이 현재 시간보다 이전이면 자동으로 ACTIVE 복구
+- 복구 시점: SecurityUtil.getCurrentUser() 호출 시, OAuth2 로그인 시
+- 별도 스케줄러 없이 요청 시점에 확인
+
+### 제재 불가 대상
+
+| 대상 | 사유 |
+|------|------|
+| ADMIN 사용자 | 관리자 계정 보호 |
+| DELETED 사용자 | 이미 탈퇴 처리된 사용자 |
 
 ---
 

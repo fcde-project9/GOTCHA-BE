@@ -17,7 +17,8 @@ public enum UserErrorCode implements ErrorCode {
     INVALID_NICKNAME_FORMAT(BAD_REQUEST, "U002", "닉네임 형식이 올바르지 않습니다"),
     FORBIDDEN_NICKNAME(BAD_REQUEST, "U003", "사용할 수 없는 닉네임입니다"),
     USER_NOT_FOUND(NOT_FOUND, "U004", "사용자를 찾을 수 없습니다"),
-    ALREADY_DELETED(BAD_REQUEST, "U005", "이미 탈퇴한 사용자입니다");
+    ALREADY_DELETED(BAD_REQUEST, "U005", "이미 탈퇴한 사용자입니다"),
+    INVALID_SUSPENSION_HOURS(BAD_REQUEST, "U006", "허용되지 않는 정지 기간입니다");
 
     private final HttpStatus status;
     private final String code;

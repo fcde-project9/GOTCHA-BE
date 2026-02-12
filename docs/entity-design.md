@@ -20,6 +20,7 @@
 | email | String | 소셜 이메일 (탈퇴 시 null) |
 | profile_image_url | String | 프로필 이미지 URL (탈퇴 시 null) |
 | oauth_access_token | String (TEXT) | OAuth2 액세스 토큰 (구글 연동 해제용) |
+| suspended_until | LocalDateTime | 정지 해제 일시 (SUSPENDED 상태일 때, nullable) |
 | is_deleted | Boolean | 탈퇴 여부 (soft delete) |
 | last_login_at | LocalDateTime | |
 | created_at, updated_at | LocalDateTime | BaseTimeEntity |
