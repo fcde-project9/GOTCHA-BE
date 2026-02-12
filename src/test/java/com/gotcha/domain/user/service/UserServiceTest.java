@@ -115,6 +115,9 @@ class UserServiceTest {
     @Mock
     private PostCommentRepository postCommentRepository;
 
+    @Mock
+    private com.gotcha.domain.block.repository.UserBlockRepository userBlockRepository;
+
     @InjectMocks
     private UserService userService;
 

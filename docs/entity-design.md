@@ -195,6 +195,21 @@
 
 ---
 
+## user_blocks
+
+사용자 차단 (A가 B를 차단하면 B의 리뷰가 A에게 안 보임)
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | Long (PK) | AUTO_INCREMENT |
+| blocker_id | Long (FK → users) | 차단하는 사용자 |
+| blocked_id | Long (FK → users) | 차단당하는 사용자 |
+| created_at, updated_at | LocalDateTime | BaseTimeEntity |
+
+- UNIQUE(blocker_id, blocked_id)
+
+---
+
 ## user_permissions
 
 사용자 권한 동의 상태 (최신 상태만 저장)

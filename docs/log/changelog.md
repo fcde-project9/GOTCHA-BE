@@ -6,7 +6,33 @@
 
 ## 2026-02-12
 
+### 추가
+- `src/main/java/com/gotcha/domain/block/entity/UserBlock.java` - 사용자 차단 Entity (blocker, blocked)
+- `src/main/java/com/gotcha/domain/block/repository/UserBlockRepository.java` - 차단 Repository (차단 목록, 삭제 쿼리)
+- `src/main/java/com/gotcha/domain/block/exception/BlockErrorCode.java` - 차단 에러코드 (BK001-BK003)
+- `src/main/java/com/gotcha/domain/block/exception/BlockException.java` - 차단 예외 클래스
+- `src/main/java/com/gotcha/domain/block/dto/BlockResponse.java` - 차단 응답 DTO
+- `src/main/java/com/gotcha/domain/block/dto/BlockedUserResponse.java` - 차단 사용자 목록 응답 DTO
+- `src/main/java/com/gotcha/domain/block/service/UserBlockService.java` - 차단 Service (차단, 해제, 목록)
+- `src/main/java/com/gotcha/domain/block/controller/UserBlockController.java` - 차단 Controller
+- `src/main/java/com/gotcha/domain/block/controller/UserBlockControllerApi.java` - 차단 Controller Swagger 인터페이스
+
 ### 수정
+- `src/main/java/com/gotcha/domain/review/repository/ReviewRepository.java` - 차단 사용자 제외 쿼리 추가
+  - 추가: findAllByShopIdExcludingBlockedUsersOrderByCreatedAtDesc()
+  - 추가: findAllByShopIdExcludingBlockedUsersOrderByLikeCountDesc()
+- `src/main/java/com/gotcha/domain/review/service/ReviewService.java` - 차단 사용자 리뷰 필터링 적용
+  - 추가: UserBlockService 의존성
+  - 변경: getReviews()에서 차단 사용자 리뷰 제외
+- `src/main/java/com/gotcha/domain/shop/service/ShopService.java` - 차단 사용자 리뷰 필터링 적용
+  - 추가: UserBlockService 의존성
+  - 변경: getTop5Reviews()에서 차단 사용자 리뷰 제외
+- `src/main/java/com/gotcha/domain/user/service/UserService.java` - 회원 탈퇴 시 차단 정보 삭제
+  - 추가: UserBlockRepository 의존성
+  - 변경: withdraw()에 차단 정보 삭제 로직 추가
+- `docs/entity-design.md` - user_blocks 테이블 스키마 추가
+- `docs/api-spec.md` - 사용자 차단 API 명세 추가 (POST/DELETE /users/{userId}/block, GET /users/me/blocks)
+- `docs/error-codes.md` - BK 도메인 및 BK001-BK003 에러코드 추가
 - `docs/api-spec.md` - 신고 사유 누락 항목 추가 (REVIEW_VIOLENCE, USER_IMPERSONATION)
 - `docs/business-rules.md` - 신고 사유 누락 항목 추가 (REVIEW_VIOLENCE, USER_IMPERSONATION)
 - `docs/entity-design.md` - 신고 사유 누락 항목 추가 (REVIEW_VIOLENCE, USER_IMPERSONATION)
