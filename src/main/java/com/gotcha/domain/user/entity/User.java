@@ -52,6 +52,8 @@ public class User extends BaseTimeEntity {
 
     private LocalDateTime lastLoginAt;
 
+    private LocalDateTime suspendedUntil;
+
     @Column(nullable = false, columnDefinition = "boolean default false")
     private Boolean isDeleted = false;
 
@@ -112,20 +114,45 @@ public class User extends BaseTimeEntity {
         this.isDeleted = true;
     }
 
-    public void suspend() {
+    public void suspend(LocalDateTime until) {
         this.status = UserStatus.SUSPENDED;
+        this.suspendedUntil = until;
     }
 
     public void ban() {
         this.status = UserStatus.BANNED;
+        this.suspendedUntil = null;
     }
 
     public void activate() {
         this.status = UserStatus.ACTIVE;
+        this.suspendedUntil = null;
     }
 
     public boolean isActive() {
         return this.status == UserStatus.ACTIVE;
+    }
+
+    public boolean isSuspended() {
+        return this.status == UserStatus.SUSPENDED;
+    }
+
+    public boolean isBanned() {
+        return this.status == UserStatus.BANNED;
+    }
+
+    /**
+     * SUSPENDED 상태에서 정지 기간이 만료되었으면 ACTIVE로 자동 복구
+     * @return true if suspension expired and status was restored to ACTIVE
+     */
+    public boolean checkAndRestoreIfSuspensionExpired() {
+        if (this.status == UserStatus.SUSPENDED
+                && this.suspendedUntil != null
+                && LocalDateTime.now().isAfter(this.suspendedUntil)) {
+            activate();
+            return true;
+        }
+        return false;
     }
 
     public boolean isAdmin() {
