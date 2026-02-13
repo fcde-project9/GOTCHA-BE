@@ -18,5 +18,10 @@ public enum PermissionType {
     /**
      * 앨범(사진) 접근 권한 - 가챠샵 제보 시 기존 사진 선택에 사용
      */
-    ALBUM
+    ALBUM,
+
+    /**
+     * 푸시 알림 권한 - 새 리뷰, 댓글 등 알림 수신에 사용
+     */
+    NOTIFICATION
 }
