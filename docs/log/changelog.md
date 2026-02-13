@@ -9,7 +9,7 @@
 ### 추가
 - `src/main/java/com/gotcha/domain/block/entity/UserBlock.java` - 사용자 차단 Entity (blocker, blocked)
 - `src/main/java/com/gotcha/domain/block/repository/UserBlockRepository.java` - 차단 Repository (차단 목록, 삭제 쿼리)
-- `src/main/java/com/gotcha/domain/block/exception/BlockErrorCode.java` - 차단 에러코드 (BK001-BK003)
+- `src/main/java/com/gotcha/domain/block/exception/BlockErrorCode.java` - 차단 에러코드 (BK001-BK004)
 - `src/main/java/com/gotcha/domain/block/exception/BlockException.java` - 차단 예외 클래스
 - `src/main/java/com/gotcha/domain/block/dto/BlockResponse.java` - 차단 응답 DTO
 - `src/main/java/com/gotcha/domain/block/dto/BlockedUserResponse.java` - 차단 사용자 목록 응답 DTO
@@ -39,7 +39,7 @@
   - 변경: withdraw()에 차단 정보 삭제 로직 추가
 - `docs/entity-design.md` - user_blocks 테이블 스키마 추가
 - `docs/api-spec.md` - 사용자 차단 API 명세 추가 (POST/DELETE /users/{userId}/block, GET /users/me/blocks)
-- `docs/error-codes.md` - BK 도메인 및 BK001-BK003 에러코드 추가
+- `docs/error-codes.md` - BK 도메인 및 BK001-BK004 에러코드 추가
 - `src/main/java/com/gotcha/domain/user/entity/User.java` - suspendedUntil 필드 추가, suspend(LocalDateTime) 시그니처 변경, isSuspended/isBanned/checkAndRestoreIfSuspensionExpired 메서드 추가
 - `src/main/java/com/gotcha/domain/user/repository/UserRepository.java` - findAllWithStatusFilter() 메서드 추가
 - `src/main/java/com/gotcha/domain/user/exception/UserErrorCode.java` - U006 추가 (허용되지 않는 정지 기간)
