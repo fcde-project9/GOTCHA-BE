@@ -32,6 +32,13 @@ public interface ReviewImageRepository extends JpaRepository<ReviewImage, Long> 
     @Query("SELECT COUNT(ri) FROM ReviewImage ri WHERE ri.review.shop.id = :shopId")
     Long countByShopId(@Param("shopId") Long shopId);
 
+    // 특정 가게의 전체 리뷰 이미지 개수 (차단 사용자 제외)
+    @Query("SELECT COUNT(ri) FROM ReviewImage ri WHERE ri.review.shop.id = :shopId " +
+            "AND ri.review.user.id NOT IN :blockedUserIds")
+    Long countByShopIdExcludingBlockedUsers(
+            @Param("shopId") Long shopId,
+            @Param("blockedUserIds") List<Long> blockedUserIds);
+
     // 특정 가게의 최신 리뷰 이미지 4개 (리뷰 생성일시 기준 내림차순)
     @Query(value = "SELECT ri.* FROM review_images ri " +
             "JOIN reviews r ON ri.review_id = r.id " +
@@ -39,6 +46,17 @@ public interface ReviewImageRepository extends JpaRepository<ReviewImage, Long> 
             "ORDER BY r.created_at DESC, ri.display_order ASC " +
             "LIMIT 4", nativeQuery = true)
     List<ReviewImage> findTop4ByShopId(@Param("shopId") Long shopId);
+
+    // 특정 가게의 최신 리뷰 이미지 4개 (차단 사용자 제외)
+    @Query(value = "SELECT ri.* FROM review_images ri " +
+            "JOIN reviews r ON ri.review_id = r.id " +
+            "WHERE r.shop_id = :shopId " +
+            "AND r.user_id NOT IN (:blockedUserIds) " +
+            "ORDER BY r.created_at DESC, ri.display_order ASC " +
+            "LIMIT 4", nativeQuery = true)
+    List<ReviewImage> findTop4ByShopIdExcludingBlockedUsers(
+            @Param("shopId") Long shopId,
+            @Param("blockedUserIds") List<Long> blockedUserIds);
 
     // 특정 가게의 전체 리뷰 이미지 조회 (리뷰 생성일시 기준 내림차순)
     @Query("SELECT ri FROM ReviewImage ri " +

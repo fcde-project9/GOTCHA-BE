@@ -1127,6 +1127,113 @@ Authorization: Bearer {accessToken}
 
 ---
 
+## 사용자 차단 API
+
+### POST /users/{userId}/block
+
+사용자 차단
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Path Parameters**
+| 파라미터 | 타입 | 필수 | 설명 |
+|---------|------|------|------|
+| userId | Long | O | 차단할 사용자 ID |
+
+**Response (201)**
+```json
+{
+  "success": true,
+  "data": {
+    "blockedUserId": 2,
+    "blockedAt": "2025-01-15T10:00:00"
+  }
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| BK001 | 본인을 차단할 수 없음 |
+| BK002 | 이미 차단한 사용자 |
+| U004 | 차단할 사용자를 찾을 수 없음 |
+
+---
+
+### DELETE /users/{userId}/block
+
+차단 해제
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Path Parameters**
+| 파라미터 | 타입 | 필수 | 설명 |
+|---------|------|------|------|
+| userId | Long | O | 차단 해제할 사용자 ID |
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": null
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| BK003 | 차단 정보를 찾을 수 없음 |
+
+---
+
+### GET /users/me/blocks
+
+내 차단 목록 조회
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Query Parameters**
+| 파라미터 | 타입 | 필수 | 기본값 |
+|---------|------|------|--------|
+| page | Integer | X | 0 |
+| size | Integer | X | 20 |
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "content": [
+      {
+        "blockedUserId": 2,
+        "nickname": "빨간캡슐#21",
+        "profileImageUrl": "https://...",
+        "blockedAt": "2025-01-15T10:00:00"
+      }
+    ],
+    "totalCount": 5,
+    "page": 0,
+    "size": 20,
+    "hasNext": false
+  }
+}
+```
+
+**참고**
+- 차단된 사용자의 리뷰는 가게 상세 조회, 리뷰 목록 조회에서 자동으로 필터링됨
+- 회원 탈퇴 시 차단 정보도 함께 삭제됨
+
+---
+
 ## 파일 업로드 API
 
 ### POST /files/upload
