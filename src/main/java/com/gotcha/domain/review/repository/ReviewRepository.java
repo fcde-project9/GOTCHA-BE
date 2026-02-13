@@ -45,6 +45,12 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     Long countByShopId(Long shopId);
 
+    @Query("SELECT COUNT(r) FROM Review r WHERE r.shop.id = :shopId " +
+            "AND r.user.id NOT IN :blockedUserIds")
+    Long countByShopIdExcludingBlockedUsers(
+            @Param("shopId") Long shopId,
+            @Param("blockedUserIds") List<Long> blockedUserIds);
+
     @Modifying(clearAutomatically = true)
     @Query("DELETE FROM Review r WHERE r.user.id = :userId")
     void deleteByUserId(@Param("userId") Long userId);

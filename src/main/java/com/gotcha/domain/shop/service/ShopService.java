@@ -549,20 +549,42 @@ public class ShopService {
         // 영업 상태 확인
         String openStatus = getOpenStatus(openTimeMap);
 
+        // 차단한 사용자 목록 조회
+        Long currentUserId = user != null ? user.getId() : null;
+        List<Long> blockedUserIds = userBlockService.getBlockedUserIds(currentUserId);
+
         // 리뷰 5개 조회 (정렬 적용)
         List<ReviewResponse> reviews = getTop5Reviews(shopId, sortBy, user);
 
-        // 전체 리뷰 개수 조회
-        Long reviewCount = reviewRepository.countByShopId(shopId);
+        // 전체 리뷰 개수 조회 (차단 사용자 제외)
+        Long reviewCount;
+        if (blockedUserIds.isEmpty()) {
+            reviewCount = reviewRepository.countByShopId(shopId);
+        } else {
+            reviewCount = reviewRepository.countByShopIdExcludingBlockedUsers(shopId, blockedUserIds);
+        }
 
-        // 전체 리뷰 사진 개수 조회
-        Long totalReviewImageCount = reviewImageRepository.countByShopId(shopId);
+        // 전체 리뷰 사진 개수 조회 (차단 사용자 제외)
+        Long totalReviewImageCount;
+        if (blockedUserIds.isEmpty()) {
+            totalReviewImageCount = reviewImageRepository.countByShopId(shopId);
+        } else {
+            totalReviewImageCount = reviewImageRepository.countByShopIdExcludingBlockedUsers(shopId, blockedUserIds);
+        }
 
-        // 최신 리뷰 이미지 4개 조회
-        List<String> recentReviewImages = reviewImageRepository.findTop4ByShopId(shopId)
-                .stream()
-                .map(ReviewImage::getImageUrl)
-                .toList();
+        // 최신 리뷰 이미지 4개 조회 (차단 사용자 제외)
+        List<String> recentReviewImages;
+        if (blockedUserIds.isEmpty()) {
+            recentReviewImages = reviewImageRepository.findTop4ByShopId(shopId)
+                    .stream()
+                    .map(ReviewImage::getImageUrl)
+                    .toList();
+        } else {
+            recentReviewImages = reviewImageRepository.findTop4ByShopIdExcludingBlockedUsers(shopId, blockedUserIds)
+                    .stream()
+                    .map(ReviewImage::getImageUrl)
+                    .toList();
+        }
 
         log.info("Shop detail - id: {}, reviews: {}/{}, images: {}/{}",
                 shopId, reviews.size(), reviewCount, recentReviewImages.size(), totalReviewImageCount);

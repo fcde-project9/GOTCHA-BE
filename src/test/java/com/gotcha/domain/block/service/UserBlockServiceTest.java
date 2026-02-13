@@ -139,6 +139,48 @@ class UserBlockServiceTest {
                     .isInstanceOf(BlockException.class)
                     .hasMessageContaining("이미 차단한 사용자입니다");
         }
+
+        @Test
+        @DisplayName("탈퇴한 사용자 차단 불가")
+        void blockUser_DeletedUser_Fail() {
+            // given
+            User deletedUser = User.builder()
+                    .socialType(SocialType.KAKAO)
+                    .socialId("deleted123")
+                    .nickname("탈퇴유저")
+                    .build();
+            ReflectionTestUtils.setField(deletedUser, "id", 3L);
+            ReflectionTestUtils.setField(deletedUser, "isDeleted", true);
+
+            when(securityUtil.getCurrentUser()).thenReturn(blocker);
+            when(userRepository.findById(3L)).thenReturn(Optional.of(deletedUser));
+
+            // when & then
+            assertThatThrownBy(() -> userBlockService.blockUser(3L))
+                    .isInstanceOf(BlockException.class)
+                    .hasMessageContaining("차단할 수 없는 사용자입니다");
+        }
+
+        @Test
+        @DisplayName("정지된 사용자 차단 불가")
+        void blockUser_SuspendedUser_Fail() {
+            // given
+            User suspendedUser = User.builder()
+                    .socialType(SocialType.KAKAO)
+                    .socialId("suspended123")
+                    .nickname("정지유저")
+                    .build();
+            ReflectionTestUtils.setField(suspendedUser, "id", 4L);
+            ReflectionTestUtils.setField(suspendedUser, "status", com.gotcha.domain.user.entity.UserStatus.SUSPENDED);
+
+            when(securityUtil.getCurrentUser()).thenReturn(blocker);
+            when(userRepository.findById(4L)).thenReturn(Optional.of(suspendedUser));
+
+            // when & then
+            assertThatThrownBy(() -> userBlockService.blockUser(4L))
+                    .isInstanceOf(BlockException.class)
+                    .hasMessageContaining("차단할 수 없는 사용자입니다");
+        }
     }
 
     @Nested

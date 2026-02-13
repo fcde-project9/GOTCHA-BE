@@ -12,6 +12,7 @@ import com.gotcha.domain.user.exception.UserException;
 import com.gotcha.domain.user.repository.UserRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -40,6 +41,11 @@ public class UserBlockService {
         User blockedUser = userRepository.findById(blockedUserId)
                 .orElseThrow(() -> UserException.notFound(blockedUserId));
 
+        // 탈퇴했거나 비활성 상태의 사용자는 차단 불가
+        if (blockedUser.getIsDeleted() || !blockedUser.isActive()) {
+            throw BlockException.invalidBlockTarget(blockedUserId);
+        }
+
         if (userBlockRepository.existsByBlockerIdAndBlockedId(blockerId, blockedUserId)) {
             throw BlockException.alreadyBlocked();
         }
@@ -49,7 +55,12 @@ public class UserBlockService {
                 .blocked(blockedUser)
                 .build();
 
-        userBlockRepository.save(userBlock);
+        try {
+            userBlockRepository.save(userBlock);
+        } catch (DataIntegrityViolationException e) {
+            // TOCTOU 경합 조건: 동시 요청으로 인한 유니크 제약조건 위반
+            throw BlockException.alreadyBlocked();
+        }
 
         log.info("User blocked - blockerId: {}, blockedUserId: {}", blockerId, blockedUserId);
 
