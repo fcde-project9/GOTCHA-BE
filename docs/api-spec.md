@@ -1696,6 +1696,7 @@ VAPID 공개키 조회 (Web Push 구독에 필요)
 ```
 
 **Error Responses**
+
 | 코드 | 상황 |
 |------|------|
 | P003 | VAPID 키 미설정 |
@@ -1707,11 +1708,13 @@ VAPID 공개키 조회 (Web Push 구독에 필요)
 푸시 알림 구독
 
 **Headers**
-```
+
+```text
 Authorization: Bearer {accessToken}
 ```
 
 **Request Body**
+
 ```json
 {
   "endpoint": "https://fcm.googleapis.com/fcm/send/...",
@@ -1723,6 +1726,7 @@ Authorization: Bearer {accessToken}
 ```
 
 **Validation**
+
 | 필드 | 규칙 |
 |------|------|
 | endpoint | 필수, URL 형식 |
@@ -1730,6 +1734,7 @@ Authorization: Bearer {accessToken}
 | keys.auth | 필수 |
 
 **Response (200)**
+
 ```json
 {
   "success": true,
@@ -1748,11 +1753,13 @@ Authorization: Bearer {accessToken}
 푸시 알림 구독 해제
 
 **Headers**
-```
+
+```text
 Authorization: Bearer {accessToken}
 ```
 
 **Request Body**
+
 ```json
 {
   "endpoint": "https://fcm.googleapis.com/fcm/send/..."
@@ -1760,6 +1767,7 @@ Authorization: Bearer {accessToken}
 ```
 
 **Response (200)**
+
 ```json
 {
   "success": true,
@@ -1768,6 +1776,7 @@ Authorization: Bearer {accessToken}
 ```
 
 **Error Responses**
+
 | 코드 | 상황 |
 |------|------|
 | P001 | 구독 정보를 찾을 수 없음 |
