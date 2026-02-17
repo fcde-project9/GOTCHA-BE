@@ -320,6 +320,24 @@
 
 ---
 
+## push_subscriptions
+
+Web Push 알림 구독 정보
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | Long (PK) | AUTO_INCREMENT |
+| user_id | Long (FK → users) | 구독한 사용자 |
+| endpoint | String (500, unique) | 브라우저 푸시 엔드포인트 URL |
+| p256dh | String | P-256 Diffie-Hellman 공개키 |
+| auth | String | 인증 키 |
+| created_at, updated_at | LocalDateTime | BaseTimeEntity |
+
+- 한 유저가 여러 기기에서 구독 가능 (1:N)
+- endpoint 기준 unique 제약
+
+---
+
 # V2 Entity (Phase 2)
 
 ---

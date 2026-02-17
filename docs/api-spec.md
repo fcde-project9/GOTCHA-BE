@@ -1679,6 +1679,110 @@ Authorization: Bearer {accessToken}
 
 ---
 
+## 푸시 알림 API
+
+### GET /push/vapid-key
+
+VAPID 공개키 조회 (Web Push 구독에 필요)
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "publicKey": "BEl62iUYgUivxIkv69yViEuiBIa-Ib9..."
+  }
+}
+```
+
+**Error Responses**
+
+| 코드 | 상황 |
+|------|------|
+| P003 | VAPID 키 미설정 |
+
+---
+
+### POST /push/subscribe
+
+푸시 알림 구독
+
+**Headers**
+
+```text
+Authorization: Bearer {accessToken}
+```
+
+**Request Body**
+
+```json
+{
+  "endpoint": "https://fcm.googleapis.com/fcm/send/...",
+  "keys": {
+    "p256dh": "BNcRdreALRFX...",
+    "auth": "tBHItJI5svbp..."
+  }
+}
+```
+
+**Validation**
+
+| 필드 | 규칙 |
+|------|------|
+| endpoint | 필수, URL 형식 |
+| keys.p256dh | 필수 |
+| keys.auth | 필수 |
+
+**Response (200)**
+
+```json
+{
+  "success": true,
+  "data": null
+}
+```
+
+**참고**
+- 동일 endpoint가 이미 존재하면 키를 갱신 (upsert)
+- 한 유저가 여러 기기에서 구독 가능 (1:N)
+
+---
+
+### DELETE /push/subscribe
+
+푸시 알림 구독 해제
+
+**Headers**
+
+```text
+Authorization: Bearer {accessToken}
+```
+
+**Request Body**
+
+```json
+{
+  "endpoint": "https://fcm.googleapis.com/fcm/send/..."
+}
+```
+
+**Response (200)**
+
+```json
+{
+  "success": true,
+  "data": null
+}
+```
+
+**Error Responses**
+
+| 코드 | 상황 |
+|------|------|
+| P001 | 구독 정보를 찾을 수 없음 |
+
+---
+
 ### PATCH /admin/users/{userId}/status
 
 사용자 상태 변경 — 제재/해제 (관리자)
