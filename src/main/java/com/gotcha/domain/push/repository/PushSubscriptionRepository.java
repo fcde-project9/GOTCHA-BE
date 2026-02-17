@@ -12,6 +12,8 @@ public interface PushSubscriptionRepository extends JpaRepository<PushSubscripti
 
     Optional<PushSubscription> findByEndpoint(String endpoint);
 
+    Optional<PushSubscription> findByUserIdAndEndpoint(Long userId, String endpoint);
+
     List<PushSubscription> findAllByUserId(Long userId);
 
     @Modifying(clearAutomatically = true)
@@ -19,8 +21,14 @@ public interface PushSubscriptionRepository extends JpaRepository<PushSubscripti
     void deleteByEndpoint(@Param("endpoint") String endpoint);
 
     @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM PushSubscription p WHERE p.user.id = :userId AND p.endpoint = :endpoint")
+    void deleteByUserIdAndEndpoint(@Param("userId") Long userId, @Param("endpoint") String endpoint);
+
+    @Modifying(clearAutomatically = true)
     @Query("DELETE FROM PushSubscription p WHERE p.user.id = :userId")
     void deleteAllByUserId(@Param("userId") Long userId);
 
     boolean existsByEndpoint(String endpoint);
+
+    boolean existsByUserIdAndEndpoint(Long userId, String endpoint);
 }
