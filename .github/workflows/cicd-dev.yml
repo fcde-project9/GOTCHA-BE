@@ -122,16 +122,16 @@ jobs:
             # 새 이미지 풀
             docker pull ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_DEV }}:${{ github.sha }}
 
-            # 새 컨테이너 실행 (t3.micro 최적화)
+            # 새 컨테이너 실행 (t3.small 최적화)
             docker run -d \
               --name gotcha-be-dev \
               -p 8080:8080 \
               --restart unless-stopped \
-              --memory="850m" \
-              --memory-swap="850m" \
-              --cpus="1.0" \
+              --memory="1400m" \
+              --memory-swap="1400m" \
+              --cpus="1.8" \
               -e SPRING_PROFILES_ACTIVE=dev \
-              -e JAVA_TOOL_OPTIONS="-Xms256m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=64m" \
+              -e JAVA_TOOL_OPTIONS="-Xms384m -Xmx768m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:MaxMetaspaceSize=256m -XX:ReservedCodeCacheSize=64m" \
               -e SPRING_DATASOURCE_URL="$DB_URL" \
               -e SPRING_DATASOURCE_USERNAME="$DB_USERNAME" \
               -e SPRING_DATASOURCE_PASSWORD="$DB_PASSWORD" \
