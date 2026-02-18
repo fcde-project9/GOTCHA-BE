@@ -36,10 +36,17 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
             redirectUri = defaultRedirectUri;
         }
 
-        String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
-                .queryParam("error", errorCode.getCode())
-                .build()
-                .toUriString();
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(redirectUri)
+                .queryParam("error", errorCode.getCode());
+
+        // 정지된 사용자: 정지 해제 시각 전달
+        if (errorCode == AuthErrorCode.USER_SUSPENDED
+                && exception instanceof OAuth2AuthenticationException oauth2Ex
+                && oauth2Ex.getError().getUri() != null) {
+            uriBuilder.queryParam("suspended_until", oauth2Ex.getError().getUri());
+        }
+
+        String targetUrl = uriBuilder.build().toUriString();
 
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
@@ -51,6 +58,9 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
                 case "access_denied" -> AuthErrorCode.OAUTH_ACCESS_DENIED;
                 case "invalid_token" -> AuthErrorCode.OAUTH_INVALID_TOKEN;
                 case "invalid_response" -> AuthErrorCode.OAUTH_INVALID_RESPONSE;
+                case "A014" -> AuthErrorCode.USER_SUSPENDED;
+                case "A015" -> AuthErrorCode.USER_BANNED;
+                case "A005" -> AuthErrorCode.USER_DELETED;
                 default -> AuthErrorCode.SOCIAL_LOGIN_FAILED;
             };
         }

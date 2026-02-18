@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gotcha._global.external.kakao.KakaoMapClient;
 import com.gotcha._global.external.kakao.dto.AddressInfo;
+import com.gotcha.domain.block.service.UserBlockService;
 import com.gotcha.domain.favorite.repository.FavoriteRepository;
 import com.gotcha.domain.review.dto.ReviewResponse;
 import com.gotcha.domain.review.dto.ReviewSortType;
@@ -56,6 +57,7 @@ public class ShopService {
     private final FileStorageService fileStorageService;
     private final CommentRepository commentRepository;
     private final ShopReportRepository shopReportRepository;
+    private final UserBlockService userBlockService;
 
     @org.springframework.beans.factory.annotation.Value("${shop.default-image-url}")
     private String defaultShopImageUrl;
@@ -547,20 +549,42 @@ public class ShopService {
         // 영업 상태 확인
         String openStatus = getOpenStatus(openTimeMap);
 
+        // 차단한 사용자 목록 조회
+        Long currentUserId = user != null ? user.getId() : null;
+        List<Long> blockedUserIds = userBlockService.getBlockedUserIds(currentUserId);
+
         // 리뷰 5개 조회 (정렬 적용)
         List<ReviewResponse> reviews = getTop5Reviews(shopId, sortBy, user);
 
-        // 전체 리뷰 개수 조회
-        Long reviewCount = reviewRepository.countByShopId(shopId);
+        // 전체 리뷰 개수 조회 (차단 사용자 제외)
+        Long reviewCount;
+        if (blockedUserIds.isEmpty()) {
+            reviewCount = reviewRepository.countByShopId(shopId);
+        } else {
+            reviewCount = reviewRepository.countByShopIdExcludingBlockedUsers(shopId, blockedUserIds);
+        }
 
-        // 전체 리뷰 사진 개수 조회
-        Long totalReviewImageCount = reviewImageRepository.countByShopId(shopId);
+        // 전체 리뷰 사진 개수 조회 (차단 사용자 제외)
+        Long totalReviewImageCount;
+        if (blockedUserIds.isEmpty()) {
+            totalReviewImageCount = reviewImageRepository.countByShopId(shopId);
+        } else {
+            totalReviewImageCount = reviewImageRepository.countByShopIdExcludingBlockedUsers(shopId, blockedUserIds);
+        }
 
-        // 최신 리뷰 이미지 4개 조회
-        List<String> recentReviewImages = reviewImageRepository.findTop4ByShopId(shopId)
-                .stream()
-                .map(ReviewImage::getImageUrl)
-                .toList();
+        // 최신 리뷰 이미지 4개 조회 (차단 사용자 제외)
+        List<String> recentReviewImages;
+        if (blockedUserIds.isEmpty()) {
+            recentReviewImages = reviewImageRepository.findTop4ByShopId(shopId)
+                    .stream()
+                    .map(ReviewImage::getImageUrl)
+                    .toList();
+        } else {
+            recentReviewImages = reviewImageRepository.findTop4ByShopIdExcludingBlockedUsers(shopId, blockedUserIds)
+                    .stream()
+                    .map(ReviewImage::getImageUrl)
+                    .toList();
+        }
 
         log.info("Shop detail - id: {}, reviews: {}/{}, images: {}/{}",
                 shopId, reviews.size(), reviewCount, recentReviewImages.size(), totalReviewImageCount);
@@ -581,13 +605,27 @@ public class ShopService {
         Pageable pageable = PageRequest.of(0, 5);
         Long currentUserId = currentUser != null ? currentUser.getId() : null;
 
-        // 정렬 타입에 따라 다른 쿼리 호출
+        // 차단한 사용자 목록 조회
+        List<Long> blockedUserIds = userBlockService.getBlockedUserIds(currentUserId);
+
+        // 정렬 타입에 따라 다른 쿼리 호출 (차단 사용자 필터링 적용)
         Page<Review> reviewPage;
-        if (sortBy == ReviewSortType.LIKE_COUNT) {
-            reviewPage = reviewRepository.findAllByShopIdOrderByLikeCountDesc(shopId, pageable);
+        if (blockedUserIds.isEmpty()) {
+            // 차단한 사용자가 없으면 기존 쿼리 사용
+            if (sortBy == ReviewSortType.LIKE_COUNT) {
+                reviewPage = reviewRepository.findAllByShopIdOrderByLikeCountDesc(shopId, pageable);
+            } else {
+                reviewPage = reviewRepository.findAllByShopIdOrderByCreatedAtDesc(shopId, pageable);
+            }
         } else {
-            // 기본값: 최신순
-            reviewPage = reviewRepository.findAllByShopIdOrderByCreatedAtDesc(shopId, pageable);
+            // 차단한 사용자가 있으면 필터링 쿼리 사용
+            if (sortBy == ReviewSortType.LIKE_COUNT) {
+                reviewPage = reviewRepository.findAllByShopIdExcludingBlockedUsersOrderByLikeCountDesc(
+                        shopId, blockedUserIds, pageable);
+            } else {
+                reviewPage = reviewRepository.findAllByShopIdExcludingBlockedUsersOrderByCreatedAtDesc(
+                        shopId, blockedUserIds, pageable);
+            }
         }
 
         // N+1 방지: 이미지 일괄 조회

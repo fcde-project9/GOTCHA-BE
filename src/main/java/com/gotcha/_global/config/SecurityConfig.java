@@ -84,6 +84,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/shops/report").permitAll()
                         // Public - file upload (used by reviews, reports, etc.)
                         .requestMatchers(HttpMethod.POST, "/api/files/**").permitAll()
+                        // Public - Push VAPID key
+                        .requestMatchers(HttpMethod.GET, "/api/push/vapid-key").permitAll()
+                        // Authenticated - Push subscription
+                        .requestMatchers(HttpMethod.POST, "/api/push/subscribe").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/push/subscribe").authenticated()
                         // Authenticated - 가게 관련 인증 필요 액션
                         .requestMatchers(HttpMethod.POST, "/api/shops/*/favorite").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/shops/*/favorite").authenticated()
@@ -96,6 +101,9 @@ public class SecurityConfig {
                         // Authenticated - 리뷰 좋아요
                         .requestMatchers(HttpMethod.POST, "/api/shops/reviews/*/like").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/shops/reviews/*/like").authenticated()
+                        // Authenticated - 신고
+                        .requestMatchers(HttpMethod.POST, "/api/reports").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/reports/*").authenticated()
                         // Admin
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         // 그 외는 전부 인증 필요

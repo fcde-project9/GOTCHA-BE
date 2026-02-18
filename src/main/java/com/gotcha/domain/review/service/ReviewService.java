@@ -1,5 +1,6 @@
 package com.gotcha.domain.review.service;
 
+import com.gotcha.domain.block.service.UserBlockService;
 import com.gotcha.domain.file.service.FileStorageService;
 import com.gotcha.domain.review.dto.CreateReviewRequest;
 import com.gotcha.domain.review.dto.PageResponse;
@@ -41,6 +42,7 @@ public class ReviewService {
     private final ShopRepository shopRepository;
     private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
+    private final UserBlockService userBlockService;
 
     private static final int MAX_IMAGES = 10;
 
@@ -86,13 +88,27 @@ public class ReviewService {
     public PageResponse<ReviewResponse> getReviews(Long shopId, ReviewSortType sortBy, Pageable pageable, Long currentUserId) {
         log.info("Getting reviews for shop {} (page: {}, sortBy: {})", shopId, pageable.getPageNumber(), sortBy);
 
-        // 정렬 타입에 따라 다른 쿼리 호출
+        // 차단한 사용자 목록 조회
+        List<Long> blockedUserIds = userBlockService.getBlockedUserIds(currentUserId);
+
+        // 정렬 타입에 따라 다른 쿼리 호출 (차단 사용자 필터링 적용)
         Page<Review> reviewPage;
-        if (sortBy == ReviewSortType.LIKE_COUNT) {
-            reviewPage = reviewRepository.findAllByShopIdOrderByLikeCountDesc(shopId, pageable);
+        if (blockedUserIds.isEmpty()) {
+            // 차단한 사용자가 없으면 기존 쿼리 사용
+            if (sortBy == ReviewSortType.LIKE_COUNT) {
+                reviewPage = reviewRepository.findAllByShopIdOrderByLikeCountDesc(shopId, pageable);
+            } else {
+                reviewPage = reviewRepository.findAllByShopIdOrderByCreatedAtDesc(shopId, pageable);
+            }
         } else {
-            // 기본값: 최신순
-            reviewPage = reviewRepository.findAllByShopIdOrderByCreatedAtDesc(shopId, pageable);
+            // 차단한 사용자가 있으면 필터링 쿼리 사용
+            if (sortBy == ReviewSortType.LIKE_COUNT) {
+                reviewPage = reviewRepository.findAllByShopIdExcludingBlockedUsersOrderByLikeCountDesc(
+                        shopId, blockedUserIds, pageable);
+            } else {
+                reviewPage = reviewRepository.findAllByShopIdExcludingBlockedUsersOrderByCreatedAtDesc(
+                        shopId, blockedUserIds, pageable);
+            }
         }
 
         // N+1 방지: 이미지 일괄 조회

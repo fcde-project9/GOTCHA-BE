@@ -4,6 +4,7 @@ import com.gotcha._global.common.PageResponse;
 import com.gotcha._global.util.SecurityUtil;
 import com.gotcha.domain.auth.repository.RefreshTokenRepository;
 import com.gotcha.domain.auth.service.SocialUnlinkService;
+import com.gotcha.domain.block.repository.UserBlockRepository;
 import com.gotcha.domain.chat.entity.ChatRoom;
 import com.gotcha.domain.chat.repository.ChatRepository;
 import com.gotcha.domain.chat.repository.ChatRoomRepository;
@@ -70,6 +71,7 @@ public class UserService {
     private final ChatRoomRepository chatRoomRepository;
     private final PostRepository postRepository;
     private final PostCommentRepository postCommentRepository;
+    private final UserBlockRepository userBlockRepository;
 
     @Value("${user.default-profile-image-url}")
     private String defaultProfileImageUrl;
@@ -300,7 +302,11 @@ public class UserService {
         // 13. Post/PostComment 삭제 (이미지 포함)
         deleteUserPosts(userId);
 
-        // 14. 사용자 soft delete (개인정보 마스킹 포함, Shop createdBy FK 유지)
+        // 14. 사용자 차단 정보 삭제 (차단한 것 + 차단당한 것 모두)
+        userBlockRepository.deleteAllByUserId(userId);
+        log.info("User blocks deleted - userId: {}", userId);
+
+        // 15. 사용자 soft delete (개인정보 마스킹 포함, Shop createdBy FK 유지)
         user.delete();
         userRepository.save(user);
         log.info("User soft deleted with masked info - userId: {}", userId);

@@ -132,3 +132,10 @@ logging:
   loki:
     url: ${LOKI_URL:}
     enabled: ${LOKI_ENABLED:false}
+
+# Web Push Configuration
+push:
+  vapid:
+    public-key: ${VAPID_PUBLIC_KEY:}
+    private-key: ${VAPID_PRIVATE_KEY:}
+    subject: ${VAPID_SUBJECT:mailto:gotcha@example.com}

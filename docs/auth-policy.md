@@ -124,6 +124,24 @@ OAUTH2_REDIRECT_URI=http://localhost:3000/oauth/callback
 | POST | /shops/reviews/{rid}/like | 리뷰 좋아요 | 로그인 사용자 |
 | DELETE | /shops/reviews/{rid}/like | 리뷰 좋아요 취소 | 본인 좋아요만 |
 
+### Admin (관리자 전용)
+
+| Method | Endpoint | 설명 | 권한 |
+|--------|----------|------|------|
+| GET | /admin/reports | 신고 목록 조회 | ADMIN |
+| GET | /admin/reports/{id} | 신고 상세 조회 | ADMIN |
+| PATCH | /admin/reports/{id}/status | 신고 상태 변경 | ADMIN |
+| GET | /admin/users | 사용자 목록 조회 | ADMIN |
+| GET | /admin/users/{id} | 사용자 상세 조회 | ADMIN |
+| PATCH | /admin/users/{id}/status | 사용자 제재/해제 | ADMIN |
+
+### 제재 사용자 접근 차단
+
+| 상태 | 로그인 | 인증 API | 자동 복구 |
+|------|--------|---------|----------|
+| SUSPENDED | X (A014) | X (A014) | O (기간 만료 시 lazy check) |
+| BANNED | X (A015) | X (A015) | X (관리자 수동 해제만) |
+
 ---
 
 ## 권한 체크 로직

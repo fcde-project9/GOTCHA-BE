@@ -9,6 +9,10 @@ public class AuthException extends BusinessException {
         super(errorCode);
     }
 
+    private AuthException(ErrorCode errorCode, String additionalInfo) {
+        super(errorCode, additionalInfo);
+    }
+
     public static AuthException unauthorized() {
         return new AuthException(AuthErrorCode.UNAUTHORIZED);
     }
@@ -47,5 +51,13 @@ public class AuthException extends BusinessException {
 
     public static AuthException invalidAuthCode() {
         return new AuthException(AuthErrorCode.INVALID_AUTH_CODE);
+    }
+
+    public static AuthException userSuspended(String suspendedUntil) {
+        return new AuthException(AuthErrorCode.USER_SUSPENDED, "suspended_until: " + suspendedUntil);
+    }
+
+    public static AuthException userBanned() {
+        return new AuthException(AuthErrorCode.USER_BANNED);
     }
 }

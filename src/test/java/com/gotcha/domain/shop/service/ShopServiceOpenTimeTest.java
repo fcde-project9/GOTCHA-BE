@@ -312,7 +312,7 @@ class ShopServiceOpenTimeTest {
     private ShopService createShopServiceForTest() {
         // ShopService 인스턴스 생성 (ObjectMapper는 3번째 파라미터, 나머지 의존성은 null로 설정)
         // 순서: ShopRepository, KakaoMapClient, ObjectMapper, FavoriteRepository, ReviewRepository, ReviewImageRepository, ReviewLikeRepository, FileStorageService, CommentRepository, ShopReportRepository
-        return new ShopService(null, null, new com.fasterxml.jackson.databind.ObjectMapper(), null, null, null, null, null, null, null);
+        return new ShopService(null, null, new com.fasterxml.jackson.databind.ObjectMapper(), null, null, null, null, null, null, null, null);
     }
 
     @Test
