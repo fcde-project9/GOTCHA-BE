@@ -51,7 +51,7 @@ public class PushNotificationService {
     private final PushProperties pushProperties;
     private final SecurityUtil securityUtil;
     private final ObjectMapper objectMapper;
-    private final Executor taskExecutor;
+    private final Executor applicationTaskExecutor;
 
     private volatile PushService webPushService;
     private volatile ApnsClient apnsClient;
@@ -274,7 +274,7 @@ public class PushNotificationService {
                     if ("BadDeviceToken".equals(reason) || "Unregistered".equals(reason)) {
                         Long tokenId = deviceToken.getId();
                         String token = deviceToken.getDeviceToken();
-                        taskExecutor.execute(() -> {
+                        applicationTaskExecutor.execute(() -> {
                             try {
                                 deviceTokenRepository.deleteById(tokenId);
                                 log.info("Invalid APNS token deleted - token: {}", token);
