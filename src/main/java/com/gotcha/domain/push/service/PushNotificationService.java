@@ -68,7 +68,7 @@ public class PushNotificationService {
         ApnsClient client = apnsClient;
         if (client != null) {
             try {
-                client.close().get();
+                client.close().get(10, java.util.concurrent.TimeUnit.SECONDS);
             } catch (Exception e) {
                 log.warn("Failed to close APNS client: {}", e.getMessage());
             }
@@ -275,8 +275,13 @@ public class PushNotificationService {
                         Long tokenId = deviceToken.getId();
                         String token = deviceToken.getDeviceToken();
                         taskExecutor.execute(() -> {
-                            deviceTokenRepository.deleteById(tokenId);
-                            log.info("Invalid APNS token deleted - token: {}", token);
+                            try {
+                                deviceTokenRepository.deleteById(tokenId);
+                                log.info("Invalid APNS token deleted - token: {}", token);
+                            } catch (Exception e) {
+                                log.error("Failed to delete invalid APNS token - token: {}, error: {}",
+                                        token, e.getMessage());
+                            }
                         });
                     }
                 }
