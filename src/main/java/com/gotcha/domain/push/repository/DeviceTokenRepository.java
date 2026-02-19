@@ -19,6 +19,8 @@ public interface DeviceTokenRepository extends JpaRepository<DeviceToken, Long> 
 
     List<DeviceToken> findAllByUserIdAndPlatform(Long userId, DevicePlatform platform);
 
+    List<DeviceToken> findAllByPlatform(DevicePlatform platform);
+
     @Modifying(clearAutomatically = true)
     @Query("DELETE FROM DeviceToken d WHERE d.user.id = :userId AND d.deviceToken = :deviceToken")
     void deleteByUserIdAndDeviceToken(@Param("userId") Long userId, @Param("deviceToken") String deviceToken);

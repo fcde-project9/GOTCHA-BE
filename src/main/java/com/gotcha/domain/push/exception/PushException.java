@@ -33,8 +33,8 @@ public class PushException extends BusinessException {
         return new PushException(PushErrorCode.VAPID_KEY_NOT_CONFIGURED);
     }
 
-    public static PushException deviceTokenNotFound(String token) {
-        return new PushException(PushErrorCode.DEVICE_TOKEN_NOT_FOUND, "token: " + token);
+    public static PushException deviceTokenNotFound() {
+        return new PushException(PushErrorCode.DEVICE_TOKEN_NOT_FOUND);
     }
 
     public static PushException apnsSendFailed(String reason) {

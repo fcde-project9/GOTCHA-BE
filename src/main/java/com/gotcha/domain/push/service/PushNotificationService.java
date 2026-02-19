@@ -20,6 +20,7 @@ import com.gotcha.domain.push.repository.DeviceTokenRepository;
 import com.gotcha.domain.push.repository.PushSubscriptionRepository;
 import com.gotcha.domain.user.entity.User;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
@@ -60,8 +61,24 @@ public class PushNotificationService {
         }
     }
 
+    @PreDestroy
+    public void destroy() {
+        ApnsClient client = apnsClient;
+        if (client != null) {
+            try {
+                client.close().get();
+            } catch (Exception e) {
+                log.warn("Failed to close APNS client: {}", e.getMessage());
+            }
+        }
+    }
+
     public VapidKeyResponse getVapidPublicKey() {
-        String publicKey = pushProperties.getVapid().getPublicKey();
+        PushProperties.Vapid vapid = pushProperties.getVapid();
+        if (vapid == null) {
+            throw PushException.vapidKeyNotConfigured();
+        }
+        String publicKey = vapid.getPublicKey();
         if (publicKey == null || publicKey.isBlank()) {
             throw PushException.vapidKeyNotConfigured();
         }
@@ -111,9 +128,9 @@ public class PushNotificationService {
         Optional<DeviceToken> existing = deviceTokenRepository.findByDeviceToken(request.deviceToken());
 
         if (existing.isPresent()) {
-            existing.get().updateUser(user);
-            log.info("Device token ownership transferred - userId: {}, token: {}", user.getId(),
-                    request.deviceToken());
+            existing.get().updateUserAndPlatform(user, request.platform());
+            log.info("Device token ownership transferred - userId: {}, platform: {}", user.getId(),
+                    request.platform());
         } else {
             DeviceToken deviceToken = DeviceToken.builder()
                     .user(user)
@@ -130,13 +147,14 @@ public class PushNotificationService {
         Long userId = securityUtil.getCurrentUserId();
 
         if (!deviceTokenRepository.existsByUserIdAndDeviceToken(userId, deviceToken)) {
-            throw PushException.deviceTokenNotFound(deviceToken);
+            throw PushException.deviceTokenNotFound();
         }
 
         deviceTokenRepository.deleteByUserIdAndDeviceToken(userId, deviceToken);
         log.info("Device token unregistered - userId: {}, token: {}", userId, deviceToken);
     }
 
+    @Transactional
     public void sendToUser(Long userId, String title, String body, String url) {
         // Web Push
         List<PushSubscription> subscriptions = pushSubscriptionRepository.findAllByUserId(userId);
@@ -152,6 +170,7 @@ public class PushNotificationService {
         }
     }
 
+    @Transactional
     public void sendToAll(String title, String body, String url) {
         // Web Push
         List<PushSubscription> subscriptions = pushSubscriptionRepository.findAll();
@@ -161,9 +180,7 @@ public class PushNotificationService {
         }
 
         // APNS
-        List<DeviceToken> iosDevices = deviceTokenRepository.findAll().stream()
-                .filter(d -> d.getPlatform() == DevicePlatform.IOS)
-                .toList();
+        List<DeviceToken> iosDevices = deviceTokenRepository.findAllByPlatform(DevicePlatform.IOS);
         log.info("Sending APNS to all iOS devices - count: {}", iosDevices.size());
         for (DeviceToken device : iosDevices) {
             sendApnsNotification(device, title, body);
@@ -291,7 +308,9 @@ public class PushNotificationService {
                             ? ApnsClientBuilder.PRODUCTION_APNS_HOST
                             : ApnsClientBuilder.DEVELOPMENT_APNS_HOST;
 
-                    byte[] keyBytes = apns.getPrivateKey().getBytes(StandardCharsets.UTF_8);
+                    // 환경변수에서 PEM 키를 가져올 때 \n이 리터럴 문자열로 저장될 수 있으므로 변환
+                    String privateKeyPem = apns.getPrivateKey().replace("\\n", "\n");
+                    byte[] keyBytes = privateKeyPem.getBytes(StandardCharsets.UTF_8);
                     ApnsSigningKey signingKey = ApnsSigningKey.loadFromInputStream(
                             new ByteArrayInputStream(keyBytes),
                             apns.getTeamId(),

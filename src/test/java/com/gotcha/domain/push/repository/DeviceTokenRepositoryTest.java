@@ -199,4 +199,36 @@ class DeviceTokenRepositoryTest {
         assertThat(deviceTokenRepository.existsByUserIdAndDeviceToken(user.getId(), "shared-token"))
                 .isFalse();
     }
+
+    @Test
+    @DisplayName("경계값 - 200자 최대 길이 토큰 저장/조회")
+    void findByDeviceToken_maxLengthToken_succeeds() {
+        // given
+        String maxToken = "a".repeat(200);
+        deviceTokenRepository.save(DeviceToken.builder()
+                .user(user).deviceToken(maxToken).platform(DevicePlatform.IOS).build());
+
+        // when & then
+        assertThat(deviceTokenRepository.findByDeviceToken(maxToken)).isPresent();
+    }
+
+    @Test
+    @DisplayName("플랫폼별 전체 조회")
+    void findAllByPlatform_returnsFilteredList() {
+        // given
+        deviceTokenRepository.save(DeviceToken.builder()
+                .user(user).deviceToken("ios-1").platform(DevicePlatform.IOS).build());
+        deviceTokenRepository.save(DeviceToken.builder()
+                .user(user).deviceToken("ios-2").platform(DevicePlatform.IOS).build());
+        deviceTokenRepository.save(DeviceToken.builder()
+                .user(otherUser).deviceToken("android-1").platform(DevicePlatform.ANDROID).build());
+
+        // when
+        List<DeviceToken> iosTokens = deviceTokenRepository.findAllByPlatform(DevicePlatform.IOS);
+        List<DeviceToken> androidTokens = deviceTokenRepository.findAllByPlatform(DevicePlatform.ANDROID);
+
+        // then
+        assertThat(iosTokens).hasSize(2);
+        assertThat(androidTokens).hasSize(1);
+    }
 }

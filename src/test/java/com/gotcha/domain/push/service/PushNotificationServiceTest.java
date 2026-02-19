@@ -26,6 +26,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class PushNotificationServiceTest {
@@ -54,13 +55,7 @@ class PushNotificationServiceTest {
                 .socialId("social-" + id)
                 .nickname("user-" + id)
                 .build();
-        try {
-            var idField = User.class.getDeclaredField("id");
-            idField.setAccessible(true);
-            idField.set(user, id);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        ReflectionTestUtils.setField(user, "id", id);
         return user;
     }
 
@@ -166,5 +161,42 @@ class PushNotificationServiceTest {
         // when & then
         assertThatThrownBy(() -> pushNotificationService.getVapidPublicKey())
                 .isInstanceOf(PushException.class);
+    }
+
+    @Test
+    @DisplayName("VAPID 공개키 조회 - Vapid 설정이 null이면 예외 발생")
+    void getVapidPublicKey_nullVapid_throwsException() {
+        // given
+        given(pushProperties.getVapid()).willReturn(null);
+
+        // when & then
+        assertThatThrownBy(() -> pushNotificationService.getVapidPublicKey())
+                .isInstanceOf(PushException.class);
+    }
+
+    @Test
+    @DisplayName("기기 등록 - 기존 토큰의 플랫폼도 함께 업데이트")
+    void registerDevice_existingToken_updatesPlatform() {
+        // given
+        User newUser = createTestUser(2L);
+        User oldUser = createTestUser(1L);
+        given(securityUtil.getCurrentUser()).willReturn(newUser);
+
+        DeviceToken existingToken = DeviceToken.builder()
+                .user(oldUser)
+                .deviceToken("existing-token")
+                .platform(DevicePlatform.IOS)
+                .build();
+        given(deviceTokenRepository.findByDeviceToken("existing-token")).willReturn(Optional.of(existingToken));
+
+        // IOS에서 ANDROID로 플랫폼 변경
+        DeviceTokenRegisterRequest request = new DeviceTokenRegisterRequest("existing-token", DevicePlatform.ANDROID);
+
+        // when
+        pushNotificationService.registerDevice(request);
+
+        // then
+        assertThat(existingToken.getUser()).isEqualTo(newUser);
+        assertThat(existingToken.getPlatform()).isEqualTo(DevicePlatform.ANDROID);
     }
 }

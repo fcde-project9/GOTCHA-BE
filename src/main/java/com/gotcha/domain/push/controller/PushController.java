@@ -9,7 +9,6 @@ import com.gotcha.domain.push.dto.VapidKeyResponse;
 import com.gotcha.domain.push.service.PushNotificationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Profile;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;

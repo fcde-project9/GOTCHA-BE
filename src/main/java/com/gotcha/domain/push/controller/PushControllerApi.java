@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 
 @Tag(name = "Push Notification", description = "푸시 알림 API")
 public interface PushControllerApi {
@@ -45,7 +46,7 @@ public interface PushControllerApi {
             description = "인증 실패 (A001)"
         )
     })
-    ApiResponse<Void> subscribe(PushSubscribeRequest request);
+    ApiResponse<Void> subscribe(@Valid PushSubscribeRequest request);
 
     @Operation(
         summary = "푸시 알림 구독 해제",
@@ -66,7 +67,7 @@ public interface PushControllerApi {
             description = "구독 정보 없음 (P001)"
         )
     })
-    ApiResponse<Void> unsubscribe(PushUnsubscribeRequest request);
+    ApiResponse<Void> unsubscribe(@Valid PushUnsubscribeRequest request);
 
     @Operation(
         summary = "네이티브 푸시 기기 등록",
@@ -83,7 +84,7 @@ public interface PushControllerApi {
             description = "인증 실패 (A001)"
         )
     })
-    ApiResponse<Void> registerDevice(DeviceTokenRegisterRequest request);
+    ApiResponse<Void> registerDevice(@Valid DeviceTokenRegisterRequest request);
 
     @Operation(
         summary = "네이티브 푸시 기기 해제",
@@ -104,5 +105,5 @@ public interface PushControllerApi {
             description = "기기 토큰 없음 (P004)"
         )
     })
-    ApiResponse<Void> unregisterDevice(DeviceTokenUnregisterRequest request);
+    ApiResponse<Void> unregisterDevice(@Valid DeviceTokenUnregisterRequest request);
 }
