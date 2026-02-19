@@ -241,6 +241,12 @@ public class PushNotificationService {
                 return;
             }
 
+            PushProperties.Apns apns = pushProperties.getApns();
+            if (apns == null) {
+                log.debug("APNS properties not configured, skipping native push");
+                return;
+            }
+
             String payload = new SimpleApnsPayloadBuilder()
                     .setAlertTitle(title)
                     .setAlertBody(body)
@@ -250,7 +256,7 @@ public class PushNotificationService {
 
             SimpleApnsPushNotification notification = new SimpleApnsPushNotification(
                     sanitizedToken,
-                    pushProperties.getApns().getBundleId(),
+                    apns.getBundleId(),
                     payload
             );
 
@@ -288,10 +294,14 @@ public class PushNotificationService {
             synchronized (this) {
                 localRef = webPushService;
                 if (localRef == null) {
+                    PushProperties.Vapid vapid = pushProperties.getVapid();
+                    if (vapid == null) {
+                        throw PushException.vapidKeyNotConfigured();
+                    }
                     webPushService = localRef = new PushService(
-                            pushProperties.getVapid().getPublicKey(),
-                            pushProperties.getVapid().getPrivateKey(),
-                            pushProperties.getVapid().getSubject()
+                            vapid.getPublicKey(),
+                            vapid.getPrivateKey(),
+                            vapid.getSubject()
                     );
                 }
             }
@@ -301,7 +311,7 @@ public class PushNotificationService {
 
     private ApnsClient getApnsClient() throws Exception {
         PushProperties.Apns apns = pushProperties.getApns();
-        if (apns.getPrivateKey() == null || apns.getPrivateKey().isBlank()) {
+        if (apns == null || apns.getPrivateKey() == null || apns.getPrivateKey().isBlank()) {
             return null;
         }
 

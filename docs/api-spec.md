@@ -1805,7 +1805,8 @@ Authorization: Bearer {accessToken}
 **Response (200)**:
 ```json
 {
-  "success": true
+  "success": true,
+  "data": null
 }
 ```
 
@@ -1814,6 +1815,7 @@ Authorization: Bearer {accessToken}
 - 없으면 신규 등록
 
 **에러**:
+
 | 코드 | 상황 |
 |------|------|
 | A001 | 인증 실패 |
@@ -1837,11 +1839,13 @@ Authorization: Bearer {accessToken}
 **Response (200)**:
 ```json
 {
-  "success": true
+  "success": true,
+  "data": null
 }
 ```
 
 **에러**:
+
 | 코드 | 상황 |
 |------|------|
 | A001 | 인증 실패 |
