@@ -1,6 +1,8 @@
 package com.gotcha.domain.push.controller;
 
 import com.gotcha._global.common.ApiResponse;
+import com.gotcha.domain.push.dto.DeviceTokenRegisterRequest;
+import com.gotcha.domain.push.dto.DeviceTokenUnregisterRequest;
 import com.gotcha.domain.push.dto.PushSubscribeRequest;
 import com.gotcha.domain.push.dto.PushUnsubscribeRequest;
 import com.gotcha.domain.push.dto.VapidKeyResponse;
@@ -65,4 +67,42 @@ public interface PushControllerApi {
         )
     })
     ApiResponse<Void> unsubscribe(PushUnsubscribeRequest request);
+
+    @Operation(
+        summary = "네이티브 푸시 기기 등록",
+        description = "APNS/FCM 디바이스 토큰을 등록합니다. 동일한 토큰이 이미 존재하면 소유자를 현재 사용자로 변경합니다.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "기기 등록 성공"
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "401",
+            description = "인증 실패 (A001)"
+        )
+    })
+    ApiResponse<Void> registerDevice(DeviceTokenRegisterRequest request);
+
+    @Operation(
+        summary = "네이티브 푸시 기기 해제",
+        description = "등록된 APNS/FCM 디바이스 토큰을 해제합니다.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "기기 해제 성공"
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "401",
+            description = "인증 실패 (A001)"
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "404",
+            description = "기기 토큰 없음 (P004)"
+        )
+    })
+    ApiResponse<Void> unregisterDevice(DeviceTokenUnregisterRequest request);
 }

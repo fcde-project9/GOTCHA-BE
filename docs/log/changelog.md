@@ -4,6 +4,33 @@
 
 ---
 
+## 2026-02-18
+
+### 추가
+- `src/main/java/com/gotcha/domain/push/entity/DevicePlatform.java` - 디바이스 플랫폼 Enum (IOS, ANDROID)
+- `src/main/java/com/gotcha/domain/push/entity/DeviceToken.java` - 네이티브 디바이스 토큰 Entity
+- `src/main/java/com/gotcha/domain/push/repository/DeviceTokenRepository.java` - DeviceToken Repository
+- `src/main/java/com/gotcha/domain/push/dto/DeviceTokenRegisterRequest.java` - 기기 등록 Request DTO
+- `src/main/java/com/gotcha/domain/push/dto/DeviceTokenUnregisterRequest.java` - 기기 해제 Request DTO
+- `src/test/java/com/gotcha/domain/push/repository/DeviceTokenRepositoryTest.java` - DeviceToken Repository 테스트
+- `src/test/java/com/gotcha/domain/push/service/PushNotificationServiceTest.java` - PushNotificationService 단위 테스트
+
+### 수정
+- `build.gradle` - Pushy APNS 의존성 추가 (com.eatthepath:pushy:0.15.4)
+- `src/main/java/com/gotcha/_global/config/PushProperties.java` - 중첩 클래스(Vapid+Apns) 구조로 리팩터링
+- `src/main/resources/application.yml` - push.apns.* 설정 추가
+- `src/main/java/com/gotcha/domain/push/service/PushNotificationService.java` - APNS 발송 로직 통합, 기기 등록/해제 메서드 추가
+- `src/main/java/com/gotcha/domain/push/controller/PushController.java` - register-device 엔드포인트 추가
+- `src/main/java/com/gotcha/domain/push/controller/PushControllerApi.java` - Swagger 문서 추가
+- `src/main/java/com/gotcha/_global/config/SecurityConfig.java` - register-device 인증 규칙 추가
+- `src/main/java/com/gotcha/domain/push/exception/PushErrorCode.java` - P004, P005 에러코드 추가
+- `src/main/java/com/gotcha/domain/push/exception/PushException.java` - deviceTokenNotFound, apnsSendFailed 팩토리 메서드 추가
+- `docs/entity-design.md` - device_tokens 테이블 설계 추가
+- `docs/error-codes.md` - P004, P005 에러코드 추가
+- `docs/api-spec.md` - POST/DELETE /push/register-device 명세 추가
+
+---
+
 ## 2026-02-12
 
 ### 추가
