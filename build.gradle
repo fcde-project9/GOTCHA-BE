@@ -18,6 +18,18 @@ configurations {
 	compileOnly {
 		extendsFrom annotationProcessor
 	}
+	all {
+		resolutionStrategy {
+			// Pushy가 사용하는 Netty 취약점 수정 (CVE 대응)
+			force 'io.netty:netty-handler:4.1.124.Final'
+			force 'io.netty:netty-codec-http2:4.1.124.Final'
+			force 'io.netty:netty-codec-http:4.1.124.Final'
+			force 'io.netty:netty-transport:4.1.124.Final'
+			force 'io.netty:netty-buffer:4.1.124.Final'
+			force 'io.netty:netty-common:4.1.124.Final'
+			force 'io.netty:netty-resolver:4.1.124.Final'
+		}
+	}
 }
 
 repositories {
@@ -55,6 +67,8 @@ dependencies {
 	// Web Push
 	implementation 'nl.martijndwars:web-push:5.1.1'
 	implementation 'org.bouncycastle:bcprov-jdk18on:1.83'
+	// APNS (Native Push)
+	implementation 'com.eatthepath:pushy:0.15.4'
 }
 
 tasks.named('test') {
