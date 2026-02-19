@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.martijndwars.webpush.Notification;
@@ -50,6 +51,7 @@ public class PushNotificationService {
     private final PushProperties pushProperties;
     private final SecurityUtil securityUtil;
     private final ObjectMapper objectMapper;
+    private final Executor taskExecutor;
 
     private volatile PushService webPushService;
     private volatile ApnsClient apnsClient;
@@ -264,8 +266,12 @@ public class PushNotificationService {
                     log.warn("APNS rejected - token: {}, reason: {}", deviceToken.getDeviceToken(), reason);
 
                     if ("BadDeviceToken".equals(reason) || "Unregistered".equals(reason)) {
-                        deviceTokenRepository.deleteById(deviceToken.getId());
-                        log.info("Invalid APNS token deleted - token: {}", deviceToken.getDeviceToken());
+                        Long tokenId = deviceToken.getId();
+                        String token = deviceToken.getDeviceToken();
+                        taskExecutor.execute(() -> {
+                            deviceTokenRepository.deleteById(tokenId);
+                            log.info("Invalid APNS token deleted - token: {}", token);
+                        });
                     }
                 }
             });
