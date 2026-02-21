@@ -2,11 +2,13 @@ package com.gotcha._global.util;
 
 import com.gotcha.domain.auth.exception.AuthException;
 import com.gotcha.domain.user.entity.User;
+import com.gotcha.domain.user.entity.UserStatus;
 import com.gotcha.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
@@ -14,6 +16,7 @@ public class SecurityUtil {
 
     private final UserRepository userRepository;
 
+    @Transactional
     public User getCurrentUser() {
         Long userId = getCurrentUserId();
         User user = userRepository.findById(userId)
@@ -22,6 +25,19 @@ public class SecurityUtil {
         // 탈퇴한 사용자 차단
         if (Boolean.TRUE.equals(user.getIsDeleted())) {
             throw AuthException.userDeleted();
+        }
+
+        // SUSPENDED 사용자: 기간 만료 시 자동 복구, 미만료 시 차단
+        if (user.isSuspended()) {
+            if (!user.checkAndRestoreIfSuspensionExpired()) {
+                throw AuthException.userSuspended(
+                        user.getSuspendedUntil() != null ? user.getSuspendedUntil().toString() : "unknown");
+            }
+        }
+
+        // BANNED 사용자 차단
+        if (user.isBanned()) {
+            throw AuthException.userBanned();
         }
 
         return user;

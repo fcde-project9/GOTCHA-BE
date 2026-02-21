@@ -420,10 +420,10 @@ Authorization: Bearer {accessToken}
     "reviewCount": 42,
     "totalReviewImageCount": 25,
     "recentReviewImages": [
-      "https://storage.googleapis.com/.../image1.jpg",
-      "https://storage.googleapis.com/.../image2.jpg",
-      "https://storage.googleapis.com/.../image3.jpg",
-      "https://storage.googleapis.com/.../image4.jpg"
+      "https://s3.ap-northeast-2.amazonaws.com/.../image1.jpg",
+      "https://s3.ap-northeast-2.amazonaws.com/.../image2.jpg",
+      "https://s3.ap-northeast-2.amazonaws.com/.../image3.jpg",
+      "https://s3.ap-northeast-2.amazonaws.com/.../image4.jpg"
     ]
   }
 }
@@ -681,8 +681,8 @@ Authorization: Bearer {accessToken}
         "id": 1,
         "content": "원하는 캐릭터 뽑았어요!",
         "imageUrls": [
-          "https://storage.googleapis.com/.../image1.jpg",
-          "https://storage.googleapis.com/.../image2.jpg"
+          "https://s3.ap-northeast-2.amazonaws.com/.../image1.jpg",
+          "https://s3.ap-northeast-2.amazonaws.com/.../image2.jpg"
         ],
         "author": {
           "id": 1,
@@ -717,8 +717,8 @@ Authorization: Bearer {accessToken}
 {
   "content": "원하는 캐릭터 뽑았어요!",
   "imageUrls": [
-    "https://storage.googleapis.com/.../image1.jpg",
-    "https://storage.googleapis.com/.../image2.jpg"
+    "https://s3.ap-northeast-2.amazonaws.com/.../image1.jpg",
+    "https://s3.ap-northeast-2.amazonaws.com/.../image2.jpg"
   ]
 }
 ```
@@ -737,8 +737,8 @@ Authorization: Bearer {accessToken}
     "id": 1,
     "content": "원하는 캐릭터 뽑았어요!",
     "imageUrls": [
-      "https://storage.googleapis.com/.../image1.jpg",
-      "https://storage.googleapis.com/.../image2.jpg"
+      "https://s3.ap-northeast-2.amazonaws.com/.../image1.jpg",
+      "https://s3.ap-northeast-2.amazonaws.com/.../image2.jpg"
     ],
     "author": {
       "id": 1,
@@ -767,8 +767,8 @@ Authorization: Bearer {accessToken}
 {
   "content": "수정된 리뷰 내용입니다!",
   "imageUrls": [
-    "https://storage.googleapis.com/.../new-image1.jpg",
-    "https://storage.googleapis.com/.../new-image2.jpg"
+    "https://s3.ap-northeast-2.amazonaws.com/.../new-image1.jpg",
+    "https://s3.ap-northeast-2.amazonaws.com/.../new-image2.jpg"
   ]
 }
 ```
@@ -787,8 +787,8 @@ Authorization: Bearer {accessToken}
     "id": 1,
     "content": "수정된 리뷰 내용입니다!",
     "imageUrls": [
-      "https://storage.googleapis.com/.../new-image1.jpg",
-      "https://storage.googleapis.com/.../new-image2.jpg"
+      "https://s3.ap-northeast-2.amazonaws.com/.../new-image1.jpg",
+      "https://s3.ap-northeast-2.amazonaws.com/.../new-image2.jpg"
     ],
     "author": {
       "id": 1,
@@ -855,9 +855,9 @@ Authorization: Bearer {accessToken}
   "data": {
     "totalCount": 25,
     "imageUrls": [
-      "https://storage.googleapis.com/.../image1.jpg",
-      "https://storage.googleapis.com/.../image2.jpg",
-      "https://storage.googleapis.com/.../image3.jpg"
+      "https://s3.ap-northeast-2.amazonaws.com/.../image1.jpg",
+      "https://s3.ap-northeast-2.amazonaws.com/.../image2.jpg",
+      "https://s3.ap-northeast-2.amazonaws.com/.../image3.jpg"
     ]
   }
 }
@@ -895,7 +895,8 @@ Authorization: Bearer {accessToken}
     "nickname": "빨간캡슐#21",
     "email": "user@example.com",
     "profileImageUrl": null,
-    "socialType": "KAKAO"
+    "socialType": "KAKAO",
+    "userType": "NORMAL"
   }
 }
 ```
@@ -953,14 +954,14 @@ Authorization: Bearer {accessToken}
 **Request Body**
 ```json
 {
-  "profileImageUrl": "https://storage.googleapis.com/gotcha-dev-files/profiles/abc-123.webp"
+  "profileImageUrl": "https://s3.ap-northeast-2.amazonaws.com/gotcha-dev-files/profiles/abc-123.webp"
 }
 ```
 
 **Validation**
 | 필드 | 규칙 |
 |------|------|
-| profileImageUrl | 필수, GCS URL 형식 (https://storage.googleapis.com/...) |
+| profileImageUrl | 필수, S3 URL 형식 (https://{bucket}.s3.{region}.amazonaws.com/...) |
 
 **Response (200)**
 ```json
@@ -970,8 +971,9 @@ Authorization: Bearer {accessToken}
     "id": 1,
     "nickname": "빨간캡슐#21",
     "email": "user@example.com",
-    "profileImageUrl": "https://storage.googleapis.com/gotcha-dev-files/profiles/abc-123.webp",
-    "socialType": "KAKAO"
+    "profileImageUrl": "https://s3.ap-northeast-2.amazonaws.com/gotcha-dev-files/profiles/abc-123.webp",
+    "socialType": "KAKAO",
+    "userType": "NORMAL"
   }
 }
 ```
@@ -984,7 +986,7 @@ Authorization: Bearer {accessToken}
 
 **참고**
 - 먼저 `/api/files/upload`로 이미지를 업로드한 후 반환된 URL 사용
-- 기존 커스텀 이미지는 GCS에서 자동 삭제됨
+- 기존 커스텀 이미지는 S3에서 자동 삭제됨
 - 기본 프로필 이미지는 삭제되지 않음 (공유 리소스)
 
 ---
@@ -1009,8 +1011,9 @@ Authorization: Bearer {accessToken}
     "id": 1,
     "nickname": "빨간캡슐#21",
     "email": "user@example.com",
-    "profileImageUrl": "https://storage.googleapis.com/gotcha-dev-files/defaults/profile-default-join.png",
-    "socialType": "KAKAO"
+    "profileImageUrl": "https://s3.ap-northeast-2.amazonaws.com/gotcha-dev-files/defaults/profile-default-join.png",
+    "socialType": "KAKAO",
+    "userType": "NORMAL"
   }
 }
 ```
@@ -1022,7 +1025,7 @@ Authorization: Bearer {accessToken}
 
 **참고**
 - 프로필 이미지를 삭제하고 자동으로 기본 프로필 이미지로 복구
-- 기존 커스텀 이미지는 GCS에서 자동 삭제됨
+- 기존 커스텀 이미지는 S3에서 자동 삭제됨
 - 기본 프로필 이미지를 사용 중인 경우 변화 없음
 
 ---
@@ -1124,11 +1127,118 @@ Authorization: Bearer {accessToken}
 
 ---
 
+## 사용자 차단 API
+
+### POST /users/{userId}/block
+
+사용자 차단
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Path Parameters**
+| 파라미터 | 타입 | 필수 | 설명 |
+|---------|------|------|------|
+| userId | Long | O | 차단할 사용자 ID |
+
+**Response (201)**
+```json
+{
+  "success": true,
+  "data": {
+    "blockedUserId": 2,
+    "blockedAt": "2025-01-15T10:00:00"
+  }
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| BK001 | 본인을 차단할 수 없음 |
+| BK002 | 이미 차단한 사용자 |
+| U004 | 차단할 사용자를 찾을 수 없음 |
+
+---
+
+### DELETE /users/{userId}/block
+
+차단 해제
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Path Parameters**
+| 파라미터 | 타입 | 필수 | 설명 |
+|---------|------|------|------|
+| userId | Long | O | 차단 해제할 사용자 ID |
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": null
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| BK003 | 차단 정보를 찾을 수 없음 |
+
+---
+
+### GET /users/me/blocks
+
+내 차단 목록 조회
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Query Parameters**
+| 파라미터 | 타입 | 필수 | 기본값 |
+|---------|------|------|--------|
+| page | Integer | X | 0 |
+| size | Integer | X | 20 |
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "content": [
+      {
+        "blockedUserId": 2,
+        "nickname": "빨간캡슐#21",
+        "profileImageUrl": "https://...",
+        "blockedAt": "2025-01-15T10:00:00"
+      }
+    ],
+    "totalCount": 5,
+    "page": 0,
+    "size": 20,
+    "hasNext": false
+  }
+}
+```
+
+**참고**
+- 차단된 사용자의 리뷰는 가게 상세 조회, 리뷰 목록 조회에서 자동으로 필터링됨
+- 회원 탈퇴 시 차단 정보도 함께 삭제됨
+
+---
+
 ## 파일 업로드 API
 
 ### POST /files/upload
 
-이미지 파일을 Google Cloud Storage에 업로드
+이미지 파일을 AWS S3에 업로드
 
 **Headers**
 ```
@@ -1144,7 +1254,7 @@ Content-Type: multipart/form-data
 
 **Validation**
 - 허용 형식: jpg, jpeg, png, webp, heic, heif
-- 최대 크기: 20MB
+- 최대 크기: 50MB
 - 허용 폴더: reviews, shops, profiles
 
 **Response (201)**
@@ -1152,7 +1262,7 @@ Content-Type: multipart/form-data
 {
   "success": true,
   "data": {
-    "url": "https://storage.googleapis.com/gotcha-bucket/reviews/abc123-def456.jpg",
+    "url": "https://s3.ap-northeast-2.amazonaws.com/gotcha-bucket/reviews/abc123-def456.jpg",
     "originalFilename": "my-photo.jpg",
     "size": 1024000,
     "contentType": "image/jpeg"
@@ -1163,10 +1273,11 @@ Content-Type: multipart/form-data
 **Error Responses**
 | 코드 | 상황 |
 |------|------|
-| I001 | 지원하지 않는 파일 형식 |
-| I002 | 파일 크기 초과 (20MB) |
-| I003 | 파일 업로드 실패 |
-| I004 | 잘못된 폴더명 |
+| FL001 | 파일이 비어있습니다 |
+| FL002 | 파일 크기 초과 (50MB) |
+| FL003 | 지원하지 않는 파일 형식 |
+| FL004 | 파일 업로드 실패 |
+| FL005 | 잘못된 폴더명 |
 
 **사용 예시**
 ```bash
@@ -1179,3 +1290,615 @@ curl -X POST /api/files/upload \
 **참고**
 - 상세한 사용법은 `docs/file-upload-guide.md` 참고
 - 업로드된 URL을 리뷰/가게 API에 전달하여 사용
+
+---
+
+## 신고 API
+
+### POST /reports
+
+리뷰 또는 유저 신고
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Request Body**
+```json
+{
+  "targetType": "REVIEW",
+  "targetId": 1,
+  "reason": "REVIEW_ABUSE",
+  "detail": "욕설이 포함되어 있습니다"
+}
+```
+
+**targetType 값**
+| 값 | 설명 |
+|---|------|
+| REVIEW | 리뷰 신고 |
+| SHOP | 가게 신고 |
+| USER | 유저 신고 |
+
+**reason 값** (targetType별로 해당 prefix 사유만 사용 가능)
+
+*리뷰 신고 (REVIEW_*)*
+| 값 | 설명 |
+|---|------|
+| REVIEW_SPAM | 도배/광고성 글이에요 |
+| REVIEW_COPYRIGHT | 저작권을 침해해요 |
+| REVIEW_DEFAMATION | 명예를 훼손하는 내용이에요 |
+| REVIEW_ABUSE | 욕설이나 비방이 심해요 |
+| REVIEW_VIOLENCE | 폭력적이거나 위협적인 내용이에요 |
+| REVIEW_OBSCENE | 외설적인 내용이 포함돼있어요 |
+| REVIEW_PRIVACY | 개인정보가 노출되어 있어요 |
+| REVIEW_HATE_SPEECH | 혐오 표현이 포함돼있어요 |
+| REVIEW_FALSE_INFO | 허위/거짓 정보예요 |
+| REVIEW_OTHER | 기타 (detail 필수) |
+
+*가게 신고 (SHOP_*)*
+| 값 | 설명 |
+|---|------|
+| SHOP_WRONG_ADDRESS | 잘못된 주소예요 |
+| SHOP_CLOSED | 영업 종료/폐업된 업체예요 |
+| SHOP_INAPPROPRIATE | 부적절한 업체(불법/유해 업소)예요 |
+| SHOP_DUPLICATE | 중복 제보된 업체예요 |
+| SHOP_FALSE_INFO | 허위/거짓 정보예요 |
+| SHOP_OTHER | 기타 (detail 필수) |
+
+*사용자 신고 (USER_*)*
+| 값 | 설명 |
+|---|------|
+| USER_INAPPROPRIATE_NICKNAME | 부적절한 닉네임이에요 |
+| USER_INAPPROPRIATE_PROFILE | 부적절한 프로필 사진이에요 |
+| USER_PRIVACY | 개인정보가 노출되어 있어요 |
+| USER_IMPERSONATION | 다른 사람을 사칭하고 있어요 |
+| USER_HATE_SPEECH | 혐오 표현이 포함돼있어요 |
+| USER_OTHER | 기타 (detail 필수) |
+
+**Validation**
+| 필드 | 규칙 |
+|------|------|
+| targetType | 필수 |
+| targetId | 필수 |
+| reason | 필수, targetType과 prefix 일치 필요 |
+| detail | reason이 *_OTHER일 때 필수 |
+
+**Response (201)**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "targetType": "REVIEW",
+    "targetId": 1,
+    "reason": "REVIEW_ABUSE",
+    "detail": "욕설이 포함되어 있습니다",
+    "status": "PENDING",
+    "createdAt": "2025-01-08T12:00:00"
+  }
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| RP002 | 이미 신고한 대상 |
+| RP003 | 신고 대상을 찾을 수 없음 |
+| RP004 | 본인을 신고할 수 없음 |
+| RP009 | targetType과 reason prefix 불일치 |
+| RP005 | 기타 사유 선택 시 상세 내용 필수 |
+
+---
+
+### GET /users/me/reports
+
+본인 신고 목록 조회
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "targetType": "REVIEW",
+      "targetId": 1,
+      "reason": "REVIEW_ABUSE",
+      "detail": "욕설이 포함되어 있습니다",
+      "status": "PENDING",
+      "createdAt": "2025-01-08T12:00:00"
+    }
+  ]
+}
+```
+
+---
+
+### DELETE /reports/{reportId}
+
+신고 취소 (PENDING 상태에서만 가능)
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": null
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| RP001 | 신고를 찾을 수 없음 |
+| RP006 | 본인의 신고만 취소 가능 |
+| RP007 | 이미 처리된 신고는 취소 불가 |
+
+---
+
+## 관리자 API
+
+### GET /admin/reports
+
+신고 목록 조회 (관리자)
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Query Parameters**
+| 파라미터 | 타입 | 필수 | 기본값 | 설명 |
+|---------|------|------|--------|------|
+| targetType | String | X | - | REVIEW, SHOP, USER |
+| status | String | X | - | PENDING, ACCEPTED, REJECTED, CANCELLED |
+| page | Integer | X | 0 | |
+| size | Integer | X | 20 | |
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "reports": [
+      {
+        "id": 1,
+        "reporterId": 1,
+        "reporterNickname": "신고자#21",
+        "targetType": "REVIEW",
+        "targetId": 1,
+        "reason": "REVIEW_ABUSE",
+        "reasonDescription": "욕설이나 비방이 심해요",
+        "detail": "욕설이 포함되어 있습니다",
+        "status": "PENDING",
+        "statusDescription": "처리 대기",
+        "createdAt": "2025-01-08T12:00:00",
+        "updatedAt": "2025-01-08T12:00:00"
+      }
+    ],
+    "page": 0,
+    "size": 20,
+    "totalElements": 100,
+    "totalPages": 5,
+    "last": false
+  }
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| A002 | 관리자 권한 필요 |
+
+---
+
+### GET /admin/reports/{reportId}
+
+신고 상세 조회 (관리자)
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "reporterId": 1,
+    "reporterNickname": "신고자#21",
+    "targetType": "REVIEW",
+    "targetId": 1,
+    "reason": "REVIEW_ABUSE",
+    "reasonDescription": "욕설이나 비방이 심해요",
+    "detail": "욕설이 포함되어 있습니다",
+    "status": "PENDING",
+    "statusDescription": "처리 대기",
+    "createdAt": "2025-01-08T12:00:00",
+    "updatedAt": "2025-01-08T12:00:00"
+  }
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| RP001 | 신고를 찾을 수 없음 |
+| A002 | 관리자 권한 필요 |
+
+---
+
+### PATCH /admin/reports/{reportId}/status
+
+신고 상태 변경 (관리자)
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Request Body**
+```json
+{
+  "status": "ACCEPTED"
+}
+```
+
+**status 값**
+| 값 | 설명 |
+|---|------|
+| ACCEPTED | 승인 |
+| REJECTED | 반려 |
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "reporterId": 1,
+    "reporterNickname": "신고자#21",
+    "targetType": "REVIEW",
+    "targetId": 1,
+    "reason": "REVIEW_ABUSE",
+    "reasonDescription": "욕설이나 비방이 심해요",
+    "detail": "욕설이 포함되어 있습니다",
+    "status": "ACCEPTED",
+    "statusDescription": "승인",
+    "createdAt": "2025-01-08T12:00:00",
+    "updatedAt": "2025-01-08T14:00:00"
+  }
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| RP001 | 신고를 찾을 수 없음 |
+| A002 | 관리자 권한 필요 |
+
+---
+
+### GET /admin/users
+
+사용자 목록 조회 (관리자)
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Query Parameters**
+| 파라미터 | 타입 | 필수 | 기본값 | 설명 |
+|---------|------|------|--------|------|
+| status | String | X | - | ACTIVE, SUSPENDED, BANNED |
+| page | Integer | X | 0 | |
+| size | Integer | X | 20 | |
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "users": [
+      {
+        "id": 1,
+        "nickname": "빨간캡슐#21",
+        "email": "user@example.com",
+        "profileImageUrl": "https://...",
+        "socialType": "KAKAO",
+        "userType": "NORMAL",
+        "status": "ACTIVE",
+        "suspendedUntil": null,
+        "lastLoginAt": "2026-01-08T12:00:00",
+        "createdAt": "2025-12-01T10:00:00"
+      }
+    ],
+    "page": 0,
+    "size": 20,
+    "totalElements": 100,
+    "totalPages": 5,
+    "last": false
+  }
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| A002 | 관리자 권한 필요 |
+
+---
+
+### GET /admin/users/{userId}
+
+사용자 상세 조회 (관리자)
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "nickname": "빨간캡슐#21",
+    "email": "user@example.com",
+    "profileImageUrl": "https://...",
+    "socialType": "KAKAO",
+    "userType": "NORMAL",
+    "status": "SUSPENDED",
+    "suspendedUntil": "2026-02-15T12:00:00",
+    "lastLoginAt": "2026-01-08T12:00:00",
+    "createdAt": "2025-12-01T10:00:00"
+  }
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| U004 | 사용자를 찾을 수 없음 |
+| A002 | 관리자 권한 필요 |
+
+---
+
+## 푸시 알림 API
+
+### GET /push/vapid-key
+
+VAPID 공개키 조회 (Web Push 구독에 필요)
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "publicKey": "BEl62iUYgUivxIkv69yViEuiBIa-Ib9..."
+  }
+}
+```
+
+**Error Responses**
+
+| 코드 | 상황 |
+|------|------|
+| P003 | VAPID 키 미설정 |
+
+---
+
+### POST /push/subscribe
+
+푸시 알림 구독
+
+**Headers**
+
+```text
+Authorization: Bearer {accessToken}
+```
+
+**Request Body**
+
+```json
+{
+  "endpoint": "https://fcm.googleapis.com/fcm/send/...",
+  "keys": {
+    "p256dh": "BNcRdreALRFX...",
+    "auth": "tBHItJI5svbp..."
+  }
+}
+```
+
+**Validation**
+
+| 필드 | 규칙 |
+|------|------|
+| endpoint | 필수, URL 형식 |
+| keys.p256dh | 필수 |
+| keys.auth | 필수 |
+
+**Response (200)**
+
+```json
+{
+  "success": true,
+  "data": null
+}
+```
+
+**참고**
+- 동일 endpoint가 이미 존재하면 키를 갱신 (upsert)
+- 한 유저가 여러 기기에서 구독 가능 (1:N)
+
+---
+
+### DELETE /push/subscribe
+
+푸시 알림 구독 해제
+
+**Headers**
+
+```text
+Authorization: Bearer {accessToken}
+```
+
+**Request Body**
+
+```json
+{
+  "endpoint": "https://fcm.googleapis.com/fcm/send/..."
+}
+```
+
+**Response (200)**
+
+```json
+{
+  "success": true,
+  "data": null
+}
+```
+
+**Error Responses**
+
+| 코드 | 상황 |
+|------|------|
+| P001 | 구독 정보를 찾을 수 없음 |
+
+---
+
+### POST /push/register-device
+
+네이티브 푸시 기기 등록
+
+**인증**: Bearer Token (필수)
+
+**Request Body**:
+```json
+{
+  "deviceToken": "a1b2c3d4e5f6...",
+  "platform": "IOS"
+}
+```
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| deviceToken | String | O | APNS/FCM 디바이스 토큰 |
+| platform | String | O | `IOS` 또는 `ANDROID` |
+
+**Response (200)**:
+```json
+{
+  "success": true,
+  "data": null
+}
+```
+
+**동작**:
+- 동일 deviceToken이 이미 존재하면 소유자를 현재 사용자로 변경 (기기 공유/계정 전환)
+- 없으면 신규 등록
+
+**에러**:
+
+| 코드 | 상황 |
+|------|------|
+| A001 | 인증 실패 |
+| C001 | 필수 필드 누락 |
+
+---
+
+### DELETE /push/register-device
+
+네이티브 푸시 기기 해제
+
+**인증**: Bearer Token (필수)
+
+**Request Body**:
+```json
+{
+  "deviceToken": "a1b2c3d4e5f6..."
+}
+```
+
+**Response (200)**:
+```json
+{
+  "success": true,
+  "data": null
+}
+```
+
+**에러**:
+
+| 코드 | 상황 |
+|------|------|
+| A001 | 인증 실패 |
+| P004 | 기기 토큰을 찾을 수 없음 |
+
+---
+
+### PATCH /admin/users/{userId}/status
+
+사용자 상태 변경 — 제재/해제 (관리자)
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Request Body**
+```json
+{
+  "status": "SUSPENDED",
+  "suspensionHours": 24
+}
+```
+
+**status 값**
+| 값 | 설명 | suspensionHours |
+|---|------|-----------------|
+| SUSPENDED | 기간 정지 | 필수 (1, 12, 24, 72, 120, 168, 336, 720) |
+| BANNED | 영구 차단 | 불필요 |
+| ACTIVE | 제재 해제 | 불필요 |
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "nickname": "빨간캡슐#21",
+    "email": "user@example.com",
+    "profileImageUrl": "https://...",
+    "socialType": "KAKAO",
+    "userType": "NORMAL",
+    "status": "SUSPENDED",
+    "suspendedUntil": "2026-02-13T12:00:00",
+    "lastLoginAt": "2026-01-08T12:00:00",
+    "createdAt": "2025-12-01T10:00:00"
+  }
+}
+```
+
+**Error Responses**
+| 코드 | 상황 |
+|------|------|
+| U004 | 사용자를 찾을 수 없음 |
+| U006 | 허용되지 않는 정지 기간 |
+| A002 | 관리자 권한 필요 |

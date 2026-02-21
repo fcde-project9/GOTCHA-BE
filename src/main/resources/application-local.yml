@@ -15,7 +15,7 @@ server:
   address: localhost
 
 cors:
-  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173,capacitor://localhost}
 
 kakao:
   api:
@@ -48,3 +48,9 @@ user:
 # Shop Configuration
 shop:
   default-image-url: ${SHOP_DEFAULT_IMAGE_URL}
+
+# Logging Configuration (Local)
+logging:
+  loki:
+    url: ${LOKI_URL:http://localhost:3100/loki/api/v1/push}
+    enabled: ${LOKI_ENABLED:false}

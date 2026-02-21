@@ -2,7 +2,7 @@
 
 ## 개요
 
-- **MVP (V1)**: users, refresh_tokens, shops, shop_reports, favorites, comments, reviews, withdrawal_surveys
+- **MVP (V1)**: users, refresh_tokens, shops, shop_reports, favorites, comments, reviews, withdrawal_surveys, reports
 - **V2**: post_types, posts, post_comments, chat_rooms, chats, inquiries
 
 ---
@@ -19,6 +19,8 @@
 | nickname | String | ex: 빨간캡슐#21 (탈퇴 시 "탈퇴한 사용자_{id}") |
 | email | String | 소셜 이메일 (탈퇴 시 null) |
 | profile_image_url | String | 프로필 이미지 URL (탈퇴 시 null) |
+| oauth_access_token | String (TEXT) | OAuth2 액세스 토큰 (구글 연동 해제용) |
+| suspended_until | LocalDateTime | 정지 해제 일시 (SUSPENDED 상태일 때, nullable) |
 | is_deleted | Boolean | 탈퇴 여부 (soft delete) |
 | last_login_at | LocalDateTime | |
 | created_at, updated_at | LocalDateTime | BaseTimeEntity |
@@ -179,6 +181,36 @@
 
 ---
 
+## review_likes
+
+리뷰 좋아요
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | Long (PK) | |
+| user_id | Long (FK → users) | 좋아요한 사용자 |
+| review_id | Long (FK → reviews) | 대상 리뷰 |
+| created_at, updated_at | LocalDateTime | BaseTimeEntity |
+
+- UNIQUE(user_id, review_id)
+
+---
+
+## user_blocks
+
+사용자 차단 (A가 B를 차단하면 B의 리뷰가 A에게 안 보임)
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | Long (PK) | AUTO_INCREMENT |
+| blocker_id | Long (FK → users) | 차단하는 사용자 |
+| blocked_id | Long (FK → users) | 차단당하는 사용자 |
+| created_at, updated_at | LocalDateTime | BaseTimeEntity |
+
+- UNIQUE(blocker_id, blocked_id)
+
+---
+
 ## user_permissions
 
 사용자 권한 동의 상태 (최신 상태만 저장)
@@ -196,6 +228,83 @@
 
 ---
 
+## reports
+
+리뷰/가게/유저 신고
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | Long (PK) | AUTO_INCREMENT |
+| reporter_id | Long (FK → users) | 신고자 |
+| target_type | Enum | REVIEW, SHOP, USER |
+| target_id | Long | 신고 대상 ID (리뷰/가게/유저 ID) |
+| reason | Enum | 신고 사유 (prefix 기반: REVIEW_*, SHOP_*, USER_*) |
+| detail | String (TEXT) | 상세 내용 (*_OTHER 선택 시 필수) |
+| status | Enum | PENDING, ACCEPTED, REJECTED, CANCELLED |
+| created_at, updated_at | LocalDateTime | BaseTimeEntity |
+
+- UNIQUE(reporter_id, target_type, target_id): 동일 대상 중복 신고 방지
+
+### ReportTargetType (Enum)
+
+| 값 | 설명 |
+|----|------|
+| REVIEW | 리뷰 신고 |
+| SHOP | 가게 신고 |
+| USER | 유저 신고 |
+
+### ReportReason (Enum)
+
+> 신고 대상 타입별로 prefix가 붙은 사유만 사용 가능 (예: REVIEW 신고 시 REVIEW_* 사유만 허용)
+
+**리뷰 신고 사유 (REVIEW_*)**
+
+| 값 | 설명 |
+|----|------|
+| REVIEW_SPAM | 도배/광고성 글이에요 |
+| REVIEW_COPYRIGHT | 저작권을 침해해요 |
+| REVIEW_DEFAMATION | 명예를 훼손하는 내용이에요 |
+| REVIEW_ABUSE | 욕설이나 비방이 심해요 |
+| REVIEW_VIOLENCE | 폭력적이거나 위협적인 내용이에요 |
+| REVIEW_OBSCENE | 외설적인 내용이 포함돼있어요 |
+| REVIEW_PRIVACY | 개인정보가 노출되어 있어요 |
+| REVIEW_HATE_SPEECH | 혐오 표현이 포함돼있어요 |
+| REVIEW_FALSE_INFO | 허위/거짓 정보예요 |
+| REVIEW_OTHER | 기타 (detail 필수) |
+
+**가게 신고 사유 (SHOP_*)**
+
+| 값 | 설명 |
+|----|------|
+| SHOP_WRONG_ADDRESS | 잘못된 주소예요 |
+| SHOP_CLOSED | 영업 종료/폐업된 업체예요 |
+| SHOP_INAPPROPRIATE | 부적절한 업체(불법/유해 업소)예요 |
+| SHOP_DUPLICATE | 중복 제보된 업체예요 |
+| SHOP_FALSE_INFO | 허위/거짓 정보예요 |
+| SHOP_OTHER | 기타 (detail 필수) |
+
+**사용자 신고 사유 (USER_*)**
+
+| 값 | 설명 |
+|----|------|
+| USER_INAPPROPRIATE_NICKNAME | 부적절한 닉네임이에요 |
+| USER_INAPPROPRIATE_PROFILE | 부적절한 프로필 사진이에요 |
+| USER_PRIVACY | 개인정보가 노출되어 있어요 |
+| USER_IMPERSONATION | 다른 사람을 사칭하고 있어요 |
+| USER_HATE_SPEECH | 혐오 표현이 포함돼있어요 |
+| USER_OTHER | 기타 (detail 필수) |
+
+### ReportStatus (Enum)
+
+| 값 | 설명 |
+|----|------|
+| PENDING | 처리 대기 |
+| ACCEPTED | 승인 |
+| REJECTED | 반려 |
+| CANCELLED | 취소 (신고자가 취소) |
+
+---
+
 ## user_permission_histories
 
 사용자 권한 변경 이력 (법적 증빙용)
@@ -208,6 +317,40 @@
 | is_agreed | Boolean | 동의 여부 |
 | changed_at | LocalDateTime | 변경 시간 |
 | device_info | String (200) | User-Agent (nullable) |
+
+---
+
+## push_subscriptions
+
+Web Push 알림 구독 정보
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | Long (PK) | AUTO_INCREMENT |
+| user_id | Long (FK → users) | 구독한 사용자 |
+| endpoint | String (500, unique) | 브라우저 푸시 엔드포인트 URL |
+| p256dh | String | P-256 Diffie-Hellman 공개키 |
+| auth | String | 인증 키 |
+| created_at, updated_at | LocalDateTime | BaseTimeEntity |
+
+- 한 유저가 여러 기기에서 구독 가능 (1:N)
+- endpoint 기준 unique 제약
+
+---
+
+## device_tokens (네이티브 디바이스 토큰)
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | Long | PK, AUTO_INCREMENT | |
+| user_id | Long | FK → users, NOT NULL | 사용자 |
+| device_token | String(200) | UNIQUE, NOT NULL | APNS/FCM 디바이스 토큰 |
+| platform | String(20) | NOT NULL | IOS, ANDROID |
+| created_at | LocalDateTime | NOT NULL | 생성 시간 |
+| updated_at | LocalDateTime | NOT NULL | 수정 시간 |
+
+- User : DeviceToken = 1 : N (한 사용자가 여러 기기 등록 가능)
+- device_token UNIQUE 제약: 동일 기기가 다른 계정으로 재등록 시 소유자 이전
 
 ---
 

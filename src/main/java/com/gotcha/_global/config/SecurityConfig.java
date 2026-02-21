@@ -1,18 +1,24 @@
 package com.gotcha._global.config;
 
+import com.gotcha._global.filter.RateLimitFilter;
 import com.gotcha.domain.auth.jwt.JwtAuthenticationEntryPoint;
 import com.gotcha.domain.auth.jwt.JwtAuthenticationFilter;
 import com.gotcha.domain.auth.oauth2.CustomOAuth2UserService;
-import com.gotcha.domain.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
+import com.gotcha.domain.auth.oauth2.CustomOidcUserService;
+import com.gotcha.domain.auth.oauth2.InMemoryAuthorizationRequestRepository;
 import com.gotcha.domain.auth.oauth2.OAuth2AuthenticationFailureHandler;
 import com.gotcha.domain.auth.oauth2.OAuth2AuthenticationSuccessHandler;
+import com.gotcha.domain.auth.oauth2.apple.AppleOAuth2AuthorizationRequestResolver;
+import com.gotcha.domain.auth.oauth2.apple.AppleOAuth2TokenResponseClient;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -26,15 +32,20 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
+@EnableScheduling
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private final RateLimitFilter rateLimitFilter;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final CustomOAuth2UserService customOAuth2UserService;
+    private final CustomOidcUserService customOidcUserService;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
     private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
-    private final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
+    private final InMemoryAuthorizationRequestRepository inMemoryAuthorizationRequestRepository;
+    private final AppleOAuth2AuthorizationRequestResolver appleOAuth2AuthorizationRequestResolver;
+    private final AppleOAuth2TokenResponseClient appleOAuth2TokenResponseClient;
 
     @Value("${cors.allowed-origins}")
     private String allowedOrigins;
@@ -73,6 +84,16 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/shops/report").permitAll()
                         // Public - file upload (used by reviews, reports, etc.)
                         .requestMatchers(HttpMethod.POST, "/api/files/**").permitAll()
+                        // Public - Push VAPID key
+                        .requestMatchers(HttpMethod.GET, "/api/push/vapid-key").permitAll()
+                        // Authenticated - Push subscription
+                        .requestMatchers(HttpMethod.POST, "/api/push/subscribe").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/push/subscribe").authenticated()
+                        // Authenticated - Native push device registration
+                        .requestMatchers(HttpMethod.POST, "/api/push/register-device").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/push/register-device").authenticated()
+                        // Authenticated - Push test (local profile only)
+                        .requestMatchers(HttpMethod.POST, "/api/push/test/**").authenticated()
                         // Authenticated - 가게 관련 인증 필요 액션
                         .requestMatchers(HttpMethod.POST, "/api/shops/*/favorite").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/shops/*/favorite").authenticated()
@@ -85,6 +106,9 @@ public class SecurityConfig {
                         // Authenticated - 리뷰 좋아요
                         .requestMatchers(HttpMethod.POST, "/api/shops/reviews/*/like").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/shops/reviews/*/like").authenticated()
+                        // Authenticated - 신고
+                        .requestMatchers(HttpMethod.POST, "/api/reports").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/reports/*").authenticated()
                         // Admin
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         // 그 외는 전부 인증 필요
@@ -93,15 +117,20 @@ public class SecurityConfig {
                 .oauth2Login(oauth2 -> oauth2
                         .authorizationEndpoint(authorization ->
                                 authorization.baseUri("/oauth2/authorize")
-                                        .authorizationRequestRepository(httpCookieOAuth2AuthorizationRequestRepository))
+                                        .authorizationRequestResolver(appleOAuth2AuthorizationRequestResolver)
+                                        .authorizationRequestRepository(inMemoryAuthorizationRequestRepository))
                         .redirectionEndpoint(redirection ->
                                 redirection.baseUri("/api/auth/callback/*"))
-                        .userInfoEndpoint(userInfo ->
-                                userInfo.userService(customOAuth2UserService))
+                        .tokenEndpoint(token ->
+                                token.accessTokenResponseClient(appleOAuth2TokenResponseClient))
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService)
+                                .oidcUserService(customOidcUserService))
                         .successHandler(oAuth2AuthenticationSuccessHandler)
                         .failureHandler(oAuth2AuthenticationFailureHandler)
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(rateLimitFilter, jwtAuthenticationFilter.getClass())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .build();
     }
@@ -130,8 +159,27 @@ public class SecurityConfig {
         configuration.setExposedHeaders(List.of("Authorization"));
         configuration.setMaxAge(3600L);  // preflight 캐시 1시간
 
+        // OAuth2 콜백 - Apple form_post는 Origin: https://appleid.apple.com으로 POST 요청
+        CorsConfiguration callbackConfig = new CorsConfiguration();
+        callbackConfig.addAllowedOrigin("https://appleid.apple.com");
+        callbackConfig.setAllowedMethods(List.of("GET", "POST"));
+        callbackConfig.setAllowedHeaders(List.of("*"));
+        callbackConfig.setAllowCredentials(false);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/auth/callback/*", callbackConfig);
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    /**
+     * RateLimitFilter의 서블릿 컨테이너 자동 등록을 비활성화합니다.
+     * Security Filter Chain에서만 실행되도록 하여 중복 실행을 방지합니다.
+     */
+    @Bean
+    public FilterRegistrationBean<RateLimitFilter> rateLimitFilterRegistration(RateLimitFilter filter) {
+        FilterRegistrationBean<RateLimitFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
     }
 }

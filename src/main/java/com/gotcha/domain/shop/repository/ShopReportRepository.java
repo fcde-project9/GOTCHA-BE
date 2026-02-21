@@ -15,4 +15,11 @@ public interface ShopReportRepository extends JpaRepository<ShopReport, Long> {
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM ShopReport sr WHERE sr.shop.id = :shopId")
     void deleteAllByShopId(@Param("shopId") Long shopId);
+
+    /**
+     * 회원 탈퇴 시 해당 사용자의 모든 신고 기록 삭제
+     */
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM ShopReport sr WHERE sr.reporter.id = :userId")
+    void deleteByReporterId(@Param("userId") Long userId);
 }

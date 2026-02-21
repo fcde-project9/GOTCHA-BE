@@ -91,6 +91,12 @@ jobs:
             NAVER_CLIENT_ID=$(aws ssm get-parameter --name "/gotcha/prod/oauth/naver/client-id" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
             NAVER_CLIENT_SECRET=$(aws ssm get-parameter --name "/gotcha/prod/oauth/naver/client-secret" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
 
+            # OAuth - Apple
+            APPLE_TEAM_ID=$(aws ssm get-parameter --name "/gotcha/prod/oauth/apple/team-id" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+            APPLE_CLIENT_ID=$(aws ssm get-parameter --name "/gotcha/prod/oauth/apple/client-id" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+            APPLE_KEY_ID=$(aws ssm get-parameter --name "/gotcha/prod/oauth/apple/key-id" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+            APPLE_PRIVATE_KEY=$(aws ssm get-parameter --name "/gotcha/prod/oauth/apple/private-key" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+
             # AWS S3
             S3_BUCKET=$(aws ssm get-parameter --name "/gotcha/prod/aws/s3/bucket-name" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
             S3_PREFIX=$(aws ssm get-parameter --name "/gotcha/prod/aws/s3/prefix" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
@@ -103,6 +109,9 @@ jobs:
             # Default Images
             USER_PROFILE_IMG=$(aws ssm get-parameter --name "/gotcha/prod/user/default-profile-image-url" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
             SHOP_IMG=$(aws ssm get-parameter --name "/gotcha/prod/shop/default-image-url" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
+
+            # Loki Logging
+            LOKI_URL=$(aws ssm get-parameter --name "/gotcha/prod/loki/url" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }} 2>/dev/null || echo "")
 
             echo "Parameters fetched successfully ✅"
 
@@ -141,6 +150,10 @@ jobs:
               -e GOOGLE_CLIENT_SECRET="$GOOGLE_CLIENT_SECRET" \
               -e NAVER_CLIENT_ID="$NAVER_CLIENT_ID" \
               -e NAVER_CLIENT_SECRET="$NAVER_CLIENT_SECRET" \
+              -e APPLE_TEAM_ID="$APPLE_TEAM_ID" \
+              -e APPLE_CLIENT_ID="$APPLE_CLIENT_ID" \
+              -e APPLE_KEY_ID="$APPLE_KEY_ID" \
+              -e APPLE_PRIVATE_KEY="$APPLE_PRIVATE_KEY" \
               -e AWS_S3_BUCKET_NAME="$S3_BUCKET" \
               -e AWS_S3_PREFIX="$S3_PREFIX" \
               -e AWS_REGION="$AWS_REGION_PARAM" \
@@ -149,6 +162,7 @@ jobs:
               -e USER_DEFAULT_PROFILE_IMAGE_URL="$USER_PROFILE_IMG" \
               -e SHOP_DEFAULT_IMAGE_URL="$SHOP_IMG" \
               -e OAUTH2_COOKIE_ENCRYPTION_KEY="$OAUTH_COOKIE_KEY" \
+              -e LOKI_URL="$LOKI_URL" \
               ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
 
             # 컨테이너 상태 확인 (10초 대기 후 확인)

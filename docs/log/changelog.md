@@ -4,6 +4,259 @@
 
 ---
 
+## 2026-02-19
+
+### 추가
+- `src/main/resources/db/migration/V3__create_device_tokens_table.sql` - device_tokens 테이블 생성 마이그레이션
+
+### 수정
+- `src/main/java/com/gotcha/domain/push/repository/DeviceTokenRepository.java` - findAllByPlatform() 메서드 추가
+- `src/main/java/com/gotcha/domain/push/service/PushNotificationService.java` - CodeRabbit 리뷰 반영
+  - 추가: @PreDestroy ApnsClient 종료 처리
+  - 추가: sendToUser/sendToAll에 @Transactional (삭제 작업 커밋 보장)
+  - 변경: sendToAll()에서 findAll().filter() → findAllByPlatform() 쿼리 최적화
+  - 변경: getVapidPublicKey() Vapid null 체크 추가
+  - 변경: getApnsClient() PEM 키 \n 리터럴 문자열 변환 처리
+- `src/main/java/com/gotcha/domain/push/entity/DeviceToken.java` - updateUserAndPlatform() 메서드 추가
+- `src/main/java/com/gotcha/domain/push/controller/PushController.java` - 미사용 @Profile import 제거
+- `src/main/java/com/gotcha/domain/push/dto/DeviceTokenRegisterRequest.java` - @Size(max=200) 유효성 검사 추가
+- `src/main/java/com/gotcha/domain/push/dto/DeviceTokenUnregisterRequest.java` - @Size(max=200) 유효성 검사 추가
+- `src/main/java/com/gotcha/domain/push/exception/PushException.java` - deviceTokenNotFound() 토큰 노출 제거 (보안)
+- `build.gradle` - Netty 버전 4.1.124.Final 강제 (CVE 대응)
+- `src/test/java/com/gotcha/domain/push/service/PushNotificationServiceTest.java` - ReflectionTestUtils 사용, 테스트 추가
+- `src/test/java/com/gotcha/domain/push/repository/DeviceTokenRepositoryTest.java` - 경계값/플랫폼 필터 테스트 추가
+
+---
+
+## 2026-02-18
+
+### 추가
+- `src/main/java/com/gotcha/domain/push/entity/DevicePlatform.java` - 디바이스 플랫폼 Enum (IOS, ANDROID)
+- `src/main/java/com/gotcha/domain/push/entity/DeviceToken.java` - 네이티브 디바이스 토큰 Entity
+- `src/main/java/com/gotcha/domain/push/repository/DeviceTokenRepository.java` - DeviceToken Repository
+- `src/main/java/com/gotcha/domain/push/dto/DeviceTokenRegisterRequest.java` - 기기 등록 Request DTO
+- `src/main/java/com/gotcha/domain/push/dto/DeviceTokenUnregisterRequest.java` - 기기 해제 Request DTO
+- `src/main/java/com/gotcha/domain/push/controller/PushTestController.java` - local 프로파일 전용 푸시 테스트 컨트롤러
+- `src/main/resources/db/migration/V2__add_apple_to_social_type_check.sql` - APPLE 소셜타입 CHECK 제약조건 추가
+- `src/test/java/com/gotcha/domain/push/repository/DeviceTokenRepositoryTest.java` - DeviceToken Repository 테스트
+- `src/test/java/com/gotcha/domain/push/service/PushNotificationServiceTest.java` - PushNotificationService 단위 테스트
+
+### 수정
+- `build.gradle` - Pushy APNS 의존성 추가 (com.eatthepath:pushy:0.15.4)
+- `src/main/java/com/gotcha/_global/config/PushProperties.java` - 중첩 클래스(Vapid+Apns) 구조로 리팩터링
+- `src/main/resources/application.yml` - push.apns.* 설정 추가
+- `src/main/java/com/gotcha/domain/push/service/PushNotificationService.java` - APNS 발송 로직 통합, 기기 등록/해제 메서드 추가
+- `src/main/java/com/gotcha/domain/push/controller/PushController.java` - register-device 엔드포인트 추가
+- `src/main/java/com/gotcha/domain/push/controller/PushControllerApi.java` - Swagger 문서 추가
+- `src/main/java/com/gotcha/_global/config/SecurityConfig.java` - register-device 인증 규칙 추가
+- `src/main/java/com/gotcha/domain/push/exception/PushErrorCode.java` - P004, P005 에러코드 추가
+- `src/main/java/com/gotcha/domain/push/exception/PushException.java` - deviceTokenNotFound, apnsSendFailed 팩토리 메서드 추가
+- `docs/entity-design.md` - device_tokens 테이블 설계 추가
+- `docs/error-codes.md` - P004, P005 에러코드 추가
+- `docs/api-spec.md` - POST/DELETE /push/register-device 명세 추가
+
+---
+
+## 2026-02-12
+
+### 추가
+- `src/main/java/com/gotcha/domain/block/entity/UserBlock.java` - 사용자 차단 Entity (blocker, blocked)
+- `src/main/java/com/gotcha/domain/block/repository/UserBlockRepository.java` - 차단 Repository (차단 목록, 삭제 쿼리)
+- `src/main/java/com/gotcha/domain/block/exception/BlockErrorCode.java` - 차단 에러코드 (BK001-BK004)
+- `src/main/java/com/gotcha/domain/block/exception/BlockException.java` - 차단 예외 클래스
+- `src/main/java/com/gotcha/domain/block/dto/BlockResponse.java` - 차단 응답 DTO
+- `src/main/java/com/gotcha/domain/block/dto/BlockedUserResponse.java` - 차단 사용자 목록 응답 DTO
+- `src/main/java/com/gotcha/domain/block/service/UserBlockService.java` - 차단 Service (차단, 해제, 목록)
+- `src/main/java/com/gotcha/domain/block/controller/UserBlockController.java` - 차단 Controller
+- `src/main/java/com/gotcha/domain/block/controller/UserBlockControllerApi.java` - 차단 Controller Swagger 인터페이스
+- `src/main/java/com/gotcha/domain/user/controller/AdminUserController.java` - 관리자 사용자 관리 API (목록/상세/상태변경)
+- `src/main/java/com/gotcha/domain/user/controller/AdminUserControllerApi.java` - 관리자 사용자 관리 API Swagger 인터페이스
+- `src/main/java/com/gotcha/domain/user/service/AdminUserService.java` - 관리자 사용자 관리 Service (제재/해제)
+- `src/main/java/com/gotcha/domain/user/dto/UpdateUserStatusRequest.java` - 사용자 상태 변경 Request DTO
+- `src/main/java/com/gotcha/domain/user/dto/AdminUserResponse.java` - 관리자용 사용자 정보 Response DTO
+- `src/main/java/com/gotcha/domain/user/dto/AdminUserListResponse.java` - 관리자용 사용자 목록 Response DTO
+- `src/test/java/com/gotcha/domain/user/service/AdminUserServiceTest.java` - AdminUserService 단위 테스트
+
+### 수정
+- `src/main/java/com/gotcha/domain/review/repository/ReviewRepository.java` - 차단 사용자 제외 쿼리 추가
+  - 추가: findAllByShopIdExcludingBlockedUsersOrderByCreatedAtDesc()
+  - 추가: findAllByShopIdExcludingBlockedUsersOrderByLikeCountDesc()
+- `src/main/java/com/gotcha/domain/review/service/ReviewService.java` - 차단 사용자 리뷰 필터링 적용
+  - 추가: UserBlockService 의존성
+  - 변경: getReviews()에서 차단 사용자 리뷰 제외
+- `src/main/java/com/gotcha/domain/shop/service/ShopService.java` - 차단 사용자 리뷰 필터링 적용
+  - 추가: UserBlockService 의존성
+  - 변경: getTop5Reviews()에서 차단 사용자 리뷰 제외
+- `src/main/java/com/gotcha/domain/user/service/UserService.java` - 회원 탈퇴 시 차단 정보 삭제
+  - 추가: UserBlockRepository 의존성
+  - 변경: withdraw()에 차단 정보 삭제 로직 추가
+- `docs/entity-design.md` - user_blocks 테이블 스키마 추가
+- `docs/api-spec.md` - 사용자 차단 API 명세 추가 (POST/DELETE /users/{userId}/block, GET /users/me/blocks)
+- `docs/error-codes.md` - BK 도메인 및 BK001-BK004 에러코드 추가
+- `src/main/java/com/gotcha/domain/user/entity/User.java` - suspendedUntil 필드 추가, suspend(LocalDateTime) 시그니처 변경, isSuspended/isBanned/checkAndRestoreIfSuspensionExpired 메서드 추가
+- `src/main/java/com/gotcha/domain/user/repository/UserRepository.java` - findAllWithStatusFilter() 메서드 추가
+- `src/main/java/com/gotcha/domain/user/exception/UserErrorCode.java` - U006 추가 (허용되지 않는 정지 기간)
+- `src/main/java/com/gotcha/domain/user/exception/UserException.java` - invalidSuspensionHours() 팩토리 메서드 추가
+- `src/main/java/com/gotcha/domain/auth/exception/AuthErrorCode.java` - A014 (정지된 사용자), A015 (차단된 사용자) 추가
+- `src/main/java/com/gotcha/domain/auth/exception/AuthException.java` - userSuspended(), userBanned() 팩토리 메서드 추가
+- `src/main/java/com/gotcha/_global/util/SecurityUtil.java` - SUSPENDED/BANNED 사용자 접근 차단, 정지 기간 만료 시 자동 복구
+- `src/main/java/com/gotcha/domain/auth/oauth2/CustomOAuth2UserService.java` - SUSPENDED/BANNED 사용자 로그인 차단
+- `src/main/java/com/gotcha/domain/auth/oauth2/CustomOidcUserService.java` - SUSPENDED/BANNED 사용자 로그인 차단 (Apple)
+- `docs/api-spec.md` - 관리자 사용자 관리 API 명세 추가 (GET /admin/users, GET /admin/users/{userId}, PATCH /admin/users/{userId}/status)
+- `docs/error-codes.md` - A013, A014, A015, U006 에러코드 추가
+- `docs/entity-design.md` - users 테이블에 suspended_until 필드 추가
+- `docs/auth-policy.md` - 관리자 사용자 관리 API 권한 매트릭스, 제재 사용자 접근 차단 정책 추가
+- `docs/business-rules.md` - 사용자 제재 섹션 추가 (제재 유형, 정지 기간 옵션, 자동 복구 정책)
+- `docs/api-spec.md` - 신고 사유 누락 항목 추가 (REVIEW_VIOLENCE, USER_IMPERSONATION)
+- `docs/business-rules.md` - 신고 사유 누락 항목 추가 (REVIEW_VIOLENCE, USER_IMPERSONATION)
+- `docs/entity-design.md` - 신고 사유 누락 항목 추가 (REVIEW_VIOLENCE, USER_IMPERSONATION)
+
+---
+
+## 2026-02-11
+
+### 수정
+- `src/main/java/com/gotcha/domain/report/entity/Report.java` - reason 컬럼 length 20→30 변경 (USER_INAPPROPRIATE_* 저장 불가 버그 수정), reopen() 메서드 추가
+- `src/main/java/com/gotcha/domain/report/repository/ReportRepository.java` - 중복 체크 시 CANCELLED 제외, 취소된 신고 조회 메서드 추가, findAllWithFilters countQuery 분리
+- `src/main/java/com/gotcha/domain/report/service/ReportService.java` - 취소 후 재신고 지원 (reopenOrCreate), 중복 체크에서 CANCELLED 제외
+- `src/main/java/com/gotcha/domain/report/service/AdminReportService.java` - 상태 변경 검증 추가 (ACCEPTED/REJECTED만 허용, PENDING 상태에서만 변경 가능)
+- `src/main/java/com/gotcha/domain/report/exception/ReportErrorCode.java` - RP010 추가 (허용되지 않는 상태 변경)
+- `src/main/java/com/gotcha/domain/report/exception/ReportException.java` - invalidStatusTransition() 메서드 추가
+- `src/main/java/com/gotcha/domain/report/controller/ReportControllerApi.java` - Swagger description에 SHOP 추가
+- `src/main/java/com/gotcha/domain/report/controller/AdminReportControllerApi.java` - Swagger parameter에 SHOP 추가
+- `src/main/java/com/gotcha/domain/report/dto/CreateReportRequest.java` - Swagger example ABUSE→REVIEW_ABUSE
+- `src/main/java/com/gotcha/domain/report/dto/ReportResponse.java` - Swagger example ABUSE→REVIEW_ABUSE
+- `src/main/java/com/gotcha/domain/report/dto/ReportDetailResponse.java` - Swagger example ABUSE→REVIEW_ABUSE
+- `src/test/java/com/gotcha/domain/report/service/ReportServiceTest.java` - SHOP 신고 테스트, reason-targetType 불일치 테스트, 취소 후 재신고 테스트 추가
+- `src/test/java/com/gotcha/domain/report/service/AdminReportServiceTest.java` - 상태 변경 검증 테스트 추가 (이미 처리된 신고, 허용되지 않는 상태)
+- `docs/business-rules.md` - 신고 섹션 전면 업데이트 (prefix 기반 사유, 신고 규칙, 처리 프로세스)
+- `docs/error-codes.md` - RP010 추가
+- `src/main/java/com/gotcha/domain/report/service/ReportService.java` - race condition 방지 (DataIntegrityViolationException → RP002), switch default case 추가
+- `src/main/java/com/gotcha/domain/report/entity/ReportReason.java` - prefix 파싱(split) 대신 명시적 targetType 필드로 변경
+- `src/main/java/com/gotcha/domain/report/repository/ReportRepository.java` - JPQL 문자열 리터럴('CANCELLED') → 파라미터 바인딩으로 변경
+- `src/main/java/com/gotcha/domain/report/controller/AdminReportController.java` - page/size 검증 추가 (@Min/@Max)
+- `src/main/java/com/gotcha/domain/report/controller/AdminReportControllerApi.java` - page/size 검증 추가 (@Min/@Max)
+- `src/main/java/com/gotcha/domain/report/dto/AdminReportListResponse.java` - from() 파라미터명 page→reportPage (record 필드 충돌 해소)
+- `docs/entity-design.md` - reports 테이블 SHOP 추가, reason 설명 prefix 기반으로 수정, 마크다운 테이블 포맷 수정
+
+---
+
+## 2026-02-10
+
+### 수정
+- `src/main/java/com/gotcha/domain/report/entity/ReportTargetType.java` - SHOP 타입 추가
+- `src/main/java/com/gotcha/domain/report/entity/ReportReason.java` - prefix 방식으로 전면 변경
+  - 리뷰: REVIEW_SPAM, REVIEW_COPYRIGHT, REVIEW_DEFAMATION, REVIEW_ABUSE, REVIEW_OBSCENE, REVIEW_PRIVACY, REVIEW_OTHER
+  - 가게: SHOP_WRONG_ADDRESS, SHOP_CLOSED, SHOP_INAPPROPRIATE, SHOP_DUPLICATE, SHOP_OTHER
+  - 사용자: USER_INAPPROPRIATE_NICKNAME, USER_INAPPROPRIATE_PROFILE, USER_PRIVACY, USER_OTHER
+  - 추가: getTargetType() 메서드 (prefix로 targetType 추출)
+- `src/main/java/com/gotcha/domain/report/exception/ReportErrorCode.java` - RP009 추가 (targetType-reason 불일치)
+- `src/main/java/com/gotcha/domain/report/exception/ReportException.java` - invalidReasonForTarget() 메서드 추가
+- `src/main/java/com/gotcha/domain/report/service/ReportService.java` - 가게 신고 및 유효성 검증 추가
+  - 추가: ShopRepository 의존성
+  - 추가: reason.getTargetType() != targetType 검증
+  - 추가: validateShopTarget() 메서드
+- `src/main/java/com/gotcha/domain/report/repository/ReportRepository.java` - 취소된 신고 목록 제외
+- `docs/entity-design.md` - ReportTargetType에 SHOP 추가, ReportReason 전면 업데이트
+- `docs/api-spec.md` - 신고 API reason 값 및 예시 전면 업데이트
+- `docs/error-codes.md` - RP009 추가, RP003/RP005 설명 수정
+- `src/main/java/com/gotcha/_global/filter/RateLimitFilter.java` - CodeRabbit 리뷰 반영
+  - 변경: waitTimeSeconds 계산 시 `Math.max(1, ...)` 적용 (최소 1초 보장)
+  - 변경: 나노초→초 변환 시 `TimeUnit.NANOSECONDS.toSeconds()` 사용 (가독성 개선)
+- `src/main/resources/logback-spring.xml` - CodeRabbit 리뷰 반영
+  - 변경: LOKI_URL 조건부 appender 적용 (`<if condition>` 추가)
+  - 변경: LOKI_URL이 빈 문자열일 때 appender 생성하지 않음 (불필요한 연결 시도 방지)
+  - 변경: message 패턴 → `JsonLayout` 클래스 사용 (JSON 특수문자 이스케이프 자동 처리)
+  - 변경: timestamp 타임존 UTC 명시 (`<timeZone>UTC</timeZone>`)
+  - 변경: dev/prod 프로파일에 ASYNC_LOKI 조건부 참조 추가
+- `src/main/resources/application.yml` - CodeRabbit 리뷰 반영
+  - 변경: `logging.loki.url` 기본값 제거 (`${LOKI_URL:}` 빈 문자열)
+  - 추가: `logging.loki.enabled` 설정 (`${LOKI_ENABLED:false}`)
+- `src/main/resources/application-local.yml` - 로컬 환경 Loki 설정 추가
+  - 추가: `logging.loki.url` 기본값 (`http://localhost:3100/loki/api/v1/push`)
+  - 추가: `logging.loki.enabled` 기본값 (`false`)
+- `src/main/java/com/gotcha/_global/config/SecurityConfig.java` - RateLimitFilter 중복 실행 방지
+  - 추가: `FilterRegistrationBean<RateLimitFilter>` 빈 등록
+  - 변경: 서블릿 컨테이너 자동 등록 비활성화 (`registration.setEnabled(false)`)
+  - 효과: Security Filter Chain에서만 1회 실행 (기존 2회 → 1회)
+
+---
+
+## 2026-02-09
+
+### 추가
+- `src/main/java/com/gotcha/domain/report/entity/Report.java` - 신고 Entity (reporter, targetType, targetId, reason, detail, status)
+- `src/main/java/com/gotcha/domain/report/entity/ReportTargetType.java` - 신고 대상 타입 Enum (REVIEW, USER)
+- `src/main/java/com/gotcha/domain/report/entity/ReportReason.java` - 신고 사유 Enum (ABUSE, OBSCENE, SPAM, PRIVACY, OTHER)
+- `src/main/java/com/gotcha/domain/report/entity/ReportStatus.java` - 신고 상태 Enum (PENDING, ACCEPTED, REJECTED, CANCELLED)
+- `src/main/java/com/gotcha/domain/report/exception/ReportErrorCode.java` - 신고 에러코드 (RP001-RP008)
+- `src/main/java/com/gotcha/domain/report/exception/ReportException.java` - 신고 예외 클래스
+- `src/main/java/com/gotcha/domain/report/repository/ReportRepository.java` - 신고 Repository (중복 체크, 필터링 쿼리)
+- `src/main/java/com/gotcha/domain/report/dto/CreateReportRequest.java` - 신고 생성 Request DTO
+- `src/main/java/com/gotcha/domain/report/dto/UpdateReportStatusRequest.java` - 신고 상태 변경 Request DTO
+- `src/main/java/com/gotcha/domain/report/dto/ReportResponse.java` - 신고 응답 DTO
+- `src/main/java/com/gotcha/domain/report/dto/ReportDetailResponse.java` - 신고 상세 응답 DTO (관리자용)
+- `src/main/java/com/gotcha/domain/report/dto/AdminReportListResponse.java` - 관리자용 신고 목록 응답 DTO
+- `src/main/java/com/gotcha/domain/report/service/ReportService.java` - 신고 Service (생성, 취소, 목록)
+- `src/main/java/com/gotcha/domain/report/service/AdminReportService.java` - 관리자용 신고 Service (조회, 상태변경)
+- `src/main/java/com/gotcha/domain/report/controller/ReportController.java` - 일반 사용자 신고 API
+- `src/main/java/com/gotcha/domain/report/controller/ReportControllerApi.java` - 일반 사용자 신고 API Swagger 인터페이스
+- `src/main/java/com/gotcha/domain/report/controller/AdminReportController.java` - 관리자 신고 API
+- `src/main/java/com/gotcha/domain/report/controller/AdminReportControllerApi.java` - 관리자 신고 API Swagger 인터페이스
+- `src/test/java/com/gotcha/domain/report/repository/ReportRepositoryTest.java` - Repository 테스트
+- `src/test/java/com/gotcha/domain/report/service/ReportServiceTest.java` - Service 테스트
+- `src/test/java/com/gotcha/domain/report/service/AdminReportServiceTest.java` - AdminService 테스트
+- `src/main/java/com/gotcha/_global/config/RateLimitProperties.java` - Rate Limit 설정 Properties 클래스
+- `src/main/java/com/gotcha/_global/filter/RateLimitFilter.java` - Rate Limiting 필터 (Bucket4j 기반, IP당 60초/100요청)
+- `src/main/resources/logback-spring.xml` - Loki 로깅 설정 (프로파일별: local/dev/prod)
+- `build.gradle` - 라이브러리 추가
+  - 추가: com.bucket4j:bucket4j-core:8.10.1 (Rate Limiting)
+  - 추가: com.github.loki4j:loki-logback-appender:1.5.2 (Loki 로깅)
+
+### 수정
+- `src/main/java/com/gotcha/_global/config/SecurityConfig.java` - 신고 API 인증 설정 및 Rate Limit 필터 통합
+  - 추가: RateLimitFilter 의존성 주입
+  - 추가: addFilterBefore(rateLimitFilter, jwtAuthenticationFilter) 필터 체인 등록
+- `docs/entity-design.md` - reports 테이블 스키마 추가
+- `docs/api-spec.md` - 신고 API 및 관리자 API 명세 추가
+- `docs/error-codes.md` - RP 도메인 및 RP001-RP008 에러코드 추가
+- `src/main/resources/application.yml` - Rate Limit, Loki 설정 추가
+  - 추가: rate-limit.enabled, capacity, refill-tokens, refill-duration-seconds
+  - 추가: logging.loki.url
+- `.github/workflows/cicd-dev.yml` - LOKI_URL 환경변수 추가
+  - 추가: AWS SSM에서 /gotcha/dev/loki/url 파라미터 조회
+  - 추가: Docker run 시 LOKI_URL 환경변수 전달
+
+### 삭제
+- `docs/api-design.md` - api-spec.md와 중복
+- `docs/decisions.md` - architecture.md에 동일 내용 포함
+- `docs/flow.md` - architecture.md에 흡수
+- `docs/aws-setup-guide.md` - 인프라 문서 (코드와 무관)
+- `docs/aws-ssm-console-guide.md` - 인프라 문서 (코드와 무관)
+- `docs/aws-ssm-setup-dev.md` - 인프라 문서 (코드와 무관)
+- `docs/dev-deployment-checklist.md` - 인프라 문서 (코드와 무관)
+- `docs/github-secrets-setup-dev.md` - 인프라 문서 (코드와 무관)
+- `docs/security-concepts.md` - outdated 참조 포함, 필요 시 재작성
+- `docs/security-roadmap.md` - outdated 참조 포함, 필요 시 재작성
+
+### 수정
+- `CLAUDE.md` - 삭제된 문서 참조 제거, architecture.md/security-checklist.md 추가
+- `docs/api-spec.md` - 코드 대조 동기화
+  - 변경: 파일 크기 제한 20MB → 50MB
+  - 변경: 파일 에러코드 I001~I004 → FL001~FL005
+  - 추가: UserResponse에 userType 필드 (GET /users/me, PATCH/DELETE /users/me/profile-image)
+  - 변경: GCS URL 예시 → S3 URL 형식으로 일괄 변경
+- `docs/business-rules.md` - 이미지 규칙 업데이트
+  - 변경: 최대 크기 10MB → 50MB
+  - 추가: 허용 확장자에 heic, heif (iOS 지원)
+- `docs/entity-design.md` - 누락 필드/테이블 추가
+  - 추가: users 테이블에 oauth_access_token 필드
+  - 추가: review_likes 테이블 스키마
+- `docs/auth-policy.md` - 리뷰 좋아요 API 권한 추가
+- `docs/error-codes.md` - FL004/FL005 설명 GCS → S3 변경
+
+---
+
 ## 2026-02-05
 
 ### 수정

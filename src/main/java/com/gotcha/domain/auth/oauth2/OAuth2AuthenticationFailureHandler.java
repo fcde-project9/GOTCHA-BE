@@ -18,7 +18,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 @RequiredArgsConstructor
 public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationFailureHandler {
 
-    private final HttpCookieOAuth2AuthorizationRequestRepository cookieRepository;
+    private final InMemoryAuthorizationRequestRepository authorizationRequestRepository;
 
     @Value("${oauth2.redirect-uri:http://localhost:3000/oauth/callback}")
     private String defaultRedirectUri;
@@ -31,16 +31,22 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
         AuthErrorCode errorCode = resolveErrorCode(exception);
 
         // 프론트엔드에서 전달한 redirect_uri 사용, 없으면 기본값 사용
-        String redirectUri = cookieRepository.getRedirectUriFromCookie(request);
+        String redirectUri = authorizationRequestRepository.getRedirectUri(request);
         if (redirectUri == null || redirectUri.isBlank()) {
             redirectUri = defaultRedirectUri;
         }
-        cookieRepository.removeRedirectUriCookie(response);
 
-        String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
-                .queryParam("error", errorCode.getCode())
-                .build()
-                .toUriString();
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(redirectUri)
+                .queryParam("error", errorCode.getCode());
+
+        // 정지된 사용자: 정지 해제 시각 전달
+        if (errorCode == AuthErrorCode.USER_SUSPENDED
+                && exception instanceof OAuth2AuthenticationException oauth2Ex
+                && oauth2Ex.getError().getUri() != null) {
+            uriBuilder.queryParam("suspended_until", oauth2Ex.getError().getUri());
+        }
+
+        String targetUrl = uriBuilder.build().toUriString();
 
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
@@ -52,6 +58,9 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
                 case "access_denied" -> AuthErrorCode.OAUTH_ACCESS_DENIED;
                 case "invalid_token" -> AuthErrorCode.OAUTH_INVALID_TOKEN;
                 case "invalid_response" -> AuthErrorCode.OAUTH_INVALID_RESPONSE;
+                case "A014" -> AuthErrorCode.USER_SUSPENDED;
+                case "A015" -> AuthErrorCode.USER_BANNED;
+                case "A005" -> AuthErrorCode.USER_DELETED;
                 default -> AuthErrorCode.SOCIAL_LOGIN_FAILED;
             };
         }

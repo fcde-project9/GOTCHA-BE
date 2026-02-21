@@ -205,32 +205,123 @@ distance = haversine(lat1, lng1, lat2, lng2)
 
 | 항목 | 규칙 |
 |------|------|
-| 허용 확장자 | jpg, jpeg, png, webp |
-| 최대 크기 | 10MB |
+| 허용 확장자 | jpg, jpeg, png, webp, heic, heif |
+| 최대 크기 | 50MB |
 | 용도 구분 | shop (가게 사진), review (리뷰 사진) |
 
 ---
 
-## 신고 (추후 구현)
+## 신고 (Report)
 
-### 신고 사유
+### 신고 대상
 
-```
-- 허위 정보
-- 중복 등록
-- 폐업/이전
-- 부적절한 내용
-- 기타
-```
+| 대상 | 설명 |
+|------|------|
+| REVIEW | 리뷰 신고 |
+| SHOP | 가게 신고 |
+| USER | 유저 신고 |
+
+### 신고 사유 (prefix 기반)
+
+신고 대상 타입별로 해당 prefix 사유만 사용 가능
+
+**리뷰 신고 (REVIEW_*)**
+| 값 | 설명 |
+|----|------|
+| REVIEW_SPAM | 도배/광고성 글이에요 |
+| REVIEW_COPYRIGHT | 저작권을 침해해요 |
+| REVIEW_DEFAMATION | 명예를 훼손하는 내용이에요 |
+| REVIEW_ABUSE | 욕설이나 비방이 심해요 |
+| REVIEW_VIOLENCE | 폭력적이거나 위협적인 내용이에요 |
+| REVIEW_OBSCENE | 외설적인 내용이 포함돼있어요 |
+| REVIEW_PRIVACY | 개인정보가 노출되어 있어요 |
+| REVIEW_HATE_SPEECH | 혐오 표현이 포함돼있어요 |
+| REVIEW_FALSE_INFO | 허위/거짓 정보예요 |
+| REVIEW_OTHER | 기타 (detail 필수) |
+
+**가게 신고 (SHOP_*)**
+| 값 | 설명 |
+|----|------|
+| SHOP_WRONG_ADDRESS | 잘못된 주소예요 |
+| SHOP_CLOSED | 영업 종료/폐업된 업체예요 |
+| SHOP_INAPPROPRIATE | 부적절한 업체(불법/유해 업소)예요 |
+| SHOP_DUPLICATE | 중복 제보된 업체예요 |
+| SHOP_FALSE_INFO | 허위/거짓 정보예요 |
+| SHOP_OTHER | 기타 (detail 필수) |
+
+**사용자 신고 (USER_*)**
+| 값 | 설명 |
+|----|------|
+| USER_INAPPROPRIATE_NICKNAME | 부적절한 닉네임이에요 |
+| USER_INAPPROPRIATE_PROFILE | 부적절한 프로필 사진이에요 |
+| USER_PRIVACY | 개인정보가 노출되어 있어요 |
+| USER_IMPERSONATION | 다른 사람을 사칭하고 있어요 |
+| USER_HATE_SPEECH | 혐오 표현이 포함돼있어요 |
+| USER_OTHER | 기타 (detail 필수) |
+
+### 신고 규칙
+
+| 항목 | 규칙 |
+|------|------|
+| 본인 신고 | 불가 (리뷰, 유저) |
+| 중복 신고 | 동일 대상 중복 신고 불가 (취소 후 재신고는 가능) |
+| 기타 사유 | *_OTHER 선택 시 detail 필수 |
+| 사유-대상 일치 | reason prefix와 targetType 일치 필요 |
 
 ### 처리 프로세스
 
 ```
-1. 사용자 신고
-2. 관리자 검토
-3. 승인 시: 숨김/삭제 처리
-4. 반려 시: 유지
+1. 사용자 신고 → 상태: PENDING
+2. 관리자 검토 (GET /admin/reports)
+3. 승인(ACCEPTED) 시: 관리자가 사용자 제재 판단 (PATCH /admin/users/{id}/status)
+4. 반려(REJECTED) 시: 유지
+5. 사용자 취소: PENDING 상태에서만 가능 → 상태: CANCELLED
 ```
+
+---
+
+## 사용자 제재 (User Sanction)
+
+### 제재 유형
+
+| 유형 | 설명 | 해제 방식 |
+|------|------|----------|
+| SUSPENDED | 기간 지정 정지 | 자동 (기간 만료 시 lazy check) |
+| BANNED | 영구 차단 | 관리자 수동 해제 |
+
+### 정지 기간 옵션
+
+| 시간 | 설명 |
+|------|------|
+| 1 | 1시간 |
+| 12 | 12시간 |
+| 24 | 24시간 (1일) |
+| 72 | 3일 |
+| 120 | 5일 |
+| 168 | 7일 |
+| 336 | 14일 |
+| 720 | 30일 |
+
+### 제재 효과
+
+| 항목 | 제한 |
+|------|------|
+| 로그인 | 불가 (OAuth2 로그인 시 차단) |
+| API 접근 | 불가 (SecurityUtil에서 차단) |
+| 기존 토큰 | 다음 API 호출 시 차단 (lazy check) |
+
+### 자동 복구 (Lazy Check)
+
+- SUSPENDED 상태에서 `suspended_until`이 현재 시간보다 이전이면 자동으로 ACTIVE 복구
+- 복구 시점: SecurityUtil.getCurrentUser() 호출 시, OAuth2 로그인 시
+- 별도 스케줄러 없이 요청 시점에 확인
+
+### 제재 불가 대상
+
+| 대상 | 사유 |
+|------|------|
+| ADMIN 사용자 | 관리자 계정 보호 |
+| DELETED 사용자 | 이미 탈퇴 처리된 사용자 |
 
 ---
 

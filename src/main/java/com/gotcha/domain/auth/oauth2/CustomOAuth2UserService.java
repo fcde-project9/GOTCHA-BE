@@ -3,10 +3,10 @@ package com.gotcha.domain.auth.oauth2;
 import com.gotcha.domain.auth.exception.AuthErrorCode;
 import com.gotcha.domain.auth.oauth2.userinfo.OAuth2UserInfo;
 import com.gotcha.domain.auth.oauth2.userinfo.OAuth2UserInfoFactory;
+import com.gotcha.domain.auth.service.OAuth2UserRegistrationService;
 import com.gotcha.domain.user.entity.SocialType;
 import com.gotcha.domain.user.entity.User;
 import com.gotcha.domain.user.repository.UserRepository;
-import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -25,20 +25,12 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
-    private static final String[] ADJECTIVES = {"빨간", "파란", "노란", "초록", "보라", "분홍", "하얀", "검은", "주황", "금색"};
-    private static final String[] NOUNS = {"캡슐", "가챠", "뽑기", "별", "달", "구름", "토끼", "고양이", "강아지", "곰돌이"};
-    private static final int MAX_NICKNAME_NUMBER = 10000;
-    private static final int MAX_NICKNAME_GENERATION_ATTEMPTS = 10;
-
     private static final Set<String> SUPPORTED_PROVIDERS = Arrays.stream(SocialType.values())
             .map(type -> type.name().toLowerCase())
             .collect(Collectors.toSet());
 
     private final UserRepository userRepository;
-    private final SecureRandom secureRandom = new SecureRandom();
-
-    @org.springframework.beans.factory.annotation.Value("${user.default-profile-image-url}")
-    private String defaultProfileImageUrl;
+    private final OAuth2UserRegistrationService registrationService;
 
     @Override
     @Transactional
@@ -80,59 +72,36 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                                 new OAuth2Error(AuthErrorCode.USER_DELETED.getCode(),
                                         AuthErrorCode.USER_DELETED.getMessage(), null));
                     }
-                    return updateExistingUser(existingUser, userInfo);
+                    // 차단된 사용자 로그인 차단
+                    if (existingUser.isBanned()) {
+                        log.warn("Banned user attempted login - userId: {}, socialType: {}",
+                                existingUser.getId(), socialType);
+                        throw new OAuth2AuthenticationException(
+                                new OAuth2Error(AuthErrorCode.USER_BANNED.getCode(),
+                                        AuthErrorCode.USER_BANNED.getMessage(), null));
+                    }
+                    // 정지된 사용자: 기간 만료 시 자동 복구, 미만료 시 차단
+                    if (existingUser.isSuspended()) {
+                        if (!existingUser.checkAndRestoreIfSuspensionExpired()) {
+                            log.warn("Suspended user attempted login - userId: {}, suspendedUntil: {}",
+                                    existingUser.getId(), existingUser.getSuspendedUntil());
+                            throw new OAuth2AuthenticationException(
+                                    new OAuth2Error(AuthErrorCode.USER_SUSPENDED.getCode(),
+                                            AuthErrorCode.USER_SUSPENDED.getMessage(),
+                                            String.valueOf(existingUser.getSuspendedUntil())));
+                        }
+                    }
+                    return registrationService.updateExistingUser(existingUser, userInfo);
                 })
-                .orElseGet(() -> createNewUser(userInfo, socialType));
+                .orElseGet(() -> registrationService.createNewUser(userInfo, socialType));
 
-        // 구글 로그인인 경우 OAuth2 access_token 저장 (탈퇴 시 연동 해제용)
+        // 구글 로그인인 경우 access_token 저장 (탈퇴 시 연동 해제용)
         if (socialType == SocialType.GOOGLE) {
-            String oauthAccessToken = userRequest.getAccessToken().getTokenValue();
-            user.updateOAuthAccessToken(oauthAccessToken);
+            String accessToken = userRequest.getAccessToken().getTokenValue();
+            user.updateSocialRevokeToken(accessToken);
             log.debug("Google OAuth access token saved - userId: {}", user.getId());
         }
 
         return new CustomOAuth2User(user, oauth2User.getAttributes(), isNewUser);
-    }
-
-    private User updateExistingUser(User user, OAuth2UserInfo userInfo) {
-        if (userInfo.getEmail() != null) {
-            user.updateEmail(userInfo.getEmail());
-        }
-        user.updateLastLoginAt();
-        return user;
-    }
-
-    private User createNewUser(OAuth2UserInfo userInfo, SocialType socialType) {
-        String nickname = generateRandomNickname();
-
-        User user = User.builder()
-                .socialType(socialType)
-                .socialId(userInfo.getId())
-                .nickname(nickname)
-                .email(userInfo.getEmail())
-                .profileImageUrl(defaultProfileImageUrl)
-                .build();
-
-        user.updateLastLoginAt();
-        return userRepository.save(user);
-    }
-
-    private String generateRandomNickname() {
-        for (int attempt = 0; attempt < MAX_NICKNAME_GENERATION_ATTEMPTS; attempt++) {
-            String adjective = ADJECTIVES[secureRandom.nextInt(ADJECTIVES.length)];
-            String noun = NOUNS[secureRandom.nextInt(NOUNS.length)];
-            int number = secureRandom.nextInt(MAX_NICKNAME_NUMBER);
-            String nickname = adjective + noun + "#" + number;
-
-            if (!userRepository.existsByNickname(nickname)) {
-                return nickname;
-            }
-        }
-
-        // 최대 시도 횟수 초과 시 UUID 기반 닉네임 생성
-        String fallbackNickname = "가챠유저#" + System.currentTimeMillis() % 1000000;
-        log.warn("Failed to generate unique nickname after {} attempts, using fallback: {}",
-                MAX_NICKNAME_GENERATION_ATTEMPTS, fallbackNickname);
-        return fallbackNickname;
     }
 }

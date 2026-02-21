@@ -44,4 +44,8 @@ public class UserException extends BusinessException {
     public static UserException alreadyDeleted(Long userId) {
         return new UserException(UserErrorCode.ALREADY_DELETED, "ID: " + userId);
     }
+
+    public static UserException invalidSuspensionHours() {
+        return new UserException(UserErrorCode.INVALID_SUSPENSION_HOURS);
+    }
 }
