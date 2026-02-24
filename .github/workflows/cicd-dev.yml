@@ -163,6 +163,7 @@ jobs:
               -e SHOP_DEFAULT_IMAGE_URL="$SHOP_IMG" \
               -e OAUTH2_COOKIE_ENCRYPTION_KEY="$OAUTH_COOKIE_KEY" \
               -e LOKI_URL="$LOKI_URL" \
+              -e RATE_LIMIT_ENABLED="false" \
               ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_DEV }}:${{ github.sha }}
 
             # 컨테이너 상태 확인 (10초 대기 후 확인)
