@@ -1,9 +1,7 @@
 package com.gotcha._global.config;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
-import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
+import com.gotcha.domain.shop.dto.ShopDetailResponse;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -11,46 +9,40 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.time.Duration;
 
 @Configuration
-@EnableCaching // Spring Boot의 캐싱 설정을 활성화
+@EnableCaching
 public class RedisCacheConfig {
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory redisConnectionFactory, ObjectMapper objectMapper) {
-        // Spring Boot 자동 설정 ObjectMapper를 복사하여 사용 (JavaTimeModule 등 이미 포함)
-        ObjectMapper cacheObjectMapper = objectMapper.copy();
-        PolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
-                .allowIfBaseType("com.gotcha.")
-                .allowIfBaseType("java.util.")
-                .allowIfBaseType("java.time.")
-                .build();
-        cacheObjectMapper.activateDefaultTyping(ptv, ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
-        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(cacheObjectMapper);
+        // 타입을 명시하여 @class 없이도 안정적인 직렬화/역직렬화
+        Jackson2JsonRedisSerializer<ShopDetailResponse> shopDetailSerializer =
+                new Jackson2JsonRedisSerializer<>(objectMapper, ShopDetailResponse.class);
 
-        RedisCacheConfiguration redisCacheConfiguration = RedisCacheConfiguration
+        RedisCacheConfiguration shopDetailConfig = RedisCacheConfiguration
                 .defaultCacheConfig()
-                // Redis에 Key를 저장할 때 String으로 직렬화(변환)해서 저장
                 .serializeKeysWith(
-                        RedisSerializationContext.SerializationPair.fromSerializer(
-                                new StringRedisSerializer()))
-                // Redis에 Value를 저장할 때 Json으로 직렬화(변환)해서 저장
+                        RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(
-                        RedisSerializationContext.SerializationPair.fromSerializer(serializer)
-                )
-                // 데이터의 만료기간(TTL) 설정
+                        RedisSerializationContext.SerializationPair.fromSerializer(shopDetailSerializer))
+                .entryTtl(Duration.ofMinutes(5L));
+
+        RedisCacheConfiguration defaultConfig = RedisCacheConfiguration
+                .defaultCacheConfig()
+                .serializeKeysWith(
+                        RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
                 .entryTtl(Duration.ofMinutes(1L));
 
         return RedisCacheManager
                 .RedisCacheManagerBuilder
                 .fromConnectionFactory(redisConnectionFactory)
-                .cacheDefaults(redisCacheConfiguration)
-                .withCacheConfiguration("shop-detail",
-                        redisCacheConfiguration.entryTtl(Duration.ofMinutes(5L)))
+                .cacheDefaults(defaultConfig)
+                .withCacheConfiguration("shop-detail", shopDetailConfig)
                 .build();
     }
 }
