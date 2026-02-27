@@ -100,4 +100,14 @@ public record ShopDetailResponse(
                 this.totalReviewImageCount, this.recentReviewImages
         );
     }
+
+    public ShopDetailResponse withReviews(List<ReviewResponse> reviews) {
+        return new ShopDetailResponse(
+                this.id, this.name, this.addressName, this.locationHint,
+                this.openTime, this.todayOpenTime, this.openStatus,
+                this.latitude, this.longitude, this.mainImageUrl,
+                this.isFavorite, reviews, this.reviewCount,
+                this.totalReviewImageCount, this.recentReviewImages
+        );
+    }
 }
