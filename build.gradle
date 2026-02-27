@@ -69,6 +69,8 @@ dependencies {
 	implementation 'org.bouncycastle:bcprov-jdk18on:1.83'
 	// APNS (Native Push)
 	implementation 'com.eatthepath:pushy:0.15.4'
+	// Redis
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 }
 
 tasks.named('test') {
