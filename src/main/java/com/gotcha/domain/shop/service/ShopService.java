@@ -28,6 +28,11 @@ import com.gotcha.domain.comment.repository.CommentRepository;
 import com.gotcha.domain.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -61,6 +66,10 @@ public class ShopService {
 
     @org.springframework.beans.factory.annotation.Value("${shop.default-image-url}")
     private String defaultShopImageUrl;
+
+    @Autowired
+    @Lazy
+    private ShopService self;
 
     @Transactional
     public Shop createShop(String name, Double latitude, Double longitude,
@@ -518,6 +527,33 @@ public class ShopService {
     }
 
     /**
+     * 가게 상세 기본 데이터 조회 (캐시용, 사용자 무관 데이터만 포함)
+     * isFavorite=false, isOwner=false, isLiked=false 로 캐시됨
+     * TTL: 5분 (RedisCacheConfig 참조)
+     */
+    @Cacheable(value = "shop-detail", key = "#shopId + ':' + #sortBy.name()")
+    public ShopDetailResponse getShopDetailBase(Long shopId, ReviewSortType sortBy) {
+        Shop shop = shopRepository.findById(shopId)
+                .orElseThrow(() -> ShopException.notFound(shopId));
+
+        Map<String, String> openTimeMap = parseOpenTime(shop.getOpenTime());
+        String todayOpenTime = getTodayOpenTime(openTimeMap);
+        String openStatus = getOpenStatus(openTimeMap);
+
+        List<ReviewResponse> reviews = getTop5Reviews(shopId, sortBy, null);
+        Long reviewCount = reviewRepository.countByShopId(shopId);
+        Long totalReviewImageCount = reviewImageRepository.countByShopId(shopId);
+        List<String> recentReviewImages = reviewImageRepository.findTop4ByShopId(shopId)
+                .stream()
+                .map(ReviewImage::getImageUrl)
+                .toList();
+
+        log.info("shop-detail cache miss - shopId: {}, sortBy: {}", shopId, sortBy);
+        return ShopDetailResponse.of(shop, todayOpenTime, openStatus, false,
+                reviews, reviewCount, totalReviewImageCount, recentReviewImages);
+    }
+
+    /**
      * 가게 상세 조회
      *
      * @param shopId 가게 ID
@@ -530,67 +566,14 @@ public class ShopService {
         log.info("getShopDetail - shopId: {}, sortBy: {}, userId: {}",
                 shopId, sortBy, user != null ? user.getId() : null);
 
-        // 가게 조회
-        Shop shop = shopRepository.findById(shopId)
-                .orElseThrow(() -> ShopException.notFound(shopId));
+        ShopDetailResponse base = self.getShopDetailBase(shopId, sortBy);
 
-        // 찜 여부 확인 (로그인 사용자만)
-        boolean isFavorite = false;
-        if (user != null) {
-            isFavorite = favoriteRepository.existsByUserIdAndShopId(user.getId(), shopId);
+        if (user == null) {
+            return base;
         }
 
-        // openTime JSON 한 번만 파싱 (중복 파싱 방지)
-        Map<String, String> openTimeMap = parseOpenTime(shop.getOpenTime());
-
-        // 오늘의 영업 시간 추출
-        String todayOpenTime = getTodayOpenTime(openTimeMap);
-
-        // 영업 상태 확인
-        String openStatus = getOpenStatus(openTimeMap);
-
-        // 차단한 사용자 목록 조회
-        Long currentUserId = user != null ? user.getId() : null;
-        List<Long> blockedUserIds = userBlockService.getBlockedUserIds(currentUserId);
-
-        // 리뷰 5개 조회 (정렬 적용)
-        List<ReviewResponse> reviews = getTop5Reviews(shopId, sortBy, user);
-
-        // 전체 리뷰 개수 조회 (차단 사용자 제외)
-        Long reviewCount;
-        if (blockedUserIds.isEmpty()) {
-            reviewCount = reviewRepository.countByShopId(shopId);
-        } else {
-            reviewCount = reviewRepository.countByShopIdExcludingBlockedUsers(shopId, blockedUserIds);
-        }
-
-        // 전체 리뷰 사진 개수 조회 (차단 사용자 제외)
-        Long totalReviewImageCount;
-        if (blockedUserIds.isEmpty()) {
-            totalReviewImageCount = reviewImageRepository.countByShopId(shopId);
-        } else {
-            totalReviewImageCount = reviewImageRepository.countByShopIdExcludingBlockedUsers(shopId, blockedUserIds);
-        }
-
-        // 최신 리뷰 이미지 4개 조회 (차단 사용자 제외)
-        List<String> recentReviewImages;
-        if (blockedUserIds.isEmpty()) {
-            recentReviewImages = reviewImageRepository.findTop4ByShopId(shopId)
-                    .stream()
-                    .map(ReviewImage::getImageUrl)
-                    .toList();
-        } else {
-            recentReviewImages = reviewImageRepository.findTop4ByShopIdExcludingBlockedUsers(shopId, blockedUserIds)
-                    .stream()
-                    .map(ReviewImage::getImageUrl)
-                    .toList();
-        }
-
-        log.info("Shop detail - id: {}, reviews: {}/{}, images: {}/{}",
-                shopId, reviews.size(), reviewCount, recentReviewImages.size(), totalReviewImageCount);
-
-        return ShopDetailResponse.of(shop, todayOpenTime, openStatus, isFavorite, reviews, reviewCount,
-                totalReviewImageCount, recentReviewImages);
+        boolean isFavorite = favoriteRepository.existsByUserIdAndShopId(user.getId(), shopId);
+        return base.withIsFavorite(isFavorite);
     }
 
     /**
@@ -715,6 +698,10 @@ public class ShopService {
      * 가게 정보 수정 (ADMIN 전용)
      */
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "shop-detail", key = "#shopId + ':LATEST'"),
+            @CacheEvict(value = "shop-detail", key = "#shopId + ':LIKE_COUNT'")
+    })
     public void updateShop(Long shopId, UpdateShopRequest request, User currentUser) {
         log.info("updateShop - shopId: {}, userId: {}", shopId, currentUser.getId());
 
@@ -782,6 +769,10 @@ public class ShopService {
      * 연관 데이터(리뷰, 찜, 이미지) 모두 삭제
      */
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "shop-detail", key = "#shopId + ':LATEST'"),
+            @CacheEvict(value = "shop-detail", key = "#shopId + ':LIKE_COUNT'")
+    })
     public void deleteShop(Long shopId, User currentUser) {
         log.info("deleteShop - shopId: {}, userId: {}", shopId, currentUser.getId());
 
