@@ -25,6 +25,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -47,6 +49,10 @@ public class ReviewService {
     private static final int MAX_IMAGES = 10;
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "shop-detail", key = "#shopId + ':LATEST'"),
+            @CacheEvict(value = "shop-detail", key = "#shopId + ':LIKE_COUNT'")
+    })
     public ReviewResponse createReview(Long shopId, Long userId, CreateReviewRequest request) {
         log.info("Creating review for shop {} by user {}", shopId, userId);
 
@@ -155,6 +161,10 @@ public class ReviewService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "shop-detail", key = "#shopId + ':LATEST'"),
+            @CacheEvict(value = "shop-detail", key = "#shopId + ':LIKE_COUNT'")
+    })
     public ReviewResponse updateReview(Long shopId, Long reviewId, User currentUser, UpdateReviewRequest request) {
         log.info("Updating review {} for shop {} by user {}", reviewId, shopId, currentUser.getId());
 
@@ -228,6 +238,10 @@ public class ReviewService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "shop-detail", key = "#shopId + ':LATEST'"),
+            @CacheEvict(value = "shop-detail", key = "#shopId + ':LIKE_COUNT'")
+    })
     public void deleteReview(Long shopId, Long reviewId, User currentUser) {
         log.info("Deleting review {} for shop {} by user {}", reviewId, shopId, currentUser.getId());
 
