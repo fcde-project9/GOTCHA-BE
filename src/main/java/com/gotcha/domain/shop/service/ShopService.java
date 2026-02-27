@@ -575,17 +575,22 @@ public class ShopService {
         // 찜 여부 조회 (1 쿼리)
         boolean isFavorite = favoriteRepository.existsByUserIdAndShopId(user.getId(), shopId);
 
-        // 리뷰의 isOwner, isLiked 오버레이 (1 배치 쿼리)
-        List<Long> reviewIds = base.reviews().stream().map(ReviewResponse::id).toList();
-        Set<Long> likedReviewIds = reviewIds.isEmpty() ? Set.of() :
-                new HashSet<>(reviewLikeRepository.findLikedReviewIds(user.getId(), reviewIds));
-
-        List<ReviewResponse> updatedReviews = base.reviews().stream()
-                .map(review -> review.withUserData(
-                        review.author().id().equals(user.getId()),
-                        likedReviewIds.contains(review.id())
-                ))
-                .toList();
+        // 차단 목록이 있으면 DB에서 재조회, 없으면 캐시 활용 후 isOwner/isLiked 오버레이
+        List<Long> blockedUserIds = userBlockService.getBlockedUserIds(user.getId());
+        List<ReviewResponse> updatedReviews;
+        if (blockedUserIds.isEmpty()) {
+            List<Long> reviewIds = base.reviews().stream().map(ReviewResponse::id).toList();
+            Set<Long> likedReviewIds = reviewIds.isEmpty() ? Set.of() :
+                    new HashSet<>(reviewLikeRepository.findLikedReviewIds(user.getId(), reviewIds));
+            updatedReviews = base.reviews().stream()
+                    .map(review -> review.withUserData(
+                            review.author().id().equals(user.getId()),
+                            likedReviewIds.contains(review.id())
+                    ))
+                    .toList();
+        } else {
+            updatedReviews = getTop5Reviews(shopId, sortBy, user);
+        }
 
         return base.withIsFavorite(isFavorite).withReviews(updatedReviews);
     }
