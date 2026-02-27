@@ -1,5 +1,6 @@
 package com.gotcha._global.config;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
@@ -31,7 +32,7 @@ public class RedisCacheConfig {
                 .allowIfBaseType("java.util.")
                 .allowIfBaseType("java.time.")
                 .build();
-        objectMapper.activateDefaultTyping(ptv, ObjectMapper.DefaultTyping.NON_FINAL);
+        objectMapper.activateDefaultTyping(ptv, ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
         GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(objectMapper);
 
         RedisCacheConfiguration redisCacheConfiguration = RedisCacheConfiguration
