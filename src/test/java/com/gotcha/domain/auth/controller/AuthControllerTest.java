@@ -110,12 +110,12 @@ class AuthControllerTest {
         }
 
         @Test
-        @DisplayName("만료된 리프레시 토큰이면 401 에러를 반환한다")
+        @DisplayName("만료된 리프레시 토큰이면 401 에러를 반환한다 (Redis TTL 만료 시 키 소멸로 not found와 동일 처리)")
         void shouldReturn401WhenRefreshTokenExpired() throws Exception {
             // given
             ReissueRequest request = new ReissueRequest("expired-refresh-token");
             given(authService.reissueToken(anyString()))
-                    .willThrow(AuthException.refreshTokenExpired());
+                    .willThrow(AuthException.refreshTokenNotFound());
 
             // when & then
             mockMvc.perform(post("/api/auth/reissue")
@@ -124,7 +124,7 @@ class AuthControllerTest {
                     .andDo(print())
                     .andExpect(status().isUnauthorized())
                     .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.error.code").value("A011"));
+                    .andExpect(jsonPath("$.error.code").value("A010"));
         }
     }
 
