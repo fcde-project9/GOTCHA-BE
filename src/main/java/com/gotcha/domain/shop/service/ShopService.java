@@ -756,6 +756,10 @@ public class ShopService {
      * 가게 대표 이미지 수정 (ADMIN 전용)
      */
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "shop-detail", key = "#shopId + ':LATEST'"),
+            @CacheEvict(value = "shop-detail", key = "#shopId + ':LIKE_COUNT'")
+    })
     public void updateShopMainImage(Long shopId, String mainImageUrl, User currentUser) {
         log.info("updateShopMainImage - shopId: {}, userId: {}", shopId, currentUser.getId());
 
