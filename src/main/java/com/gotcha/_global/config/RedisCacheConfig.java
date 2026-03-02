@@ -55,6 +55,7 @@ public class RedisCacheConfig {
         return RedisCacheManager
                 .RedisCacheManagerBuilder
                 .fromConnectionFactory(redisConnectionFactory)
+                .transactionAware()
                 .cacheDefaults(defaultConfig)
                 .withCacheConfiguration("shop-detail", shopDetailConfig)
                 .withCacheConfiguration("blocked-user-ids", blockedUserIdsConfig)
