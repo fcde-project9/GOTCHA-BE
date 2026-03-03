@@ -2,7 +2,7 @@ package com.gotcha.domain.user.service;
 
 import com.gotcha._global.common.PageResponse;
 import com.gotcha._global.util.SecurityUtil;
-import com.gotcha.domain.auth.repository.RefreshTokenRepository;
+import com.gotcha.domain.auth.repository.RedisRefreshTokenStore;
 import com.gotcha.domain.auth.service.SocialUnlinkService;
 import com.gotcha.domain.block.repository.UserBlockRepository;
 import com.gotcha.domain.chat.entity.ChatRoom;
@@ -54,7 +54,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserPermissionRepository userPermissionRepository;
     private final WithdrawalSurveyRepository withdrawalSurveyRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final RedisRefreshTokenStore redisRefreshTokenStore;
     private final FavoriteRepository favoriteRepository;
     private final ReviewRepository reviewRepository;
     private final ReviewImageRepository reviewImageRepository;
@@ -285,7 +285,7 @@ public class UserService {
         log.info("User permissions deleted - userId: {}", userId);
 
         // 9. RefreshToken 삭제
-        refreshTokenRepository.deleteByUserId(userId);
+        redisRefreshTokenStore.deleteByUserId(userId);
         log.info("RefreshToken deleted - userId: {}", userId);
 
         // 10. ShopReport 삭제
