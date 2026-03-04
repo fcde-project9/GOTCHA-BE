@@ -1783,6 +1783,76 @@ Authorization: Bearer {accessToken}
 
 ---
 
+### POST /push/register-device
+
+네이티브 푸시 기기 등록
+
+**인증**: Bearer Token (필수)
+
+**Request Body**:
+```json
+{
+  "deviceToken": "a1b2c3d4e5f6...",
+  "platform": "IOS"
+}
+```
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| deviceToken | String | O | APNS/FCM 디바이스 토큰 |
+| platform | String | O | `IOS` 또는 `ANDROID` |
+
+**Response (200)**:
+```json
+{
+  "success": true,
+  "data": null
+}
+```
+
+**동작**:
+- 동일 deviceToken이 이미 존재하면 소유자를 현재 사용자로 변경 (기기 공유/계정 전환)
+- 없으면 신규 등록
+
+**에러**:
+
+| 코드 | 상황 |
+|------|------|
+| A001 | 인증 실패 |
+| C001 | 필수 필드 누락 |
+
+---
+
+### DELETE /push/register-device
+
+네이티브 푸시 기기 해제
+
+**인증**: Bearer Token (필수)
+
+**Request Body**:
+```json
+{
+  "deviceToken": "a1b2c3d4e5f6..."
+}
+```
+
+**Response (200)**:
+```json
+{
+  "success": true,
+  "data": null
+}
+```
+
+**에러**:
+
+| 코드 | 상황 |
+|------|------|
+| A001 | 인증 실패 |
+| P004 | 기기 토큰을 찾을 수 없음 |
+
+---
+
 ### PATCH /admin/users/{userId}/status
 
 사용자 상태 변경 — 제재/해제 (관리자)

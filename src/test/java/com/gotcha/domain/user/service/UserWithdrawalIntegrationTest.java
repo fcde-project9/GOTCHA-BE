@@ -4,9 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
 
-import com.gotcha.domain.auth.entity.RefreshToken;
-import com.gotcha.domain.auth.repository.RefreshTokenRepository;
+import com.gotcha.domain.auth.repository.RedisRefreshTokenStore;
 import com.gotcha.domain.auth.service.SocialUnlinkService;
 import com.gotcha.domain.chat.entity.Chat;
 import com.gotcha.domain.chat.entity.ChatRoom;
@@ -75,8 +75,8 @@ class UserWithdrawalIntegrationTest {
     @Autowired
     private WithdrawalSurveyRepository withdrawalSurveyRepository;
 
-    @Autowired
-    private RefreshTokenRepository refreshTokenRepository;
+    @MockBean
+    private RedisRefreshTokenStore redisRefreshTokenStore;
 
     @Autowired
     private FavoriteRepository favoriteRepository;
@@ -202,7 +202,7 @@ class UserWithdrawalIntegrationTest {
             assertThat(reviewLikeRepository.findAll()).isEmpty();
             assertThat(commentRepository.findAll()).isEmpty();
             assertThat(userPermissionRepository.findAll()).isEmpty();
-            assertThat(refreshTokenRepository.findAll()).isEmpty();
+            verify(redisRefreshTokenStore).deleteByUserId(testUser.getId());
             assertThat(shopReportRepository.findAll()).isEmpty();
             assertThat(inquiryRepository.findAll()).isEmpty();
             assertThat(chatRepository.findAll()).isEmpty();
@@ -327,13 +327,6 @@ class UserWithdrawalIntegrationTest {
                     .user(testUser)
                     .permissionType(PermissionType.LOCATION)
                     .isAgreed(true)
-                    .build());
-
-            // RefreshToken
-            refreshTokenRepository.save(RefreshToken.builder()
-                    .user(testUser)
-                    .token("test-refresh-token")
-                    .expiresAt(java.time.LocalDateTime.now().plusDays(7))
                     .build());
 
             // ShopReport

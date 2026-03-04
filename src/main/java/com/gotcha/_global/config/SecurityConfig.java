@@ -89,6 +89,11 @@ public class SecurityConfig {
                         // Authenticated - Push subscription
                         .requestMatchers(HttpMethod.POST, "/api/push/subscribe").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/push/subscribe").authenticated()
+                        // Authenticated - Native push device registration
+                        .requestMatchers(HttpMethod.POST, "/api/push/register-device").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/push/register-device").authenticated()
+                        // Authenticated - Push test (local profile only)
+                        .requestMatchers(HttpMethod.POST, "/api/push/test/**").authenticated()
                         // Authenticated - 가게 관련 인증 필요 액션
                         .requestMatchers(HttpMethod.POST, "/api/shops/*/favorite").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/shops/*/favorite").authenticated()

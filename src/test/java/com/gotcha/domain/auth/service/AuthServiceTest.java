@@ -2,21 +2,19 @@ package com.gotcha.domain.auth.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
 import com.gotcha.domain.auth.dto.TokenExchangeResponse;
 import com.gotcha.domain.auth.dto.TokenResponse;
-import com.gotcha.domain.auth.entity.RefreshToken;
 import com.gotcha.domain.auth.exception.AuthException;
 import com.gotcha.domain.auth.jwt.JwtTokenProvider;
-import com.gotcha.domain.auth.repository.RefreshTokenRepository;
+import com.gotcha.domain.auth.repository.RedisRefreshTokenStore;
 import com.gotcha.domain.auth.service.OAuthTokenCookieService.TokenData;
 import com.gotcha.domain.user.entity.SocialType;
 import com.gotcha.domain.user.entity.User;
-import java.time.LocalDateTime;
+import com.gotcha.domain.user.repository.UserRepository;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -38,37 +36,24 @@ class AuthServiceTest {
     private JwtTokenProvider jwtTokenProvider;
 
     @Mock
-    private RefreshTokenRepository refreshTokenRepository;
+    private RedisRefreshTokenStore redisRefreshTokenStore;
 
     @Mock
     private OAuthTokenCookieService oAuthTokenCacheService;
 
+    @Mock
+    private UserRepository userRepository;
+
     private User testUser;
-    private RefreshToken validRefreshToken;
-    private RefreshToken expiredRefreshToken;
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(authService, "refreshTokenValidity", 604800000L); // 7일
-
         testUser = User.builder()
                 .socialType(SocialType.KAKAO)
                 .socialId("12345")
                 .nickname("테스트유저")
                 .build();
         ReflectionTestUtils.setField(testUser, "id", 1L);
-
-        validRefreshToken = RefreshToken.builder()
-                .user(testUser)
-                .token("valid-refresh-token")
-                .expiresAt(LocalDateTime.now().plusDays(7))
-                .build();
-
-        expiredRefreshToken = RefreshToken.builder()
-                .user(testUser)
-                .token("expired-refresh-token")
-                .expiresAt(LocalDateTime.now().minusDays(1))
-                .build();
     }
 
     @Nested
@@ -83,8 +68,10 @@ class AuthServiceTest {
             String newAccessToken = "new-access-token";
             String newRefreshToken = "new-refresh-token";
 
-            given(refreshTokenRepository.findByToken(refreshTokenValue))
-                    .willReturn(Optional.of(validRefreshToken));
+            given(redisRefreshTokenStore.findUserIdByToken(refreshTokenValue))
+                    .willReturn(Optional.of(1L));
+            given(userRepository.findById(1L))
+                    .willReturn(Optional.of(testUser));
             given(jwtTokenProvider.generateAccessToken(testUser))
                     .willReturn(newAccessToken);
             given(jwtTokenProvider.generateRefreshToken(testUser))
@@ -99,6 +86,7 @@ class AuthServiceTest {
             assertThat(response.refreshToken()).isEqualTo(newRefreshToken);
             assertThat(response.user().id()).isEqualTo(1L);
             assertThat(response.user().isNewUser()).isFalse();
+            verify(redisRefreshTokenStore).save(1L, newRefreshToken);
         }
 
         @Test
@@ -106,7 +94,7 @@ class AuthServiceTest {
         void shouldThrowExceptionWhenRefreshTokenNotFound() {
             // given
             String invalidToken = "non-existent-token";
-            given(refreshTokenRepository.findByToken(invalidToken))
+            given(redisRefreshTokenStore.findUserIdByToken(invalidToken))
                     .willReturn(Optional.empty());
 
             // when & then
@@ -116,19 +104,17 @@ class AuthServiceTest {
         }
 
         @Test
-        @DisplayName("만료된 리프레시 토큰이면 삭제 후 예외를 던진다")
-        void shouldDeleteAndThrowExceptionWhenRefreshTokenExpired() {
-            // given
+        @DisplayName("만료된 리프레시 토큰은 Redis TTL로 키가 소멸되어 not found와 동일하게 처리된다")
+        void shouldThrowExceptionWhenRefreshTokenExpired() {
+            // given - Redis TTL 만료 시 키가 없으므로 empty 반환
             String expiredToken = "expired-refresh-token";
-            given(refreshTokenRepository.findByToken(expiredToken))
-                    .willReturn(Optional.of(expiredRefreshToken));
+            given(redisRefreshTokenStore.findUserIdByToken(expiredToken))
+                    .willReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> authService.reissueToken(expiredToken))
                     .isInstanceOf(AuthException.class)
-                    .hasMessageContaining("만료");
-
-            verify(refreshTokenRepository).delete(expiredRefreshToken);
+                    .hasMessageContaining("리프레시 토큰");
         }
     }
 
@@ -146,7 +132,7 @@ class AuthServiceTest {
             authService.logout(userId);
 
             // then
-            verify(refreshTokenRepository).deleteByUserId(userId);
+            verify(redisRefreshTokenStore).deleteByUserId(userId);
         }
     }
 
@@ -155,33 +141,16 @@ class AuthServiceTest {
     class SaveRefreshToken {
 
         @Test
-        @DisplayName("기존 토큰이 있으면 업데이트한다")
-        void shouldUpdateExistingToken() {
+        @DisplayName("리프레시 토큰을 Redis에 저장한다")
+        void shouldSaveRefreshToken() {
             // given
-            String newToken = "new-refresh-token";
-            given(refreshTokenRepository.findByUser(testUser))
-                    .willReturn(Optional.of(validRefreshToken));
+            String token = "new-refresh-token";
 
             // when
-            authService.saveRefreshToken(testUser, newToken);
+            authService.saveRefreshToken(testUser, token);
 
             // then
-            assertThat(validRefreshToken.getToken()).isEqualTo(newToken);
-        }
-
-        @Test
-        @DisplayName("기존 토큰이 없으면 새로 저장한다")
-        void shouldSaveNewTokenWhenNotExists() {
-            // given
-            String newToken = "new-refresh-token";
-            given(refreshTokenRepository.findByUser(testUser))
-                    .willReturn(Optional.empty());
-
-            // when
-            authService.saveRefreshToken(testUser, newToken);
-
-            // then
-            verify(refreshTokenRepository).save(any(RefreshToken.class));
+            verify(redisRefreshTokenStore).save(testUser.getId(), token);
         }
     }
 

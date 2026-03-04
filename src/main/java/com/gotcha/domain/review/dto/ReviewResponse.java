@@ -36,6 +36,13 @@ public record ReviewResponse(
         LocalDateTime createdAt
 ) {
 
+    public ReviewResponse withUserData(boolean isOwner, boolean isLiked) {
+        return new ReviewResponse(
+                this.id, this.content, this.imageUrls, this.author,
+                isOwner, this.likeCount, isLiked, this.createdAt
+        );
+    }
+
     public static ReviewResponse from(Review review, User author, List<ReviewImage> images, boolean isOwner, Long likeCount, boolean isLiked) {
         return new ReviewResponse(
                 review.getId(),

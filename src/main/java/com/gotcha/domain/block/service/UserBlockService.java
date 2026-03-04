@@ -12,8 +12,10 @@ import com.gotcha.domain.user.exception.UserException;
 import com.gotcha.domain.user.repository.UserRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -29,7 +31,9 @@ public class UserBlockService {
     private final UserRepository userRepository;
     private final SecurityUtil securityUtil;
 
+    // 사용자 차단 - 차단 성공 시 해당 유저의 blocked-user-ids 캐시 무효화
     @Transactional
+    @CacheEvict(cacheNames = "blocked-user-ids", key = "@securityUtil.getCurrentUserId()")
     public BlockResponse blockUser(Long blockedUserId) {
         User currentUser = securityUtil.getCurrentUser();
         Long blockerId = currentUser.getId();
@@ -67,7 +71,9 @@ public class UserBlockService {
         return BlockResponse.from(userBlock);
     }
 
+    // 차단 해제 - 해제 성공 시 해당 유저의 blocked-user-ids 캐시 무효화
     @Transactional
+    @CacheEvict(cacheNames = "blocked-user-ids", key = "@securityUtil.getCurrentUserId()")
     public void unblockUser(Long blockedUserId) {
         Long blockerId = securityUtil.getCurrentUserId();
 
@@ -79,6 +85,7 @@ public class UserBlockService {
         log.info("User unblocked - blockerId: {}, blockedUserId: {}", blockerId, blockedUserId);
     }
 
+    // 내 차단 목록 페이지 조회
     public PageResponse<BlockedUserResponse> getMyBlocks(Pageable pageable) {
         Long blockerId = securityUtil.getCurrentUserId();
 
@@ -91,6 +98,8 @@ public class UserBlockService {
         return PageResponse.from(blockPage, responses);
     }
 
+    // 차단한 사용자 ID 목록 조회 - 리뷰/댓글 필터링에 사용, 결과를 Redis에 캐시 (TTL 10분)
+    @Cacheable(cacheNames = "blocked-user-ids", key = "#userId", condition = "#userId != null")
     public List<Long> getBlockedUserIds(Long userId) {
         if (userId == null) {
             return List.of();

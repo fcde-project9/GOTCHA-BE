@@ -4,6 +4,59 @@
 
 ---
 
+## 2026-02-19
+
+### 추가
+- `src/main/resources/db/migration/V3__create_device_tokens_table.sql` - device_tokens 테이블 생성 마이그레이션
+
+### 수정
+- `src/main/java/com/gotcha/domain/push/repository/DeviceTokenRepository.java` - findAllByPlatform() 메서드 추가
+- `src/main/java/com/gotcha/domain/push/service/PushNotificationService.java` - CodeRabbit 리뷰 반영
+  - 추가: @PreDestroy ApnsClient 종료 처리
+  - 추가: sendToUser/sendToAll에 @Transactional (삭제 작업 커밋 보장)
+  - 변경: sendToAll()에서 findAll().filter() → findAllByPlatform() 쿼리 최적화
+  - 변경: getVapidPublicKey() Vapid null 체크 추가
+  - 변경: getApnsClient() PEM 키 \n 리터럴 문자열 변환 처리
+- `src/main/java/com/gotcha/domain/push/entity/DeviceToken.java` - updateUserAndPlatform() 메서드 추가
+- `src/main/java/com/gotcha/domain/push/controller/PushController.java` - 미사용 @Profile import 제거
+- `src/main/java/com/gotcha/domain/push/dto/DeviceTokenRegisterRequest.java` - @Size(max=200) 유효성 검사 추가
+- `src/main/java/com/gotcha/domain/push/dto/DeviceTokenUnregisterRequest.java` - @Size(max=200) 유효성 검사 추가
+- `src/main/java/com/gotcha/domain/push/exception/PushException.java` - deviceTokenNotFound() 토큰 노출 제거 (보안)
+- `build.gradle` - Netty 버전 4.1.124.Final 강제 (CVE 대응)
+- `src/test/java/com/gotcha/domain/push/service/PushNotificationServiceTest.java` - ReflectionTestUtils 사용, 테스트 추가
+- `src/test/java/com/gotcha/domain/push/repository/DeviceTokenRepositoryTest.java` - 경계값/플랫폼 필터 테스트 추가
+
+---
+
+## 2026-02-18
+
+### 추가
+- `src/main/java/com/gotcha/domain/push/entity/DevicePlatform.java` - 디바이스 플랫폼 Enum (IOS, ANDROID)
+- `src/main/java/com/gotcha/domain/push/entity/DeviceToken.java` - 네이티브 디바이스 토큰 Entity
+- `src/main/java/com/gotcha/domain/push/repository/DeviceTokenRepository.java` - DeviceToken Repository
+- `src/main/java/com/gotcha/domain/push/dto/DeviceTokenRegisterRequest.java` - 기기 등록 Request DTO
+- `src/main/java/com/gotcha/domain/push/dto/DeviceTokenUnregisterRequest.java` - 기기 해제 Request DTO
+- `src/main/java/com/gotcha/domain/push/controller/PushTestController.java` - local 프로파일 전용 푸시 테스트 컨트롤러
+- `src/main/resources/db/migration/V2__add_apple_to_social_type_check.sql` - APPLE 소셜타입 CHECK 제약조건 추가
+- `src/test/java/com/gotcha/domain/push/repository/DeviceTokenRepositoryTest.java` - DeviceToken Repository 테스트
+- `src/test/java/com/gotcha/domain/push/service/PushNotificationServiceTest.java` - PushNotificationService 단위 테스트
+
+### 수정
+- `build.gradle` - Pushy APNS 의존성 추가 (com.eatthepath:pushy:0.15.4)
+- `src/main/java/com/gotcha/_global/config/PushProperties.java` - 중첩 클래스(Vapid+Apns) 구조로 리팩터링
+- `src/main/resources/application.yml` - push.apns.* 설정 추가
+- `src/main/java/com/gotcha/domain/push/service/PushNotificationService.java` - APNS 발송 로직 통합, 기기 등록/해제 메서드 추가
+- `src/main/java/com/gotcha/domain/push/controller/PushController.java` - register-device 엔드포인트 추가
+- `src/main/java/com/gotcha/domain/push/controller/PushControllerApi.java` - Swagger 문서 추가
+- `src/main/java/com/gotcha/_global/config/SecurityConfig.java` - register-device 인증 규칙 추가
+- `src/main/java/com/gotcha/domain/push/exception/PushErrorCode.java` - P004, P005 에러코드 추가
+- `src/main/java/com/gotcha/domain/push/exception/PushException.java` - deviceTokenNotFound, apnsSendFailed 팩토리 메서드 추가
+- `docs/entity-design.md` - device_tokens 테이블 설계 추가
+- `docs/error-codes.md` - P004, P005 에러코드 추가
+- `docs/api-spec.md` - POST/DELETE /push/register-device 명세 추가
+
+---
+
 ## 2026-02-12
 
 ### 추가

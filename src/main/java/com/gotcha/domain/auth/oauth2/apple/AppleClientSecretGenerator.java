@@ -73,6 +73,8 @@ public class AppleClientSecretGenerator {
         privateKeyContent = privateKeyContent
                 .replace("-----BEGIN PRIVATE KEY-----", "")
                 .replace("-----END PRIVATE KEY-----", "")
+                .replace("\\n", "")
+                .replace("\\r", "")
                 .replaceAll("\\s", "");
 
         byte[] keyBytes = Base64.getDecoder().decode(privateKeyContent);

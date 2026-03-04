@@ -338,6 +338,22 @@ Web Push 알림 구독 정보
 
 ---
 
+## device_tokens (네이티브 디바이스 토큰)
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | Long | PK, AUTO_INCREMENT | |
+| user_id | Long | FK → users, NOT NULL | 사용자 |
+| device_token | String(200) | UNIQUE, NOT NULL | APNS/FCM 디바이스 토큰 |
+| platform | String(20) | NOT NULL | IOS, ANDROID |
+| created_at | LocalDateTime | NOT NULL | 생성 시간 |
+| updated_at | LocalDateTime | NOT NULL | 수정 시간 |
+
+- User : DeviceToken = 1 : N (한 사용자가 여러 기기 등록 가능)
+- device_token UNIQUE 제약: 동일 기기가 다른 계정으로 재등록 시 소유자 이전
+
+---
+
 # V2 Entity (Phase 2)
 
 ---
