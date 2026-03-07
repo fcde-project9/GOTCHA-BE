@@ -56,6 +56,9 @@ public class PushNotificationService {
     private volatile PushService webPushService;
     private volatile ApnsClient apnsClient;
 
+    /**
+     * BouncyCastle 보안 프로바이더 초기화
+     */
     @PostConstruct
     public void init() {
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
@@ -63,6 +66,9 @@ public class PushNotificationService {
         }
     }
 
+    /**
+     * APNS 클라이언트 종료
+     */
     @PreDestroy
     public void destroy() {
         ApnsClient client = apnsClient;
@@ -75,6 +81,9 @@ public class PushNotificationService {
         }
     }
 
+    /**
+     * VAPID 공개 키 조회
+     */
     public VapidKeyResponse getVapidPublicKey() {
         PushProperties.Vapid vapid = pushProperties.getVapid();
         if (vapid == null) {
@@ -87,6 +96,9 @@ public class PushNotificationService {
         return VapidKeyResponse.of(publicKey);
     }
 
+    /**
+     * Web Push 구독 등록 또는 업데이트
+     */
     @Transactional
     public void subscribe(PushSubscribeRequest request) {
         User user = securityUtil.getCurrentUser();
@@ -111,6 +123,9 @@ public class PushNotificationService {
         }
     }
 
+    /**
+     * Web Push 구독 해제
+     */
     @Transactional
     public void unsubscribe(String endpoint) {
         Long userId = securityUtil.getCurrentUserId();
@@ -123,6 +138,9 @@ public class PushNotificationService {
         log.info("Push subscription deleted - userId: {}, endpoint: {}", userId, endpoint);
     }
 
+    /**
+     * iOS 디바이스 토큰 등록
+     */
     @Transactional
     public void registerDevice(DeviceTokenRegisterRequest request) {
         User user = securityUtil.getCurrentUser();
@@ -144,6 +162,9 @@ public class PushNotificationService {
         }
     }
 
+    /**
+     * iOS 디바이스 토큰 해제
+     */
     @Transactional
     public void unregisterDevice(String deviceToken) {
         Long userId = securityUtil.getCurrentUserId();
@@ -156,6 +177,9 @@ public class PushNotificationService {
         log.info("Device token unregistered - userId: {}, token: {}", userId, deviceToken);
     }
 
+    /**
+     * 특정 사용자에게 푸시 알림 발송 (Web Push + APNS)
+     */
     @Transactional
     public void sendToUser(Long userId, String title, String body, String url) {
         // Web Push
@@ -172,6 +196,9 @@ public class PushNotificationService {
         }
     }
 
+    /**
+     * 전체 사용자에게 푸시 알림 발송 (Web Push + APNS)
+     */
     @Transactional
     public void sendToAll(String title, String body, String url) {
         // Web Push
@@ -189,6 +216,9 @@ public class PushNotificationService {
         }
     }
 
+    /**
+     * 단일 Web Push 구독자에게 알림 발송
+     */
     private void sendWebPushNotification(PushSubscription subscription, String title, String body, String url) {
         try {
             PushService pushService = getWebPushService();
@@ -233,6 +263,9 @@ public class PushNotificationService {
         }
     }
 
+    /**
+     * 단일 iOS 디바이스에 APNS 알림 발송
+     */
     private void sendApnsNotification(DeviceToken deviceToken, String title, String body) {
         try {
             ApnsClient client = getApnsClient();
@@ -293,6 +326,9 @@ public class PushNotificationService {
         }
     }
 
+    /**
+     * Web Push 서비스 인스턴스 반환 (지연 초기화, 스레드 안전)
+     */
     private PushService getWebPushService() throws GeneralSecurityException {
         PushService localRef = webPushService;
         if (localRef == null) {
@@ -314,6 +350,9 @@ public class PushNotificationService {
         return localRef;
     }
 
+    /**
+     * APNS 클라이언트 인스턴스 반환 (지연 초기화, 스레드 안전)
+     */
     private ApnsClient getApnsClient() throws Exception {
         PushProperties.Apns apns = pushProperties.getApns();
         if (apns == null || apns.getPrivateKey() == null || apns.getPrivateKey().isBlank()) {

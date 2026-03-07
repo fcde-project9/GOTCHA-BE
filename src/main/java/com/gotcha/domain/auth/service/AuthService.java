@@ -23,7 +23,9 @@ public class AuthService {
     private final OAuthTokenCookieService oAuthTokenCacheService;
     private final UserRepository userRepository;
 
-    // 토큰 재발급: 기존 refresh token 검증 후 access/refresh token 모두 재발급
+    /**
+     * 토큰 재발급 (기존 refresh token 검증 후 access/refresh token 모두 재발급)
+     */
     public TokenResponse reissueToken(String refreshTokenValue) {
         Long userId = redisRefreshTokenStore.findUserIdByToken(refreshTokenValue)
                 .orElseThrow(AuthException::refreshTokenNotFound);
@@ -39,12 +41,16 @@ public class AuthService {
         return TokenResponse.of(newAccessToken, newRefreshToken, user, false);
     }
 
-    // 로그아웃: Redis에서 해당 유저의 refresh token 삭제
+    /**
+     * 로그아웃 (Redis에서 refresh token 삭제)
+     */
     public void logout(Long userId) {
         redisRefreshTokenStore.deleteByUserId(userId);
     }
 
-    // 로그인/토큰 발급 시 refresh token Redis에 저장
+    /**
+     * Refresh token 저장 - 로그인/토큰 발급 시 refresh token을 redis에 저장
+     */
     public void saveRefreshToken(User user, String token) {
         redisRefreshTokenStore.save(user.getId(), token);
     }

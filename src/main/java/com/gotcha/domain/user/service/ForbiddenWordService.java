@@ -43,6 +43,9 @@ public class ForbiddenWordService {
             'ㅆ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'
     };
 
+    /**
+     * 금칙어 목록 초기화 (앱 시작 시 파일에서 로드)
+     */
     @PostConstruct
     public void init() {
         loadForbiddenWords("forbidden-words/ko.txt", koreanForbiddenWords, true);
@@ -51,6 +54,9 @@ public class ForbiddenWordService {
                 koreanForbiddenWords.size(), englishForbiddenWords.size(), chosungForbiddenWords.size());
     }
 
+    /**
+     * 파일에서 금칙어 목록 로드
+     */
     private void loadForbiddenWords(String resourcePath, Set<String> targetSet, boolean isKorean) {
         try {
             ClassPathResource resource = new ClassPathResource(resourcePath);
@@ -111,6 +117,9 @@ public class ForbiddenWordService {
         return false;
     }
 
+    /**
+     * 한국어 금칙어 포함 여부 확인
+     */
     private boolean containsKoreanForbiddenWord(String text) {
         String normalized = normalizeKorean(text);
 
@@ -122,6 +131,9 @@ public class ForbiddenWordService {
         return false;
     }
 
+    /**
+     * 영어 금칙어 포함 여부 확인
+     */
     private boolean containsEnglishForbiddenWord(String text) {
         String normalized = normalizeEnglish(text);
 
@@ -141,6 +153,9 @@ public class ForbiddenWordService {
         return false;
     }
 
+    /**
+     * 초성 금칙어 포함 여부 확인
+     */
     private boolean containsChosungForbiddenWord(String text) {
         // 입력에 실제 초성 문자(ㄱ-ㅎ)가 포함된 경우만 검사
         // 일반 한글에서 초성을 추출하면 오탐이 발생함 (예: 시바견 → ㅅㅂㄱ → ㅅㅂ 감지)
@@ -282,6 +297,9 @@ public class ForbiddenWordService {
         return result.toString();
     }
 
+    /**
+     * 초성 인덱스 반환 (-1: 해당 없음)
+     */
     private int getChosungIndex(char c) {
         for (int i = 0; i < CHOSUNG.length; i++) {
             if (CHOSUNG[i] == c) return i;
@@ -289,6 +307,9 @@ public class ForbiddenWordService {
         return -1;
     }
 
+    /**
+     * 중성 인덱스 반환 (-1: 해당 없음)
+     */
     private int getJungsungIndex(char c) {
         for (int i = 0; i < JUNGSUNG.length; i++) {
             if (JUNGSUNG[i] == c) return i;
@@ -296,6 +317,9 @@ public class ForbiddenWordService {
         return -1;
     }
 
+    /**
+     * 종성 인덱스 반환 (-1: 해당 없음)
+     */
     private int getJongsungIndex(char c) {
         for (int i = 0; i < JONGSUNG.length; i++) {
             if (JONGSUNG[i] == c) return i;

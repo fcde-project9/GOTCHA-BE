@@ -53,6 +53,9 @@ public class S3FileUploadService implements FileStorageService {
     @Value("${aws.s3.prefix}")
     private String prefix;
 
+    /**
+     * 이미지 파일을 S3에 업로드
+     */
     @Override
     public FileUploadResponse uploadImage(MultipartFile file, String folder) {
         validateFile(file);
@@ -100,6 +103,9 @@ public class S3FileUploadService implements FileStorageService {
         }
     }
 
+    /**
+     * S3에서 파일 삭제
+     */
     @Override
     public void deleteFile(String fileUrl) {
         try {
