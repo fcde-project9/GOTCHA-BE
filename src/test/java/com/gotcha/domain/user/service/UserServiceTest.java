@@ -25,7 +25,7 @@ import com.gotcha.domain.review.repository.ReviewImageRepository;
 import com.gotcha.domain.review.repository.ReviewLikeRepository;
 import com.gotcha.domain.review.repository.ReviewRepository;
 import com.gotcha.domain.shop.entity.Shop;
-import com.gotcha.domain.shop.repository.ShopReportRepository;
+import com.gotcha.domain.shop.repository.ShopSuggestionRepository;
 import com.gotcha.domain.shop.repository.ShopRepository;
 import com.gotcha.domain.shop.service.ShopService;
 import com.gotcha.domain.user.dto.UserResponse;
@@ -92,7 +92,7 @@ class UserServiceTest {
     private ShopRepository shopRepository;
 
     @Mock
-    private ShopReportRepository shopReportRepository;
+    private ShopSuggestionRepository shopSuggestionRepository;
 
     @Mock
     private ShopService shopService;
@@ -283,7 +283,7 @@ class UserServiceTest {
             verify(commentRepository).deleteByUserId(testUser.getId());
             verify(userPermissionRepository).deleteByUserId(testUser.getId());
             verify(redisRefreshTokenStore).deleteByUserId(testUser.getId());
-            verify(shopReportRepository).deleteByReporterId(testUser.getId());
+            verify(shopSuggestionRepository).deleteBySuggesterId(testUser.getId());
             verify(inquiryRepository).deleteByUserId(testUser.getId());
             verify(postCommentRepository).clearParentByUserId(testUser.getId());
             verify(postCommentRepository).deleteByUserId(testUser.getId());
