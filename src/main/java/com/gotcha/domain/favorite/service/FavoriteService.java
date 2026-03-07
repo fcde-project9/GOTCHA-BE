@@ -30,6 +30,9 @@ public class FavoriteService {
     private final ShopService shopService;
     private final SecurityUtil securityUtil;
 
+    /**
+     * 찜 추가
+     */
     @Transactional
     public FavoriteResponse addFavorite(Long shopId) {
         User currentUser = securityUtil.getCurrentUser();
@@ -53,6 +56,9 @@ public class FavoriteService {
         return FavoriteResponse.of(shopId, true);
     }
 
+    /**
+     * 찜 삭제
+     */
     @Transactional
     public FavoriteResponse removeFavorite(Long shopId) {
         Long userId = securityUtil.getCurrentUserId();
@@ -71,6 +77,9 @@ public class FavoriteService {
         return FavoriteResponse.of(shopId, false);
     }
 
+    /**
+     * 내 찜 목록 조회
+     */
     public List<FavoriteShopResponse> getMyFavorites() {
         Long userId = securityUtil.getCurrentUserId();
 

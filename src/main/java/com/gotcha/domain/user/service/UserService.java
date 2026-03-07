@@ -76,6 +76,9 @@ public class UserService {
     @Value("${user.default-profile-image-url}")
     private String defaultProfileImageUrl;
 
+    /**
+     * 내 정보 조회
+     */
     public UserResponse getMyInfo() {
         User user = securityUtil.getCurrentUser();
         return UserResponse.from(user, defaultProfileImageUrl);

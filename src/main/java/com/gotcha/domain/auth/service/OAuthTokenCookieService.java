@@ -53,6 +53,9 @@ public class OAuthTokenCookieService {
         this.secretKey = createSecretKey(encryptionKey);
     }
 
+    /**
+     * 암호화 키 생성 (32바이트로 패딩/잘라내기)
+     */
     private SecretKey createSecretKey(String key) {
         byte[] keyBytes = key.getBytes(StandardCharsets.UTF_8);
         if (keyBytes.length < 32) {
@@ -202,6 +205,9 @@ public class OAuthTokenCookieService {
         return encryptTokens(accessToken, refreshToken, isNewUser);
     }
 
+    /**
+     * 토큰 쿠키 삭제
+     */
     private void removeTokenCookie(HttpServletResponse response) {
         ResponseCookie cookie = ResponseCookie.from(OAUTH_TOKEN_COOKIE_NAME, "")
                 .path("/")
@@ -213,6 +219,9 @@ public class OAuthTokenCookieService {
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 
+    /**
+     * 요청에서 특정 이름의 쿠키 조회
+     */
     private Optional<Cookie> getCookie(HttpServletRequest request, String name) {
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
@@ -225,6 +234,9 @@ public class OAuthTokenCookieService {
         return Optional.empty();
     }
 
+    /**
+     * HTTPS 요청 여부 확인
+     */
     private boolean isSecureRequest(HttpServletRequest request) {
         if (request.isSecure()) {
             return true;
@@ -233,6 +245,9 @@ public class OAuthTokenCookieService {
         return "https".equalsIgnoreCase(forwardedProto);
     }
 
+    /**
+     * AES/GCM으로 텍스트 암호화
+     */
     private String encrypt(String plainText) {
         try {
             byte[] iv = new byte[GCM_IV_LENGTH];
@@ -255,6 +270,9 @@ public class OAuthTokenCookieService {
         }
     }
 
+    /**
+     * AES/GCM으로 텍스트 복호화
+     */
     private String decrypt(String encryptedText) {
         try {
             byte[] combined = Base64.getUrlDecoder().decode(encryptedText);
