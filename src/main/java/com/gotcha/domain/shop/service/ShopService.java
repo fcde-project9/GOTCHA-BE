@@ -22,7 +22,7 @@ import com.gotcha.domain.shop.dto.ShopMapResponse;
 import com.gotcha.domain.shop.dto.UpdateShopRequest;
 import com.gotcha.domain.shop.entity.Shop;
 import com.gotcha.domain.shop.exception.ShopException;
-import com.gotcha.domain.shop.repository.ShopReportRepository;
+import com.gotcha.domain.shop.repository.ShopSuggestionRepository;
 import com.gotcha.domain.shop.repository.ShopRepository;
 import com.gotcha.domain.comment.repository.CommentRepository;
 import com.gotcha.domain.user.entity.User;
@@ -61,7 +61,7 @@ public class ShopService {
     private final ReviewLikeRepository reviewLikeRepository;
     private final FileStorageService fileStorageService;
     private final CommentRepository commentRepository;
-    private final ShopReportRepository shopReportRepository;
+    private final ShopSuggestionRepository shopSuggestionRepository;
     private final UserBlockService userBlockService;
 
     @org.springframework.beans.factory.annotation.Value("${shop.default-image-url}")
@@ -793,8 +793,8 @@ public class ShopService {
         // 3. 댓글 삭제
         commentRepository.deleteAllByShopId(shopId);
 
-        // 4. 신고 기록 삭제
-        shopReportRepository.deleteAllByShopId(shopId);
+        // 4. 제안 기록 삭제
+        shopSuggestionRepository.deleteAllByShopId(shopId);
 
         // 5. 가게 대표 이미지 S3 삭제
         if (shop.getMainImageUrl() != null && !shop.getMainImageUrl().equals(defaultShopImageUrl)) {
