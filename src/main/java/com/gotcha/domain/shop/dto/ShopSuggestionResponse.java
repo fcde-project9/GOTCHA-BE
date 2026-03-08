@@ -15,7 +15,7 @@ public record ShopSuggestionResponse(
         return new ShopSuggestionResponse(
             suggestion.getId(),
             suggestion.getShop().getId(),
-            suggestion.getReasons(),
+            List.copyOf(suggestion.getReasons()),
             suggestion.getCreatedAt()
         );
     }
