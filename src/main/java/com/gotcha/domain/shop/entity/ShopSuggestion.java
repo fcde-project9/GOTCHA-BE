@@ -15,8 +15,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -44,12 +45,12 @@ public class ShopSuggestion extends BaseTimeEntity {
     @CollectionTable(name = "shop_suggestion_reasons", joinColumns = @JoinColumn(name = "suggestion_id"))
     @Column(name = "reason", nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
-    private List<SuggestionReason> reasons = new ArrayList<>();
+    private Set<SuggestionReason> reasons = new LinkedHashSet<>();
 
     @Builder
-    public ShopSuggestion(Shop shop, User suggester, List<SuggestionReason> reasons) {
+    public ShopSuggestion(Shop shop, User suggester, Collection<SuggestionReason> reasons) {
         this.shop = shop;
         this.suggester = suggester;
-        this.reasons = reasons != null ? reasons : new ArrayList<>();
+        this.reasons = reasons == null ? new LinkedHashSet<>() : new LinkedHashSet<>(reasons);
     }
 }
