@@ -4,11 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.gotcha.config.TestcontainersConfig;
 import com.gotcha.domain.shop.entity.Shop;
-import com.gotcha.domain.shop.entity.ShopReport;
+import com.gotcha.domain.shop.entity.ShopSuggestion;
+import com.gotcha.domain.shop.entity.SuggestionReason;
 import com.gotcha.domain.user.entity.SocialType;
 import com.gotcha.domain.user.entity.User;
 import com.gotcha.domain.user.repository.UserRepository;
-import java.util.Optional;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,10 +21,10 @@ import org.springframework.context.annotation.Import;
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Import(TestcontainersConfig.class)
-class ShopReportRepositoryTest {
+class ShopSuggestionRepositoryTest {
 
     @Autowired
-    private ShopReportRepository shopReportRepository;
+    private ShopSuggestionRepository shopSuggestionRepository;
 
     @Autowired
     private ShopRepository shopRepository;
@@ -32,7 +33,7 @@ class ShopReportRepositoryTest {
     private UserRepository userRepository;
 
     private Shop shop;
-    private User reporter;
+    private User suggester;
 
     @BeforeEach
     void setUp() {
@@ -50,142 +51,123 @@ class ShopReportRepositoryTest {
                 .createdBy(creator)
                 .build());
 
-        reporter = userRepository.save(User.builder()
+        suggester = userRepository.save(User.builder()
                 .socialType(SocialType.GOOGLE)
-                .socialId("reporter123")
-                .nickname("신고자")
+                .socialId("suggester123")
+                .nickname("제안자")
                 .build());
     }
 
     @Test
-    @DisplayName("샵 제보 저장")
+    @DisplayName("가게 정보 수정 제안 저장")
     void save() {
         // given
-        ShopReport report = ShopReport.builder()
+        ShopSuggestion suggestion = ShopSuggestion.builder()
                 .shop(shop)
-                .reporter(reporter)
-                .reportTitle("new")
-                .reportContent("새로운 가챠샵 발견")
-                .isAnonymous(false)
+                .suggester(suggester)
+                .reasons(List.of(SuggestionReason.WRONG_BUSINESS_HOURS, SuggestionReason.WRONG_ADDRESS))
                 .build();
 
         // when
-        ShopReport savedReport = shopReportRepository.save(report);
+        ShopSuggestion saved = shopSuggestionRepository.save(suggestion);
 
         // then
-        assertThat(savedReport.getId()).isNotNull();
-        assertThat(savedReport.getReportTitle()).isEqualTo("new");
-        assertThat(savedReport.getReporter().getNickname()).isEqualTo("신고자");
+        assertThat(saved.getId()).isNotNull();
+        assertThat(saved.getReasons()).containsExactlyInAnyOrder(
+                SuggestionReason.WRONG_BUSINESS_HOURS, SuggestionReason.WRONG_ADDRESS);
+        assertThat(saved.getSuggester().getNickname()).isEqualTo("제안자");
+        assertThat(saved.getShop().getId()).isEqualTo(shop.getId());
     }
 
     @Test
-    @DisplayName("ID로 샵 제보 조회")
+    @DisplayName("ID로 제안 조회")
     void findById() {
         // given
-        ShopReport report = ShopReport.builder()
+        ShopSuggestion saved = shopSuggestionRepository.save(ShopSuggestion.builder()
                 .shop(shop)
-                .reporter(reporter)
-                .reportTitle("update")
-                .reportContent("영업시간 변경")
-                .isAnonymous(true)
-                .build();
-        ShopReport savedReport = shopReportRepository.save(report);
+                .suggester(suggester)
+                .reasons(List.of(SuggestionReason.WRONG_PHOTO))
+                .build());
 
-        // when
-        Optional<ShopReport> found = shopReportRepository.findById(savedReport.getId());
-
-        // then
-        assertThat(found).isPresent();
-        assertThat(found.get().getReportTitle()).isEqualTo("update");
-        assertThat(found.get().getIsAnonymous()).isTrue();
-    }
-
-    @Test
-    @DisplayName("샵 제보 삭제")
-    void delete() {
-        // given
-        ShopReport report = ShopReport.builder()
-                .shop(shop)
-                .reporter(reporter)
-                .reportTitle("duplicate")
-                .reportContent("중복 등록된 가게")
-                .build();
-        ShopReport savedReport = shopReportRepository.save(report);
-        Long reportId = savedReport.getId();
-
-        // when
-        shopReportRepository.deleteById(reportId);
-
-        // then
-        assertThat(shopReportRepository.findById(reportId)).isEmpty();
+        // when & then
+        assertThat(shopSuggestionRepository.findById(saved.getId())).isPresent();
     }
 
     @Test
     @DisplayName("존재하지 않는 ID로 조회 시 빈 Optional 반환")
     void findById_NotFound() {
-        // when
-        Optional<ShopReport> found = shopReportRepository.findById(999999L);
-
-        // then
-        assertThat(found).isEmpty();
+        assertThat(shopSuggestionRepository.findById(999999L)).isEmpty();
     }
 
     @Test
-    @DisplayName("익명 여부 기본값 확인 - null 전달 시 false")
-    void save_AnonymousDefaultValue() {
+    @DisplayName("가게 삭제 시 해당 가게의 제안 기록 모두 삭제")
+    void deleteAllByShopId() {
         // given
-        ShopReport report = ShopReport.builder()
+        User anotherCreator = userRepository.save(User.builder()
+                .socialType(SocialType.KAKAO)
+                .socialId("creator456")
+                .nickname("다른제보자")
+                .build());
+        Shop anotherShop = shopRepository.save(Shop.builder()
+                .name("다른가챠샵")
+                .addressName("서울시 서초구")
+                .latitude(37.4920)
+                .longitude(127.0276)
+                .createdBy(anotherCreator)
+                .build());
+
+        shopSuggestionRepository.save(ShopSuggestion.builder()
                 .shop(shop)
-                .reporter(reporter)
-                .reportTitle("test")
-                .reportContent("테스트")
-                .isAnonymous(null)
-                .build();
+                .suggester(suggester)
+                .reasons(List.of(SuggestionReason.WRONG_ADDRESS))
+                .build());
+        shopSuggestionRepository.save(ShopSuggestion.builder()
+                .shop(shop)
+                .suggester(suggester)
+                .reasons(List.of(SuggestionReason.WRONG_PHOTO))
+                .build());
+        ShopSuggestion otherShopSuggestion = shopSuggestionRepository.save(ShopSuggestion.builder()
+                .shop(anotherShop)
+                .suggester(suggester)
+                .reasons(List.of(SuggestionReason.WRONG_BUSINESS_HOURS))
+                .build());
 
         // when
-        ShopReport savedReport = shopReportRepository.save(report);
+        shopSuggestionRepository.deleteAllByShopId(shop.getId());
 
         // then
-        assertThat(savedReport.getIsAnonymous()).isFalse();
+        List<ShopSuggestion> remaining = shopSuggestionRepository.findAll();
+        assertThat(remaining).hasSize(1);
+        assertThat(remaining.get(0).getId()).isEqualTo(otherShopSuggestion.getId());
     }
 
     @Test
-    @DisplayName("빈 reportContent로 제보 저장")
-    void save_EmptyContent() {
+    @DisplayName("회원 탈퇴 시 해당 사용자의 제안 기록 모두 삭제")
+    void deleteBySuggesterId() {
         // given
-        ShopReport report = ShopReport.builder()
+        User anotherSuggester = userRepository.save(User.builder()
+                .socialType(SocialType.KAKAO)
+                .socialId("suggester456")
+                .nickname("다른제안자")
+                .build());
+
+        shopSuggestionRepository.save(ShopSuggestion.builder()
                 .shop(shop)
-                .reporter(reporter)
-                .reportTitle("new")
-                .reportContent("")
-                .isAnonymous(false)
-                .build();
+                .suggester(suggester)
+                .reasons(List.of(SuggestionReason.WRONG_BUSINESS_HOURS))
+                .build());
+        ShopSuggestion otherSuggestion = shopSuggestionRepository.save(ShopSuggestion.builder()
+                .shop(shop)
+                .suggester(anotherSuggester)
+                .reasons(List.of(SuggestionReason.WRONG_ADDRESS))
+                .build());
 
         // when
-        ShopReport savedReport = shopReportRepository.save(report);
+        shopSuggestionRepository.deleteBySuggesterId(suggester.getId());
 
         // then
-        assertThat(savedReport.getId()).isNotNull();
-        assertThat(savedReport.getReportContent()).isEmpty();
-    }
-
-    @Test
-    @DisplayName("null reportContent로 제보 저장")
-    void save_NullContent() {
-        // given
-        ShopReport report = ShopReport.builder()
-                .shop(shop)
-                .reporter(reporter)
-                .reportTitle("update")
-                .reportContent(null)
-                .isAnonymous(true)
-                .build();
-
-        // when
-        ShopReport savedReport = shopReportRepository.save(report);
-
-        // then
-        assertThat(savedReport.getId()).isNotNull();
-        assertThat(savedReport.getReportContent()).isNull();
+        List<ShopSuggestion> remaining = shopSuggestionRepository.findAll();
+        assertThat(remaining).hasSize(1);
+        assertThat(remaining.get(0).getId()).isEqualTo(otherSuggestion.getId());
     }
 }

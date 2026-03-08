@@ -29,8 +29,9 @@ import com.gotcha.domain.review.entity.ReviewLike;
 import com.gotcha.domain.review.repository.ReviewLikeRepository;
 import com.gotcha.domain.review.repository.ReviewRepository;
 import com.gotcha.domain.shop.entity.Shop;
-import com.gotcha.domain.shop.entity.ShopReport;
-import com.gotcha.domain.shop.repository.ShopReportRepository;
+import com.gotcha.domain.shop.entity.ShopSuggestion;
+import com.gotcha.domain.shop.entity.SuggestionReason;
+import com.gotcha.domain.shop.repository.ShopSuggestionRepository;
 import com.gotcha.domain.shop.repository.ShopRepository;
 import com.gotcha.domain.user.dto.WithdrawalRequest;
 import com.gotcha.domain.user.entity.SocialType;
@@ -94,7 +95,7 @@ class UserWithdrawalIntegrationTest {
     private ShopRepository shopRepository;
 
     @Autowired
-    private ShopReportRepository shopReportRepository;
+    private ShopSuggestionRepository shopSuggestionRepository;
 
     @Autowired
     private InquiryRepository inquiryRepository;
@@ -203,7 +204,7 @@ class UserWithdrawalIntegrationTest {
             assertThat(commentRepository.findAll()).isEmpty();
             assertThat(userPermissionRepository.findAll()).isEmpty();
             verify(redisRefreshTokenStore).deleteByUserId(testUser.getId());
-            assertThat(shopReportRepository.findAll()).isEmpty();
+            assertThat(shopSuggestionRepository.findAll()).isEmpty();
             assertThat(inquiryRepository.findAll()).isEmpty();
             assertThat(chatRepository.findAll()).isEmpty();
             assertThat(chatRoomRepository.findAll()).isEmpty();
@@ -329,13 +330,11 @@ class UserWithdrawalIntegrationTest {
                     .isAgreed(true)
                     .build());
 
-            // ShopReport
-            shopReportRepository.save(ShopReport.builder()
+            // ShopSuggestion
+            shopSuggestionRepository.save(ShopSuggestion.builder()
                     .shop(testShop)
-                    .reporter(testUser)
-                    .reportTitle("정보 수정")
-                    .reportContent("영업시간 변경")
-                    .isAnonymous(false)
+                    .suggester(testUser)
+                    .reasons(List.of(SuggestionReason.WRONG_BUSINESS_HOURS))
                     .build());
 
             // Inquiry
