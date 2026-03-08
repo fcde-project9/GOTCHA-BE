@@ -103,6 +103,19 @@ class ShopSuggestionRepositoryTest {
     @DisplayName("가게 삭제 시 해당 가게의 제안 기록 모두 삭제")
     void deleteAllByShopId() {
         // given
+        User anotherCreator = userRepository.save(User.builder()
+                .socialType(SocialType.KAKAO)
+                .socialId("creator456")
+                .nickname("다른제보자")
+                .build());
+        Shop anotherShop = shopRepository.save(Shop.builder()
+                .name("다른가챠샵")
+                .addressName("서울시 서초구")
+                .latitude(37.4920)
+                .longitude(127.0276)
+                .createdBy(anotherCreator)
+                .build());
+
         shopSuggestionRepository.save(ShopSuggestion.builder()
                 .shop(shop)
                 .suggester(suggester)
@@ -113,28 +126,48 @@ class ShopSuggestionRepositoryTest {
                 .suggester(suggester)
                 .reasons(List.of(SuggestionReason.WRONG_PHOTO))
                 .build());
+        ShopSuggestion otherShopSuggestion = shopSuggestionRepository.save(ShopSuggestion.builder()
+                .shop(anotherShop)
+                .suggester(suggester)
+                .reasons(List.of(SuggestionReason.WRONG_BUSINESS_HOURS))
+                .build());
 
         // when
         shopSuggestionRepository.deleteAllByShopId(shop.getId());
 
         // then
-        assertThat(shopSuggestionRepository.findAll()).isEmpty();
+        List<ShopSuggestion> remaining = shopSuggestionRepository.findAll();
+        assertThat(remaining).hasSize(1);
+        assertThat(remaining.get(0).getId()).isEqualTo(otherShopSuggestion.getId());
     }
 
     @Test
     @DisplayName("회원 탈퇴 시 해당 사용자의 제안 기록 모두 삭제")
     void deleteBySuggesterId() {
         // given
+        User anotherSuggester = userRepository.save(User.builder()
+                .socialType(SocialType.KAKAO)
+                .socialId("suggester456")
+                .nickname("다른제안자")
+                .build());
+
         shopSuggestionRepository.save(ShopSuggestion.builder()
                 .shop(shop)
                 .suggester(suggester)
                 .reasons(List.of(SuggestionReason.WRONG_BUSINESS_HOURS))
+                .build());
+        ShopSuggestion otherSuggestion = shopSuggestionRepository.save(ShopSuggestion.builder()
+                .shop(shop)
+                .suggester(anotherSuggester)
+                .reasons(List.of(SuggestionReason.WRONG_ADDRESS))
                 .build());
 
         // when
         shopSuggestionRepository.deleteBySuggesterId(suggester.getId());
 
         // then
-        assertThat(shopSuggestionRepository.findAll()).isEmpty();
+        List<ShopSuggestion> remaining = shopSuggestionRepository.findAll();
+        assertThat(remaining).hasSize(1);
+        assertThat(remaining.get(0).getId()).isEqualTo(otherSuggestion.getId());
     }
 }
