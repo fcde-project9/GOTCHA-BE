@@ -126,6 +126,9 @@ public class AdminReportService {
         }
     }
 
+    /**
+     * 변경 가능한 상태값인지 검증 (ACCEPTED, REJECTED만 허용)
+     */
     private void validateStatusTransition(ReportStatus status) {
         if (status != ReportStatus.ACCEPTED && status != ReportStatus.REJECTED) {
             throw ReportException.invalidStatusTransition();

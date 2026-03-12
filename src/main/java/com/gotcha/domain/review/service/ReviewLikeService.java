@@ -23,6 +23,9 @@ public class ReviewLikeService {
     private final ReviewRepository reviewRepository;
     private final SecurityUtil securityUtil;
 
+    /**
+     * 리뷰 좋아요 추가
+     */
     @Transactional
     public ReviewLikeResponse addLike(Long reviewId) {
         User currentUser = securityUtil.getCurrentUser();
@@ -46,6 +49,9 @@ public class ReviewLikeService {
         return ReviewLikeResponse.of(reviewId, true);
     }
 
+    /**
+     * 리뷰 좋아요 취소
+     */
     @Transactional
     public ReviewLikeResponse removeLike(Long reviewId) {
         User currentUser = securityUtil.getCurrentUser();

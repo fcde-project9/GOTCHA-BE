@@ -48,6 +48,9 @@ public class ReviewService {
 
     private static final int MAX_IMAGES = 10;
 
+    /**
+     * 리뷰 생성
+     */
     @Transactional
     @Caching(evict = {
             @CacheEvict(value = "shop-detail", key = "#shopId + ':LATEST'"),
@@ -91,6 +94,9 @@ public class ReviewService {
         return ReviewResponse.from(review, user, images, true, likeCount, false);
     }
 
+    /**
+     * 가게 리뷰 목록 조회 (페이징)
+     */
     public PageResponse<ReviewResponse> getReviews(Long shopId, ReviewSortType sortBy, Pageable pageable, Long currentUserId) {
         log.info("Getting reviews for shop {} (page: {}, sortBy: {})", shopId, pageable.getPageNumber(), sortBy);
 
@@ -160,6 +166,9 @@ public class ReviewService {
         return PageResponse.from(reviewPage, responses);
     }
 
+    /**
+     * 리뷰 수정 (본인만 가능)
+     */
     @Transactional
     @Caching(evict = {
             @CacheEvict(value = "shop-detail", key = "#shopId + ':LATEST'"),
@@ -237,6 +246,9 @@ public class ReviewService {
         return ReviewResponse.from(review, reviewAuthor, images, isOwner, likeCount, isLiked);
     }
 
+    /**
+     * 리뷰 삭제 (본인 또는 ADMIN)
+     */
     @Transactional
     @Caching(evict = {
             @CacheEvict(value = "shop-detail", key = "#shopId + ':LATEST'"),
@@ -275,6 +287,9 @@ public class ReviewService {
         log.info("Review {} deleted successfully", reviewId);
     }
 
+    /**
+     * 가게 리뷰 이미지 전체 조회
+     */
     public ReviewImageListResponse getShopReviewImages(Long shopId) {
         log.info("Getting all review images for shop {}", shopId);
 
@@ -291,6 +306,9 @@ public class ReviewService {
         return ReviewImageListResponse.from(images);
     }
 
+    /**
+     * 리뷰 이미지 삭제 (클라우드 스토리지 + DB)
+     */
     private void deleteReviewImages(Long reviewId) {
         List<ReviewImage> images = reviewImageRepository
                 .findAllByReviewIdOrderByDisplayOrder(reviewId);
@@ -308,6 +326,9 @@ public class ReviewService {
         reviewImageRepository.deleteAllByReviewId(reviewId);
     }
 
+    /**
+     * 리뷰 이미지 저장 (displayOrder 순서대로)
+     */
     private void saveReviewImages(Review review, List<String> imageUrls) {
         for (int i = 0; i < imageUrls.size(); i++) {
             ReviewImage image = ReviewImage.builder()
@@ -319,6 +340,9 @@ public class ReviewService {
         }
     }
 
+    /**
+     * 이미지 개수 유효성 검증 (최대 10개)
+     */
     private void validateImageCount(List<String> imageUrls) {
         if (imageUrls != null && imageUrls.size() > MAX_IMAGES) {
             log.warn("Too many images provided: {}", imageUrls.size());

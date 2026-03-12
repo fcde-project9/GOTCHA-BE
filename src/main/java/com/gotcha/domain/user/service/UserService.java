@@ -21,7 +21,7 @@ import com.gotcha.domain.review.repository.ReviewImageRepository;
 import com.gotcha.domain.review.repository.ReviewLikeRepository;
 import com.gotcha.domain.review.repository.ReviewRepository;
 import com.gotcha.domain.shop.entity.Shop;
-import com.gotcha.domain.shop.repository.ShopReportRepository;
+import com.gotcha.domain.shop.repository.ShopSuggestionRepository;
 import com.gotcha.domain.shop.repository.ShopRepository;
 import com.gotcha.domain.shop.service.ShopService;
 import com.gotcha.domain.user.dto.MyShopResponse;
@@ -62,7 +62,7 @@ public class UserService {
     private final CommentRepository commentRepository;
     private final FileStorageService fileStorageService;
     private final ShopRepository shopRepository;
-    private final ShopReportRepository shopReportRepository;
+    private final ShopSuggestionRepository shopSuggestionRepository;
     private final ShopService shopService;
     private final SocialUnlinkService socialUnlinkService;
     private final ForbiddenWordService forbiddenWordService;
@@ -76,6 +76,9 @@ public class UserService {
     @Value("${user.default-profile-image-url}")
     private String defaultProfileImageUrl;
 
+    /**
+     * 내 정보 조회
+     */
     public UserResponse getMyInfo() {
         User user = securityUtil.getCurrentUser();
         return UserResponse.from(user, defaultProfileImageUrl);
@@ -225,7 +228,7 @@ public class UserService {
      * 7. 댓글 삭제 (Shop 댓글)
      * 8. 권한 동의 기록 삭제
      * 9. RefreshToken 삭제
-     * 10. ShopReport 삭제
+     * 10. ShopSuggestion 삭제
      * 11. Inquiry 삭제
      * 12. Chat/ChatRoom 삭제
      * 13. Post/PostComment 삭제 (이미지 포함)
@@ -288,9 +291,9 @@ public class UserService {
         redisRefreshTokenStore.deleteByUserId(userId);
         log.info("RefreshToken deleted - userId: {}", userId);
 
-        // 10. ShopReport 삭제
-        shopReportRepository.deleteByReporterId(userId);
-        log.info("ShopReports deleted - userId: {}", userId);
+        // 10. ShopSuggestion 삭제
+        shopSuggestionRepository.deleteBySuggesterId(userId);
+        log.info("ShopSuggestions deleted - userId: {}", userId);
 
         // 11. Inquiry 삭제
         inquiryRepository.deleteByUserId(userId);
