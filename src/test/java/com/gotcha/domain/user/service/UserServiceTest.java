@@ -9,7 +9,7 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.gotcha._global.util.SecurityUtil;
-import com.gotcha.domain.auth.repository.RefreshTokenRepository;
+import com.gotcha.domain.auth.repository.RedisRefreshTokenStore;
 import com.gotcha.domain.auth.service.SocialUnlinkService;
 import com.gotcha.domain.chat.repository.ChatRepository;
 import com.gotcha.domain.chat.repository.ChatRoomRepository;
@@ -25,7 +25,7 @@ import com.gotcha.domain.review.repository.ReviewImageRepository;
 import com.gotcha.domain.review.repository.ReviewLikeRepository;
 import com.gotcha.domain.review.repository.ReviewRepository;
 import com.gotcha.domain.shop.entity.Shop;
-import com.gotcha.domain.shop.repository.ShopReportRepository;
+import com.gotcha.domain.shop.repository.ShopSuggestionRepository;
 import com.gotcha.domain.shop.repository.ShopRepository;
 import com.gotcha.domain.shop.service.ShopService;
 import com.gotcha.domain.user.dto.UserResponse;
@@ -65,7 +65,7 @@ class UserServiceTest {
     private WithdrawalSurveyRepository withdrawalSurveyRepository;
 
     @Mock
-    private RefreshTokenRepository refreshTokenRepository;
+    private RedisRefreshTokenStore redisRefreshTokenStore;
 
     @Mock
     private FavoriteRepository favoriteRepository;
@@ -92,7 +92,7 @@ class UserServiceTest {
     private ShopRepository shopRepository;
 
     @Mock
-    private ShopReportRepository shopReportRepository;
+    private ShopSuggestionRepository shopSuggestionRepository;
 
     @Mock
     private ShopService shopService;
@@ -282,8 +282,8 @@ class UserServiceTest {
             verify(reviewRepository).deleteByUserId(testUser.getId());
             verify(commentRepository).deleteByUserId(testUser.getId());
             verify(userPermissionRepository).deleteByUserId(testUser.getId());
-            verify(refreshTokenRepository).deleteByUserId(testUser.getId());
-            verify(shopReportRepository).deleteByReporterId(testUser.getId());
+            verify(redisRefreshTokenStore).deleteByUserId(testUser.getId());
+            verify(shopSuggestionRepository).deleteBySuggesterId(testUser.getId());
             verify(inquiryRepository).deleteByUserId(testUser.getId());
             verify(postCommentRepository).clearParentByUserId(testUser.getId());
             verify(postCommentRepository).deleteByUserId(testUser.getId());
@@ -320,7 +320,7 @@ class UserServiceTest {
             assertThat(savedSurvey.getDetail()).isNull();
 
             // then - 데이터 삭제 및 soft delete
-            verify(refreshTokenRepository).deleteByUserId(testUser.getId());
+            verify(redisRefreshTokenStore).deleteByUserId(testUser.getId());
             assertThat(testUser.getIsDeleted()).isTrue();
         }
 

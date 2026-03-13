@@ -22,12 +22,17 @@ import com.gotcha.domain.shop.dto.ShopMapResponse;
 import com.gotcha.domain.shop.dto.UpdateShopRequest;
 import com.gotcha.domain.shop.entity.Shop;
 import com.gotcha.domain.shop.exception.ShopException;
-import com.gotcha.domain.shop.repository.ShopReportRepository;
+import com.gotcha.domain.shop.repository.ShopSuggestionRepository;
 import com.gotcha.domain.shop.repository.ShopRepository;
 import com.gotcha.domain.comment.repository.CommentRepository;
 import com.gotcha.domain.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -56,12 +61,19 @@ public class ShopService {
     private final ReviewLikeRepository reviewLikeRepository;
     private final FileStorageService fileStorageService;
     private final CommentRepository commentRepository;
-    private final ShopReportRepository shopReportRepository;
+    private final ShopSuggestionRepository shopSuggestionRepository;
     private final UserBlockService userBlockService;
 
     @org.springframework.beans.factory.annotation.Value("${shop.default-image-url}")
     private String defaultShopImageUrl;
 
+    @Autowired
+    @Lazy
+    private ShopService self;
+
+    /**
+     * 가게 생성
+     */
     @Transactional
     public Shop createShop(String name, Double latitude, Double longitude,
                            String mainImageUrl, String locationHint, Map<String, String> openTime,
@@ -117,6 +129,9 @@ public class ShopService {
         }
     }
 
+    /**
+     * 영업 시간 Map을 JSON 문자열로 변환
+     */
     private String convertOpenTimeMapToString(Map<String, String> openTime) {
         log.info("convertOpenTimeMapToString - 입력 Map: {}", openTime);
         if (openTime != null) {
@@ -138,6 +153,9 @@ public class ShopService {
         }
     }
 
+    /**
+     * 위도/경도 유효성 검증
+     */
     private void validateCoordinates(Double latitude, Double longitude) {
         if (latitude == null || longitude == null) {
             throw ShopException.invalidCoordinates();
@@ -150,12 +168,18 @@ public class ShopService {
         }
     }
 
+    /**
+     * 가게 이름 유효성 검증 (2~100자)
+     */
     private void validateShopName(String name) {
         if (name == null || name.length() < 2 || name.length() > 100) {
             throw ShopException.invalidName();
         }
     }
 
+    /**
+     * 가게 등록 전 50m 이내 근처 가게 목록 조회
+     */
     @Transactional(readOnly = true)
     public NearbyShopsResponse checkNearbyShopsBeforeSave(Double latitude, Double longitude) {
         log.info("checkNearbyShopsBeforeSave - lat: {}, lng: {}", latitude, longitude);
@@ -178,15 +202,6 @@ public class ShopService {
 
     /**
      * 지도 영역 내 가게 목록 조회
-     *
-     * @param northEastLat 북동쪽 위도 (필수)
-     * @param northEastLng 북동쪽 경도 (필수)
-     * @param southWestLat 남서쪽 위도 (필수)
-     * @param southWestLng 남서쪽 경도 (필수)
-     * @param latitude     사용자 현재 위치 위도 (선택, 거리 계산용, null이면 distance도 null 반환)
-     * @param longitude    사용자 현재 위치 경도 (선택, 거리 계산용, null이면 distance도 null 반환)
-     * @param user         현재 로그인한 사용자 (null 가능)
-     * @return 지도용 가게 응답 리스트 (거리순 정렬, latitude/longitude가 null이면 distance는 null)
      */
     @Transactional(readOnly = true)
     public List<ShopMapResponse> getShopsInMap(
@@ -259,13 +274,7 @@ public class ShopService {
     }
 
     /**
-     * Haversine 공식을 사용하여 두 좌표 간 거리 계산
-     *
-     * @param lat1 위도1
-     * @param lng1 경도1
-     * @param lat2 위도2
-     * @param lng2 경도2
-     * @return 거리 (km)
+     * Haversine 공식으로 두 좌표 간 거리 계산 (단위: km)
      */
     private double calculateDistance(double lat1, double lng1, double lat2, double lng2) {
         final int EARTH_RADIUS_KM = 6371;
@@ -283,12 +292,7 @@ public class ShopService {
     }
 
     /**
-     * 거리를 50m 단위로 반올림하여 문자열로 변환
-     * 1000m 미만: "50m", "100m", "950m"
-     * 1000m 이상: "1.0km", "1.5km", "2.0km"
-     *
-     * @param distanceKm 거리 (km)
-     * @return 포맷된 거리 문자열
+     * 거리를 표시용 문자열로 변환 (1km 미만: "300m", 이상: "1.5km")
      */
     private String formatDistance(double distanceKm) {
         double distanceM = distanceKm * 1000;  // km -> m 변환
@@ -307,10 +311,7 @@ public class ShopService {
     }
 
     /**
-     * openTime JSON 파싱
-     *
-     * @param openTimeJson JSON 문자열 (예: {"Mon":"10:00-22:00","Tue":null})
-     * @return 파싱된 Map (파싱 실패 시 빈 Map)
+     * 영업 시간 JSON 문자열을 Map으로 파싱
      */
     private Map<String, String> parseOpenTime(String openTimeJson) {
         log.debug("parseOpenTime 호출 - 입력값: '{}'", openTimeJson);
@@ -329,10 +330,7 @@ public class ShopService {
     }
 
     /**
-     * 현재 한국 시간 기준으로 영업중인지 판단
-     *
-     * @param openTimeJson JSON 문자열 (예: {"Mon":"10:00-22:00","Tue":null,"Wed":"10:00-22:00"})
-     * @return 영업중이면 true, 아니면 false
+     * 현재 한국 시간 기준 영업 여부 판단
      */
     public boolean isOpenNow(String openTimeJson) {
         Map<String, String> timeMap = parseOpenTime(openTimeJson);
@@ -340,10 +338,7 @@ public class ShopService {
     }
 
     /**
-     * 현재 한국 시간 기준으로 영업중인지 판단 (파싱된 Map 사용)
-     *
-     * @param timeMap 파싱된 영업 시간 Map
-     * @return 영업중이면 true, 아니면 false
+     * 현재 한국 시간 기준 영업 여부 판단 (파싱된 Map 사용)
      */
     private boolean isOpenNow(Map<String, String> timeMap) {
         if (timeMap.isEmpty()) {
@@ -391,10 +386,7 @@ public class ShopService {
     }
 
     /**
-     * 시간 범위 문자열을 분리 ("10:00-22:00", "10:00 - 22:00", "10:00~22:00" 모두 지원)
-     *
-     * @param timeRange 시간 범위 문자열
-     * @return [시작시간, 종료시간] 배열 (trim 적용됨), 파싱 실패 시 null
+     * 시간 범위 문자열 분리 ("10:00-22:00", "10:00~22:00" 형식 지원)
      */
     private String[] splitTimeRange(String timeRange) {
         if (timeRange == null) {
@@ -409,7 +401,7 @@ public class ShopService {
     }
 
     /**
-     * 시간 문자열을 LocalTime으로 파싱 ("24:00" → "23:59:59" 변환 포함)
+     * 시간 문자열을 LocalTime으로 파싱 ("24:00" → 23:59:59 처리 포함)
      */
     private LocalTime parseTimeString(String timeStr) {
         if ("24:00".equals(timeStr)) {
@@ -419,10 +411,7 @@ public class ShopService {
     }
 
     /**
-     * 현재 한국 시간 기준으로 영업 상태를 판단
-     *
-     * @param openTimeJson JSON 문자열 (예: {"Mon":"10:00-22:00","Tue":null,"Wed":"10:00-22:00"})
-     * @return "영업 중" / "영업 종료" / "휴무" / ""
+     * 현재 한국 시간 기준 영업 상태 반환 ("영업 중" / "영업 종료" / "휴무" / "")
      */
     public String getOpenStatus(String openTimeJson) {
         Map<String, String> timeMap = parseOpenTime(openTimeJson);
@@ -430,10 +419,7 @@ public class ShopService {
     }
 
     /**
-     * 현재 한국 시간 기준으로 영업 상태를 판단 (파싱된 Map 사용)
-     *
-     * @param timeMap 파싱된 영업 시간 Map
-     * @return "영업 중" / "영업 종료" / "휴무" / ""
+     * 현재 한국 시간 기준 영업 상태 반환 (파싱된 Map 사용)
      */
     private String getOpenStatus(Map<String, String> timeMap) {
         log.debug("getOpenStatus 호출 - timeMap: {}", timeMap);
@@ -500,10 +486,7 @@ public class ShopService {
     }
 
     /**
-     * DayOfWeek를 "Mon", "Tue" 형식으로 변환
-     *
-     * @param dayOfWeek DayOfWeek
-     * @return "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"
+     * DayOfWeek를 "Mon", "Tue" 형식 문자열로 변환
      */
     private String getDayKey(DayOfWeek dayOfWeek) {
         return switch (dayOfWeek) {
@@ -518,88 +501,71 @@ public class ShopService {
     }
 
     /**
+     * 가게 상세 기본 데이터 조회 (캐시용, 사용자 무관 데이터만 포함)
+     * isFavorite=false, isOwner=false, isLiked=false 로 캐시됨
+     * TTL: 5분 (RedisCacheConfig 참조)
+     */
+    @Cacheable(value = "shop-detail", key = "#shopId + ':' + #sortBy.name()")
+    public ShopDetailResponse getShopDetailBase(Long shopId, ReviewSortType sortBy) {
+        Shop shop = shopRepository.findById(shopId)
+                .orElseThrow(() -> ShopException.notFound(shopId));
+
+        Map<String, String> openTimeMap = parseOpenTime(shop.getOpenTime());
+        String todayOpenTime = getTodayOpenTime(openTimeMap);
+        String openStatus = getOpenStatus(openTimeMap);
+
+        List<ReviewResponse> reviews = getTop5Reviews(shopId, sortBy, null);
+        Long reviewCount = reviewRepository.countByShopId(shopId);
+        Long totalReviewImageCount = reviewImageRepository.countByShopId(shopId);
+        List<String> recentReviewImages = reviewImageRepository.findTop4ByShopId(shopId)
+                .stream()
+                .map(ReviewImage::getImageUrl)
+                .toList();
+
+        log.info("shop-detail cache miss - shopId: {}, sortBy: {}", shopId, sortBy);
+        return ShopDetailResponse.of(shop, todayOpenTime, openStatus, false,
+                reviews, reviewCount, totalReviewImageCount, recentReviewImages);
+    }
+
+    /**
      * 가게 상세 조회
-     *
-     * @param shopId 가게 ID
-     * @param sortBy 리뷰 정렬 방식 (LATEST 또는 LIKE_COUNT)
-     * @param user   현재 로그인한 사용자 (null 가능)
-     * @return 가게 상세 정보 (찜 여부, 리뷰 5개 포함)
      */
     @Transactional(readOnly = true)
     public ShopDetailResponse getShopDetail(Long shopId, ReviewSortType sortBy, User user) {
         log.info("getShopDetail - shopId: {}, sortBy: {}, userId: {}",
                 shopId, sortBy, user != null ? user.getId() : null);
 
-        // 가게 조회
-        Shop shop = shopRepository.findById(shopId)
-                .orElseThrow(() -> ShopException.notFound(shopId));
+        ShopDetailResponse base = self.getShopDetailBase(shopId, sortBy);
 
-        // 찜 여부 확인 (로그인 사용자만)
-        boolean isFavorite = false;
-        if (user != null) {
-            isFavorite = favoriteRepository.existsByUserIdAndShopId(user.getId(), shopId);
+        if (user == null) {
+            return base;
         }
 
-        // openTime JSON 한 번만 파싱 (중복 파싱 방지)
-        Map<String, String> openTimeMap = parseOpenTime(shop.getOpenTime());
+        // 찜 여부 조회 (1 쿼리)
+        boolean isFavorite = favoriteRepository.existsByUserIdAndShopId(user.getId(), shopId);
 
-        // 오늘의 영업 시간 추출
-        String todayOpenTime = getTodayOpenTime(openTimeMap);
-
-        // 영업 상태 확인
-        String openStatus = getOpenStatus(openTimeMap);
-
-        // 차단한 사용자 목록 조회
-        Long currentUserId = user != null ? user.getId() : null;
-        List<Long> blockedUserIds = userBlockService.getBlockedUserIds(currentUserId);
-
-        // 리뷰 5개 조회 (정렬 적용)
-        List<ReviewResponse> reviews = getTop5Reviews(shopId, sortBy, user);
-
-        // 전체 리뷰 개수 조회 (차단 사용자 제외)
-        Long reviewCount;
+        // 차단 목록이 있으면 DB에서 재조회, 없으면 캐시 활용 후 isOwner/isLiked 오버레이
+        List<Long> blockedUserIds = userBlockService.getBlockedUserIds(user.getId());
+        List<ReviewResponse> updatedReviews;
         if (blockedUserIds.isEmpty()) {
-            reviewCount = reviewRepository.countByShopId(shopId);
-        } else {
-            reviewCount = reviewRepository.countByShopIdExcludingBlockedUsers(shopId, blockedUserIds);
-        }
-
-        // 전체 리뷰 사진 개수 조회 (차단 사용자 제외)
-        Long totalReviewImageCount;
-        if (blockedUserIds.isEmpty()) {
-            totalReviewImageCount = reviewImageRepository.countByShopId(shopId);
-        } else {
-            totalReviewImageCount = reviewImageRepository.countByShopIdExcludingBlockedUsers(shopId, blockedUserIds);
-        }
-
-        // 최신 리뷰 이미지 4개 조회 (차단 사용자 제외)
-        List<String> recentReviewImages;
-        if (blockedUserIds.isEmpty()) {
-            recentReviewImages = reviewImageRepository.findTop4ByShopId(shopId)
-                    .stream()
-                    .map(ReviewImage::getImageUrl)
+            List<Long> reviewIds = base.reviews().stream().map(ReviewResponse::id).toList();
+            Set<Long> likedReviewIds = reviewIds.isEmpty() ? Set.of() :
+                    new HashSet<>(reviewLikeRepository.findLikedReviewIds(user.getId(), reviewIds));
+            updatedReviews = base.reviews().stream()
+                    .map(review -> review.withUserData(
+                            review.author().id().equals(user.getId()),
+                            likedReviewIds.contains(review.id())
+                    ))
                     .toList();
         } else {
-            recentReviewImages = reviewImageRepository.findTop4ByShopIdExcludingBlockedUsers(shopId, blockedUserIds)
-                    .stream()
-                    .map(ReviewImage::getImageUrl)
-                    .toList();
+            updatedReviews = getTop5Reviews(shopId, sortBy, user);
         }
 
-        log.info("Shop detail - id: {}, reviews: {}/{}, images: {}/{}",
-                shopId, reviews.size(), reviewCount, recentReviewImages.size(), totalReviewImageCount);
-
-        return ShopDetailResponse.of(shop, todayOpenTime, openStatus, isFavorite, reviews, reviewCount,
-                totalReviewImageCount, recentReviewImages);
+        return base.withIsFavorite(isFavorite).withReviews(updatedReviews);
     }
 
     /**
-     * 가게의 리뷰 상위 5개 조회
-     *
-     * @param shopId      가게 ID
-     * @param sortBy      정렬 방식
-     * @param currentUser 현재 사용자 (null 가능)
-     * @return 리뷰 목록 (최대 5개)
+     * 가게 리뷰 상위 5개 조회
      */
     private List<ReviewResponse> getTop5Reviews(Long shopId, ReviewSortType sortBy, User currentUser) {
         Pageable pageable = PageRequest.of(0, 5);
@@ -674,9 +640,6 @@ public class ShopService {
 
     /**
      * 오늘의 영업 시간 추출 (한국 시간 기준)
-     *
-     * @param openTimeJson JSON 문자열 (예: {"Mon":"10:00-22:00","Tue":null,"Wed":"10:00-22:00"})
-     * @return 오늘의 영업 시간 (예: "10:00-22:00") 또는 null (휴무일)
      */
     private String getTodayOpenTime(String openTimeJson) {
         Map<String, String> timeMap = parseOpenTime(openTimeJson);
@@ -685,9 +648,6 @@ public class ShopService {
 
     /**
      * 오늘의 영업 시간 추출 (파싱된 Map 사용)
-     *
-     * @param timeMap 파싱된 영업 시간 Map
-     * @return 오늘의 영업 시간 (예: "10:00-22:00") 또는 null (휴무일)
      */
     private String getTodayOpenTime(Map<String, String> timeMap) {
         if (timeMap.isEmpty()) {
@@ -715,6 +675,10 @@ public class ShopService {
      * 가게 정보 수정 (ADMIN 전용)
      */
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "shop-detail", key = "#shopId + ':LATEST'"),
+            @CacheEvict(value = "shop-detail", key = "#shopId + ':LIKE_COUNT'")
+    })
     public void updateShop(Long shopId, UpdateShopRequest request, User currentUser) {
         log.info("updateShop - shopId: {}, userId: {}", shopId, currentUser.getId());
 
@@ -750,6 +714,10 @@ public class ShopService {
      * 가게 대표 이미지 수정 (ADMIN 전용)
      */
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "shop-detail", key = "#shopId + ':LATEST'"),
+            @CacheEvict(value = "shop-detail", key = "#shopId + ':LIKE_COUNT'")
+    })
     public void updateShopMainImage(Long shopId, String mainImageUrl, User currentUser) {
         log.info("updateShopMainImage - shopId: {}, userId: {}", shopId, currentUser.getId());
 
@@ -782,6 +750,10 @@ public class ShopService {
      * 연관 데이터(리뷰, 찜, 이미지) 모두 삭제
      */
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "shop-detail", key = "#shopId + ':LATEST'"),
+            @CacheEvict(value = "shop-detail", key = "#shopId + ':LIKE_COUNT'")
+    })
     public void deleteShop(Long shopId, User currentUser) {
         log.info("deleteShop - shopId: {}, userId: {}", shopId, currentUser.getId());
 
@@ -821,8 +793,8 @@ public class ShopService {
         // 3. 댓글 삭제
         commentRepository.deleteAllByShopId(shopId);
 
-        // 4. 신고 기록 삭제
-        shopReportRepository.deleteAllByShopId(shopId);
+        // 4. 제안 기록 삭제
+        shopSuggestionRepository.deleteAllByShopId(shopId);
 
         // 5. 가게 대표 이미지 S3 삭제
         if (shop.getMainImageUrl() != null && !shop.getMainImageUrl().equals(defaultShopImageUrl)) {
@@ -838,6 +810,9 @@ public class ShopService {
         log.info("Shop {} deleted successfully", shopId);
     }
 
+    /**
+     * ADMIN 권한 검증
+     */
     private void validateAdmin(User user) {
         if (!user.isAdmin()) {
             throw ShopException.unauthorized();

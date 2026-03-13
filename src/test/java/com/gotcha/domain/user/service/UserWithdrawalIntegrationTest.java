@@ -4,9 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
 
-import com.gotcha.domain.auth.entity.RefreshToken;
-import com.gotcha.domain.auth.repository.RefreshTokenRepository;
+import com.gotcha.domain.auth.repository.RedisRefreshTokenStore;
 import com.gotcha.domain.auth.service.SocialUnlinkService;
 import com.gotcha.domain.chat.entity.Chat;
 import com.gotcha.domain.chat.entity.ChatRoom;
@@ -29,8 +29,9 @@ import com.gotcha.domain.review.entity.ReviewLike;
 import com.gotcha.domain.review.repository.ReviewLikeRepository;
 import com.gotcha.domain.review.repository.ReviewRepository;
 import com.gotcha.domain.shop.entity.Shop;
-import com.gotcha.domain.shop.entity.ShopReport;
-import com.gotcha.domain.shop.repository.ShopReportRepository;
+import com.gotcha.domain.shop.entity.ShopSuggestion;
+import com.gotcha.domain.shop.entity.SuggestionReason;
+import com.gotcha.domain.shop.repository.ShopSuggestionRepository;
 import com.gotcha.domain.shop.repository.ShopRepository;
 import com.gotcha.domain.user.dto.WithdrawalRequest;
 import com.gotcha.domain.user.entity.SocialType;
@@ -75,8 +76,8 @@ class UserWithdrawalIntegrationTest {
     @Autowired
     private WithdrawalSurveyRepository withdrawalSurveyRepository;
 
-    @Autowired
-    private RefreshTokenRepository refreshTokenRepository;
+    @MockBean
+    private RedisRefreshTokenStore redisRefreshTokenStore;
 
     @Autowired
     private FavoriteRepository favoriteRepository;
@@ -94,7 +95,7 @@ class UserWithdrawalIntegrationTest {
     private ShopRepository shopRepository;
 
     @Autowired
-    private ShopReportRepository shopReportRepository;
+    private ShopSuggestionRepository shopSuggestionRepository;
 
     @Autowired
     private InquiryRepository inquiryRepository;
@@ -202,8 +203,8 @@ class UserWithdrawalIntegrationTest {
             assertThat(reviewLikeRepository.findAll()).isEmpty();
             assertThat(commentRepository.findAll()).isEmpty();
             assertThat(userPermissionRepository.findAll()).isEmpty();
-            assertThat(refreshTokenRepository.findAll()).isEmpty();
-            assertThat(shopReportRepository.findAll()).isEmpty();
+            verify(redisRefreshTokenStore).deleteByUserId(testUser.getId());
+            assertThat(shopSuggestionRepository.findAll()).isEmpty();
             assertThat(inquiryRepository.findAll()).isEmpty();
             assertThat(chatRepository.findAll()).isEmpty();
             assertThat(chatRoomRepository.findAll()).isEmpty();
@@ -329,20 +330,11 @@ class UserWithdrawalIntegrationTest {
                     .isAgreed(true)
                     .build());
 
-            // RefreshToken
-            refreshTokenRepository.save(RefreshToken.builder()
-                    .user(testUser)
-                    .token("test-refresh-token")
-                    .expiresAt(java.time.LocalDateTime.now().plusDays(7))
-                    .build());
-
-            // ShopReport
-            shopReportRepository.save(ShopReport.builder()
+            // ShopSuggestion
+            shopSuggestionRepository.save(ShopSuggestion.builder()
                     .shop(testShop)
-                    .reporter(testUser)
-                    .reportTitle("정보 수정")
-                    .reportContent("영업시간 변경")
-                    .isAnonymous(false)
+                    .suggester(testUser)
+                    .reasons(List.of(SuggestionReason.WRONG_BUSINESS_HOURS))
                     .build());
 
             // Inquiry
