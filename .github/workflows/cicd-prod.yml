@@ -115,6 +115,23 @@ jobs:
 
             echo "Parameters fetched successfully ✅"
 
+            # Docker 네트워크 생성 (이미 존재하면 무시)
+            docker network create gotcha-net || true
+
+            # Redis 컨테이너 보장 (running/exited/미연결 상태 모두 처리)
+            if docker ps --format '{{.Names}}' | grep -qx 'gotcha-redis'; then
+              docker network connect gotcha-net gotcha-redis 2>/dev/null || true
+            elif docker ps -a --format '{{.Names}}' | grep -qx 'gotcha-redis'; then
+              docker start gotcha-redis
+              docker network connect gotcha-net gotcha-redis 2>/dev/null || true
+            else
+              docker run -d \
+                --name gotcha-redis \
+                --network gotcha-net \
+                --restart unless-stopped \
+                redis
+            fi
+
             # 기존 컨테이너 중지 및 제거
             docker stop gotcha-be-prod || true
             docker rm gotcha-be-prod || true
@@ -125,6 +142,7 @@ jobs:
             # 새 컨테이너 실행 (t3.small 최적화)
             docker run -d \
               --name gotcha-be-prod \
+              --network gotcha-net \
               -p 8080:8080 \
               --restart unless-stopped \
               --memory="1800m" \
@@ -163,6 +181,7 @@ jobs:
               -e SHOP_DEFAULT_IMAGE_URL="$SHOP_IMG" \
               -e OAUTH2_COOKIE_ENCRYPTION_KEY="$OAUTH_COOKIE_KEY" \
               -e LOKI_URL="$LOKI_URL" \
+              -e REDIS_HOST=gotcha-redis \
               ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
 
             # 컨테이너 상태 확인 (10초 대기 후 확인)
