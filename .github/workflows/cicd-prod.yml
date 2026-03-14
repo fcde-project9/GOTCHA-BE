@@ -118,8 +118,13 @@ jobs:
             # Docker 네트워크 생성 (이미 존재하면 무시)
             docker network create gotcha-net || true
 
-            # Redis 컨테이너 실행 (이미 실행 중이면 무시)
-            if ! docker ps | grep -q gotcha-redis; then
+            # Redis 컨테이너 보장 (running/exited/미연결 상태 모두 처리)
+            if docker ps --format '{{.Names}}' | grep -qx 'gotcha-redis'; then
+              docker network connect gotcha-net gotcha-redis 2>/dev/null || true
+            elif docker ps -a --format '{{.Names}}' | grep -qx 'gotcha-redis'; then
+              docker start gotcha-redis
+              docker network connect gotcha-net gotcha-redis 2>/dev/null || true
+            else
               docker run -d \
                 --name gotcha-redis \
                 --network gotcha-net \
