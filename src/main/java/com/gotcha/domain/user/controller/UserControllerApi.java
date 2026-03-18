@@ -20,7 +20,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import java.util.List;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -156,7 +155,7 @@ public interface UserControllerApi {
                     )
             )
     })
-    ApiResponse<List<FavoriteShopResponse>> getMyFavorites();
+    ApiResponse<PageResponse<FavoriteShopResponse>> getMyFavorites(int page, int size);
 
     @Operation(
             summary = "내가 제보한 가게 목록 조회",

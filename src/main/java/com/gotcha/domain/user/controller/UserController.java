@@ -17,7 +17,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -47,8 +46,12 @@ public class UserController implements UserControllerApi {
 
     @Override
     @GetMapping("/me/favorites")
-    public ApiResponse<List<FavoriteShopResponse>> getMyFavorites() {
-        return ApiResponse.success(favoriteService.getMyFavorites());
+    public ApiResponse<PageResponse<FavoriteShopResponse>> getMyFavorites(
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(50) int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ApiResponse.success(favoriteService.getMyFavorites(pageable));
     }
 
     @Override

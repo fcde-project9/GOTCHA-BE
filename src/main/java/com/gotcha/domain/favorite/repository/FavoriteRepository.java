@@ -24,7 +24,10 @@ public interface FavoriteRepository extends JpaRepository<Favorite, Long> {
     @Query("DELETE FROM Favorite f WHERE f.user.id = :userId AND f.shop.id = :shopId")
     void deleteByUserIdAndShopId(@Param("userId") Long userId, @Param("shopId") Long shopId);
 
-    @Query("SELECT f FROM Favorite f JOIN FETCH f.shop WHERE f.user.id = :userId ORDER BY f.createdAt DESC")
+    @Query(
+            value = "SELECT f FROM Favorite f JOIN FETCH f.shop WHERE f.user.id = :userId ORDER BY f.createdAt DESC",
+            countQuery = "SELECT COUNT(f) FROM Favorite f WHERE f.user.id = :userId"
+    )
     Page<Favorite> findAllByUserIdWithShop(@Param("userId") Long userId, Pageable pageable);
 
     @Query("SELECT f FROM Favorite f JOIN FETCH f.shop WHERE f.user.id = :userId ORDER BY f.createdAt DESC")
