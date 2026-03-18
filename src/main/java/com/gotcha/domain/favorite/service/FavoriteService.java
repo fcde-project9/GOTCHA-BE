@@ -1,5 +1,6 @@
 package com.gotcha.domain.favorite.service;
 
+import com.gotcha._global.common.PageResponse;
 import com.gotcha._global.util.SecurityUtil;
 import com.gotcha.domain.favorite.dto.FavoriteResponse;
 import com.gotcha.domain.favorite.dto.FavoriteShopResponse;
@@ -13,6 +14,8 @@ import com.gotcha.domain.shop.service.ShopService;
 import com.gotcha.domain.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -78,20 +81,21 @@ public class FavoriteService {
     }
 
     /**
-     * 내 찜 목록 조회
+     * 내 찜 목록 조회 (페이지네이션)
      */
-    public List<FavoriteShopResponse> getMyFavorites() {
+    public PageResponse<FavoriteShopResponse> getMyFavorites(Pageable pageable) {
         Long userId = securityUtil.getCurrentUserId();
 
-        // N+1 방지: JOIN FETCH를 사용하여 Shop을 함께 조회 (전체 조회)
-        List<Favorite> favorites = favoriteRepository.findAllByUserIdWithShop(userId);
+        // N+1 방지: JOIN FETCH를 사용하여 Shop을 함께 조회
+        Page<Favorite> favoritePage = favoriteRepository.findAllByUserIdWithShop(userId, pageable);
 
-        return favorites.stream()
+        List<FavoriteShopResponse> content = favoritePage.getContent().stream()
                 .map(favorite -> {
-                    Shop shop = favorite.getShop();
-                    String openStatus = shopService.getOpenStatus(shop.getOpenTime());
+                    String openStatus = shopService.getOpenStatus(favorite.getShop().getOpenTime());
                     return FavoriteShopResponse.from(favorite, openStatus);
                 })
                 .collect(Collectors.toList());
+
+        return PageResponse.from(favoritePage, content);
     }
 }
