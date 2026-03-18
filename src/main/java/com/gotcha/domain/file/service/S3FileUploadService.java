@@ -53,6 +53,9 @@ public class S3FileUploadService implements FileStorageService {
     @Value("${aws.s3.prefix}")
     private String prefix;
 
+    @Value("${aws.cloudfront.domain:}")
+    private String cloudfrontDomain;
+
     /**
      * 이미지 파일을 S3에 업로드
      */
@@ -79,8 +82,9 @@ public class S3FileUploadService implements FileStorageService {
 
             s3Client.putObject(putObjectRequest, RequestBody.fromBytes(file.getBytes()));
 
-            String publicUrl = String.format("https://%s.s3.%s.amazonaws.com/%s",
-                    bucketName, region, key);
+            String publicUrl = (cloudfrontDomain != null && !cloudfrontDomain.isBlank())
+                    ? String.format("https://%s/%s", cloudfrontDomain, key)
+                    : String.format("https://%s.s3.%s.amazonaws.com/%s", bucketName, region, key);
 
             log.info("File uploaded successfully to S3. URL: {}, Key: {}", publicUrl, key);
 
@@ -183,20 +187,30 @@ public class S3FileUploadService implements FileStorageService {
     }
 
     /**
-     * S3 URL에서 key 추출
-     * (예: https://bucket.s3.region.amazonaws.com/dev/folder/file.jpg -> dev/folder/file.jpg)
+     * URL에서 S3 key 추출 (CloudFront URL과 S3 URL 모두 지원)
+     * CloudFront: https://{cloudfrontDomain}/{key}
+     * S3 (legacy): https://{bucket}.s3.{region}.amazonaws.com/{key}
      */
     private String extractKey(String fileUrl) {
-        String urlPrefix = String.format("https://%s.s3.%s.amazonaws.com/", bucketName, region);
-        log.debug("Extracting key from URL. Expected prefix: {}, Actual URL: {}", urlPrefix, fileUrl);
+        if (cloudfrontDomain != null && !cloudfrontDomain.isBlank()) {
+            String cfPrefix = String.format("https://%s/", cloudfrontDomain);
+            if (fileUrl.startsWith(cfPrefix)) {
+                String extractedKey = fileUrl.substring(cfPrefix.length());
+                log.debug("Extracted key from CloudFront URL: {}", extractedKey);
+                return extractedKey;
+            }
+        }
 
-        if (fileUrl.startsWith(urlPrefix)) {
-            String extractedKey = fileUrl.substring(urlPrefix.length());
-            log.debug("Successfully extracted key: {}", extractedKey);
+        String s3Prefix = String.format("https://%s.s3.%s.amazonaws.com/", bucketName, region);
+        log.debug("Extracting key from URL. Expected prefix: {}, Actual URL: {}", s3Prefix, fileUrl);
+
+        if (fileUrl.startsWith(s3Prefix)) {
+            String extractedKey = fileUrl.substring(s3Prefix.length());
+            log.debug("Extracted key from S3 URL: {}", extractedKey);
             return extractedKey;
         }
 
-        log.error("URL format mismatch! Expected prefix: {}, Actual URL: {}", urlPrefix, fileUrl);
-        throw FileException.deleteFailed("Invalid file URL format. Expected: " + urlPrefix + "*, Actual: " + fileUrl);
+        log.error("URL format mismatch! Actual URL: {}", fileUrl);
+        throw FileException.deleteFailed("Invalid file URL format. Actual: " + fileUrl);
     }
 }

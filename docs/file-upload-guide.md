@@ -27,13 +27,14 @@ folder: "reviews"  // "shops", "profiles" 중 선택
 {
   "success": true,
   "data": {
-    "url": "https://your-bucket.s3.ap-northeast-2.amazonaws.com/env/reviews/abc123-def456.jpg",
+    "url": "https://d1a2b3c4abcd.cloudfront.net/env/reviews/abc123-def456.jpg",
     "originalFilename": "my-photo.jpg",
     "size": 1024000,
     "contentType": "image/jpeg"
   }
 }
 ```
+> `CLOUDFRONT_DOMAIN` 환경변수가 설정된 경우 CloudFront URL 반환, 미설정 시 S3 URL 반환
 
 ### 2. 지원 폴더
 
@@ -431,6 +432,8 @@ aws:
   credentials:
     access-key: ${AWS_ACCESS_KEY_ID}         # AWS IAM 액세스 키
     secret-key: ${AWS_SECRET_ACCESS_KEY}     # AWS IAM 시크릿 키
+  cloudfront:
+    domain: ${CLOUDFRONT_DOMAIN:}            # CloudFront 도메인 (예: d1a2b3c4abcd.cloudfront.net), 미설정 시 S3 URL 사용
 ```
 
 ### IAM 권한 요구사항
@@ -456,8 +459,9 @@ S3 사용자에게 필요한 권한:
 
 ### URL 형식
 
-- **업로드된 파일 URL**: `https://your-bucket.s3.region.amazonaws.com/prefix/folder/uuid.ext`
-- **예시**: `https://your-bucket.s3.ap-northeast-2.amazonaws.com/dev/reviews/abc-123.jpg`
+- **업로드된 파일 URL (CloudFront)**: `https://{cloudfrontDomain}/prefix/folder/uuid.ext`
+- **업로드된 파일 URL (S3 fallback)**: `https://your-bucket.s3.region.amazonaws.com/prefix/folder/uuid.ext`
+- **예시**: `https://d1a2b3c4abcd.cloudfront.net/prod/reviews/abc-123.jpg`
 
 ---
 
