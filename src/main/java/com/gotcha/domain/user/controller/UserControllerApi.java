@@ -155,7 +155,10 @@ public interface UserControllerApi {
                     )
             )
     })
-    ApiResponse<PageResponse<FavoriteShopResponse>> getMyFavorites(int page, int size);
+    ApiResponse<PageResponse<FavoriteShopResponse>> getMyFavorites(
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(50) int size
+    );
 
     @Operation(
             summary = "내가 제보한 가게 목록 조회",
