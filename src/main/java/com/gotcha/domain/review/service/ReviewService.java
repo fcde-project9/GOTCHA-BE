@@ -4,7 +4,6 @@ import com.gotcha.domain.block.service.UserBlockService;
 import com.gotcha.domain.file.service.FileStorageService;
 import com.gotcha.domain.review.dto.CreateReviewRequest;
 import com.gotcha.domain.review.dto.PageResponse;
-import com.gotcha.domain.review.dto.ReviewImageListResponse;
 import com.gotcha.domain.review.dto.ReviewResponse;
 import com.gotcha.domain.review.dto.ReviewSortType;
 import com.gotcha.domain.review.dto.UpdateReviewRequest;
@@ -288,22 +287,24 @@ public class ReviewService {
     }
 
     /**
-     * 가게 리뷰 이미지 전체 조회
+     * 가게 리뷰 이미지 전체 조회 (페이지네이션)
      */
-    public ReviewImageListResponse getShopReviewImages(Long shopId) {
-        log.info("Getting all review images for shop {}", shopId);
+    public PageResponse<String> getShopReviewImages(Long shopId, Pageable pageable) {
+        log.info("Getting review images for shop {}, page: {}, size: {}", shopId, pageable.getPageNumber(), pageable.getPageSize());
 
-        // 1. Shop 존재 확인
         if (!shopRepository.existsById(shopId)) {
             throw ShopException.notFound(shopId);
         }
 
-        // 2. 해당 가게의 모든 리뷰 이미지 조회 (최신순)
-        List<ReviewImage> images = reviewImageRepository
-                .findAllByShopIdOrderByCreatedAtDesc(shopId);
+        Page<ReviewImage> imagePage = reviewImageRepository
+                .findAllByShopIdOrderByCreatedAtDesc(shopId, pageable);
 
-        log.info("Found {} review images for shop {}", images.size(), shopId);
-        return ReviewImageListResponse.from(images);
+        List<String> imageUrls = imagePage.getContent().stream()
+                .map(ReviewImage::getImageUrl)
+                .toList();
+
+        log.info("Found {} review images for shop {} (page {}/{})", imageUrls.size(), shopId, pageable.getPageNumber(), imagePage.getTotalPages());
+        return PageResponse.from(imagePage, imageUrls);
     }
 
     /**

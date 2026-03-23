@@ -18,6 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -292,11 +294,13 @@ class ReviewImageRepositoryTest {
                 .build());
 
         // when
-        List<ReviewImage> images = reviewImageRepository
-                .findAllByShopIdOrderByCreatedAtDesc(shop.getId());
+        Page<ReviewImage> imagePage = reviewImageRepository
+                .findAllByShopIdOrderByCreatedAtDesc(shop.getId(), PageRequest.of(0, 20));
+        List<ReviewImage> images = imagePage.getContent();
 
         // then
         assertThat(images).hasSize(5);
+        assertThat(imagePage.getTotalElements()).isEqualTo(5);
         // 최신 리뷰의 이미지가 먼저 와야 함 (displayOrder 순서대로)
         assertThat(images.get(0).getImageUrl()).isEqualTo("https://example.com/new-img0.jpg");
         assertThat(images.get(1).getImageUrl()).isEqualTo("https://example.com/new-img1.jpg");
@@ -307,24 +311,26 @@ class ReviewImageRepositoryTest {
     }
 
     @Test
-    @DisplayName("가게에 리뷰 이미지가 없는 경우 빈 리스트 반환")
+    @DisplayName("가게에 리뷰 이미지가 없는 경우 빈 페이지 반환")
     void findAllByShopIdOrderByCreatedAtDesc_Empty() {
         // when
-        List<ReviewImage> images = reviewImageRepository
-                .findAllByShopIdOrderByCreatedAtDesc(shop.getId());
+        Page<ReviewImage> imagePage = reviewImageRepository
+                .findAllByShopIdOrderByCreatedAtDesc(shop.getId(), PageRequest.of(0, 20));
 
         // then
-        assertThat(images).isEmpty();
+        assertThat(imagePage.getContent()).isEmpty();
+        assertThat(imagePage.getTotalElements()).isZero();
     }
 
     @Test
-    @DisplayName("존재하지 않는 가게 ID로 조회 시 빈 리스트 반환")
+    @DisplayName("존재하지 않는 가게 ID로 조회 시 빈 페이지 반환")
     void findAllByShopIdOrderByCreatedAtDesc_NonExistentShop() {
         // when
-        List<ReviewImage> images = reviewImageRepository
-                .findAllByShopIdOrderByCreatedAtDesc(999999L);
+        Page<ReviewImage> imagePage = reviewImageRepository
+                .findAllByShopIdOrderByCreatedAtDesc(999999L, PageRequest.of(0, 20));
 
         // then
-        assertThat(images).isEmpty();
+        assertThat(imagePage.getContent()).isEmpty();
+        assertThat(imagePage.getTotalElements()).isZero();
     }
 }
