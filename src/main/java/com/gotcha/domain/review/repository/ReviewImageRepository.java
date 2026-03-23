@@ -2,6 +2,8 @@ package com.gotcha.domain.review.repository;
 
 import com.gotcha.domain.review.entity.ReviewImage;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -58,10 +60,10 @@ public interface ReviewImageRepository extends JpaRepository<ReviewImage, Long> 
             @Param("shopId") Long shopId,
             @Param("blockedUserIds") List<Long> blockedUserIds);
 
-    // 특정 가게의 전체 리뷰 이미지 조회 (리뷰 생성일시 기준 내림차순)
+    // 특정 가게의 전체 리뷰 이미지 조회 (리뷰 생성일시 기준 내림차순, 페이지네이션)
     @Query("SELECT ri FROM ReviewImage ri " +
             "JOIN ri.review r " +
             "WHERE r.shop.id = :shopId " +
             "ORDER BY r.createdAt DESC, ri.displayOrder ASC")
-    List<ReviewImage> findAllByShopIdOrderByCreatedAtDesc(@Param("shopId") Long shopId);
+    Page<ReviewImage> findAllByShopIdOrderByCreatedAtDesc(@Param("shopId") Long shopId, Pageable pageable);
 }
