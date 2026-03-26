@@ -93,7 +93,7 @@ public class AdminReportService {
      * 신고 대상의 사용자 ID를 추출
      * - USER: targetId가 곧 userId
      * - REVIEW: 리뷰 작성자의 userId
-     * - SHOP: 사용자 제재 대상 아님 (null 반환)
+     * - SHOP_REPORT, SHOP_SUGGESTION: 사용자 제재 대상 아님 (null 반환)
      */
     private Long resolveTargetUserId(Report report) {
         return switch (report.getTargetType()) {
@@ -101,7 +101,7 @@ public class AdminReportService {
             case REVIEW -> reviewRepository.findById(report.getTargetId())
                     .map(review -> review.getUser().getId())
                     .orElse(null);
-            case SHOP -> null;
+            case SHOP_REPORT, SHOP_SUGGESTION -> null;
         };
     }
 
