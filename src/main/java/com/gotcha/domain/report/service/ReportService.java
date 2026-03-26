@@ -116,7 +116,7 @@ public class ReportService {
     private void validateTarget(ReportTargetType targetType, Long targetId, Long reporterId) {
         switch (targetType) {
             case REVIEW -> validateReviewTarget(targetId, reporterId);
-            case SHOP -> validateShopTarget(targetId);
+            case SHOP_REPORT, SHOP_SUGGESTION -> validateShopTarget(targetId);
             case USER -> validateUserTarget(targetId, reporterId);
             default -> throw new IllegalArgumentException("Unsupported target type: " + targetType);
         }
