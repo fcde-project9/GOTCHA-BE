@@ -213,15 +213,22 @@ com.gotcha
 │          │                    │                    │                             │
 │          ▼                    ▼                    ▼                             │
 │  ┌───────────────┐   ┌───────────────┐   ┌───────────────┐                      │
-│  │      RDS      │   │      S3       │   │      ECR      │                      │
-│  │  PostgreSQL   │   │    Bucket     │   │   Registry    │                      │
+│  │      RDS      │   │  CloudFront   │   │      ECR      │                      │
+│  │  PostgreSQL   │   │     (CDN)     │   │   Registry    │                      │
 │  │               │   │               │   │               │                      │
-│  │  - users      │   │  - images/    │   │  gotcha-be-   │                      │
-│  │  - shops      │   │    reviews/   │   │  prod:latest  │                      │
-│  │  - reviews    │   │    profiles/  │   │               │                      │
-│  │  - favorites  │   │    shops/     │   │               │                      │
-│  │  - tokens     │   │               │   │               │                      │
-│  └───────────────┘   └───────────────┘   └───────────────┘                      │
+│  │  - users      │   │  - 이미지 캐싱  │   │  gotcha-be-   │                      │
+│  │  - shops      │   │  - 엣지 서빙   │   │  prod:latest  │                      │
+│  │  - reviews    │   │               │   │               │                      │
+│  │  - favorites  │   └───────┬───────┘   └───────────────┘                      │
+│  │  - tokens     │           │ OAC                                               │
+│  └───────────────┘   ┌───────▼───────┐                                          │
+│                       │      S3       │                                          │
+│                       │    Bucket     │                                          │
+│                       │               │                                          │
+│                       │  - reviews/   │                                          │
+│                       │  - profiles/  │                                          │
+│                       │  - shops/     │                                          │
+│                       └───────────────┘                                          │
 │                                                                                  │
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -311,7 +318,7 @@ com.gotcha
 | **ORM** | Spring Data JPA + Hibernate |
 | **Database** | PostgreSQL 14+ (AWS RDS) |
 | **Security** | Spring Security + OAuth2 Client + JWT (JJWT) |
-| **File Storage** | AWS S3 (SDK v2) |
+| **File Storage** | AWS S3 (SDK v2) + CloudFront (CDN) |
 | **Container** | Docker |
 | **Registry** | AWS ECR |
 | **API Documentation** | Springdoc OpenAPI (Swagger) |
@@ -430,6 +437,7 @@ AWS_SECRET_ACCESS_KEY=...
 AWS_REGION=ap-northeast-2
 AWS_S3_BUCKET_NAME=...
 AWS_S3_PREFIX=...
+CLOUDFRONT_DOMAIN=...  # CloudFront 도메인 (예: d1a2b3c4abcd.cloudfront.net)
 
 # Frontend
 FRONTEND_BASE_URL=...

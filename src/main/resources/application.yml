@@ -115,6 +115,10 @@ springdoc:
     operationsSorter: method
     tagsSorter: alpha
 
+aws:
+  cloudfront:
+    domain: ${CLOUDFRONT_DOMAIN:}
+
 management:
   endpoints:
     web:
