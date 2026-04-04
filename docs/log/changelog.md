@@ -4,6 +4,25 @@
 
 ---
 
+## 2026-03-17
+
+### 수정
+- `src/main/java/com/gotcha/domain/file/service/S3FileUploadService.java` - CloudFront CDN 지원 추가
+  - 추가: `cloudfrontDomain` 필드 (`${CLOUDFRONT_DOMAIN:}`, 미설정 시 S3 URL fallback)
+  - 변경: `uploadImage()` - `CLOUDFRONT_DOMAIN` 설정 시 CloudFront URL 반환, 미설정 시 기존 S3 URL 반환
+  - 변경: `extractKey()` - CloudFront URL과 S3 URL(레거시) 모두 지원하여 하위 호환성 유지
+- `src/main/resources/application.yml` - `aws.cloudfront.domain` 환경변수 추가 (`${CLOUDFRONT_DOMAIN:}`)
+- `docs/architecture.md` - CloudFront 인프라 반영
+  - 변경: AWS 인프라 다이어그램에 CloudFront → S3 (OAC) 구조 추가
+  - 변경: 기술 스택에 CloudFront (CDN) 추가
+  - 추가: 필수 환경변수에 `CLOUDFRONT_DOMAIN` 추가
+- `docs/file-upload-guide.md` - CloudFront URL 반영
+  - 변경: Response URL 예시 S3 → CloudFront URL로 변경
+  - 변경: URL 형식 설명 (CloudFront URL / S3 fallback)
+  - 추가: `aws.cloudfront.domain` 환경변수 설명
+
+---
+
 ## 2026-02-19
 
 ### 추가

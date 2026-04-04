@@ -1,6 +1,7 @@
 package com.gotcha._global.exception;
 
 import com.gotcha._global.common.ApiResponse;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import com.gotcha.domain.file.exception.FileErrorCode;
 import org.springframework.http.ResponseEntity;
@@ -42,6 +43,18 @@ public class GlobalExceptionHandler {
         String message = e.getBindingResult().getFieldErrors().stream()
                 .findFirst()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .orElse("유효하지 않은 입력입니다");
+        return ResponseEntity
+                .badRequest()
+                .body(ApiResponse.error(CommonErrorCode.INVALID_INPUT, message));
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    protected ResponseEntity<ApiResponse<Void>> handleConstraintViolationException(ConstraintViolationException e) {
+        log.warn("ConstraintViolationException: {}", e.getMessage());
+        String message = e.getConstraintViolations().stream()
+                .findFirst()
+                .map(v -> v.getPropertyPath() + ": " + v.getMessage())
                 .orElse("유효하지 않은 입력입니다");
         return ResponseEntity
                 .badRequest()

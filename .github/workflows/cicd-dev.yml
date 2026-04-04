@@ -8,15 +8,14 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
       # 1. 소스 체크아웃
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # 2. AWS 자격증명 설정
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -110,6 +109,9 @@ jobs:
             USER_PROFILE_IMG=$(aws ssm get-parameter --name "/gotcha/dev/user/default-profile-image-url" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
             SHOP_IMG=$(aws ssm get-parameter --name "/gotcha/dev/shop/default-image-url" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
 
+            # CloudFront
+            CLOUDFRONT_DOMAIN=$(aws ssm get-parameter --name "/gotcha/dev/aws/cloudfront/domain" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }} 2>/dev/null || echo "")
+
             # Loki Logging
             LOKI_URL=$(aws ssm get-parameter --name "/gotcha/dev/loki/url" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }} 2>/dev/null || echo "")
 
@@ -157,6 +159,7 @@ jobs:
               -e APPLE_PRIVATE_KEY="$APPLE_PRIVATE_KEY" \
               -e AWS_S3_BUCKET_NAME="$S3_BUCKET" \
               -e AWS_S3_PREFIX="$S3_PREFIX" \
+              -e CLOUDFRONT_DOMAIN="$CLOUDFRONT_DOMAIN" \
               -e AWS_REGION="$AWS_REGION_PARAM" \
               -e AWS_ACCESS_KEY_ID="$S3_ACCESS_KEY" \
               -e AWS_SECRET_ACCESS_KEY="$S3_SECRET_KEY" \
