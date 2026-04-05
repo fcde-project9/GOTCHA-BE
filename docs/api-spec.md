@@ -1250,12 +1250,12 @@ Content-Type: multipart/form-data
 | 필드 | 타입 | 필수 | 설명 |
 |------|------|------|------|
 | file | MultipartFile | O | 업로드할 이미지 파일 |
-| folder | String | O | 저장할 폴더 (reviews, shops, profiles) |
+| folder | String | O | 저장할 폴더 (reviews, shops, profiles, posts) |
 
 **Validation**
 - 허용 형식: jpg, jpeg, png, webp, heic, heif
 - 최대 크기: 50MB
-- 허용 폴더: reviews, shops, profiles
+- 허용 폴더: reviews, shops, profiles, posts
 
 **Response (201)**
 ```json

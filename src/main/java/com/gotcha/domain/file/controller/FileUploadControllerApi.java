@@ -39,7 +39,7 @@ public interface FileUploadControllerApi {
             @NotNull(message = "파일은 필수입니다")
             MultipartFile file,
 
-            @Parameter(description = "저장할 폴더 (예: reviews, shops, profiles)", required = true, example = "reviews")
+            @Parameter(description = "저장할 폴더 (예: reviews, shops, profiles, posts)", required = true, example = "reviews")
             @RequestParam("folder")
             @NotBlank(message = "폴더명은 필수입니다")
             String folder
