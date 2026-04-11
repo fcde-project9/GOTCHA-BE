@@ -75,6 +75,17 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/shops/**").permitAll()
                         // Swagger
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/api/v3/api-docs/**", "/api/swagger-ui/**", "/api/swagger-ui.html").permitAll()
+                        // Community Post
+                        .requestMatchers(HttpMethod.GET, "/api/posts").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/posts/*").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/posts").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/posts/*").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/posts/*/like").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/posts/*/like").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/posts/*/comments").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/posts/*/comments/*").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/posts/*/comments/*/like").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/posts/*/comments/*/like").authenticated()
                         // Dev API (local/dev 환경에서만 빈 등록됨)
                         .requestMatchers("/api/dev/**").permitAll()
                         // Authenticated - 사용자

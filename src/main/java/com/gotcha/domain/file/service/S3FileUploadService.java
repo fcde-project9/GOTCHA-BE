@@ -39,7 +39,8 @@ public class S3FileUploadService implements FileStorageService {
     private static final Set<String> ALLOWED_FOLDERS = Set.of(
             "reviews",
             "shops",
-            "profiles"
+            "profiles",
+            "posts"
     );
 
     private final S3Client s3Client;

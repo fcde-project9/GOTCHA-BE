@@ -13,7 +13,9 @@ import com.gotcha.domain.favorite.repository.FavoriteRepository;
 import com.gotcha.domain.file.service.FileStorageService;
 import com.gotcha.domain.inquiry.repository.InquiryRepository;
 import com.gotcha.domain.post.entity.Post;
+import com.gotcha.domain.post.entity.PostImage;
 import com.gotcha.domain.post.repository.PostCommentRepository;
+import com.gotcha.domain.post.repository.PostImageRepository;
 import com.gotcha.domain.post.repository.PostRepository;
 import com.gotcha.domain.review.entity.Review;
 import com.gotcha.domain.review.entity.ReviewImage;
@@ -70,6 +72,7 @@ public class UserService {
     private final ChatRepository chatRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final PostRepository postRepository;
+    private final PostImageRepository postImageRepository;
     private final PostCommentRepository postCommentRepository;
     private final UserBlockRepository userBlockRepository;
 
@@ -395,14 +398,16 @@ public class UserService {
             log.info("PostComments on user's posts deleted - userId: {}, postCount: {}", userId, postIds.size());
 
             // 게시글 이미지 클라우드 스토리지에서 삭제
-            for (Post post : userPosts) {
-                if (post.getPostImageUrl() != null) {
+            for (Long postId : postIds) {
+                List<PostImage> postImages = postImageRepository.findAllByPostIdOrderByDisplayOrder(postId);
+                for (PostImage image : postImages) {
                     try {
-                        fileStorageService.deleteFile(post.getPostImageUrl());
+                        fileStorageService.deleteFile(image.getImageUrl());
                     } catch (Exception e) {
-                        log.warn("Failed to delete post image: {} - {}", post.getPostImageUrl(), e.getMessage());
+                        log.warn("Failed to delete post image: {} - {}", image.getImageUrl(), e.getMessage());
                     }
                 }
+                postImageRepository.deleteAllByPostId(postId);
             }
             log.info("Post images deleted from storage - userId: {}", userId);
         }
