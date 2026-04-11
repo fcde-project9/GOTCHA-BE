@@ -24,9 +24,9 @@ public class TestcontainersConfig {
         return new FileStorageService() {
             @Override
             public FileUploadResponse uploadImage(MultipartFile file, String folder) {
-                String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-                String mockUrl = "https://test-bucket.s3.amazonaws.com/test/" + folder + "/" + fileName;
-                return new FileUploadResponse(mockUrl, fileName, file.getSize(), file.getContentType());
+                String storedName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+                String mockUrl = "https://test-bucket.s3.amazonaws.com/test/" + folder + "/" + storedName;
+                return new FileUploadResponse(mockUrl, file.getOriginalFilename(), file.getSize(), file.getContentType());
             }
 
             @Override
