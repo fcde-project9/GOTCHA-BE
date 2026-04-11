@@ -12,10 +12,10 @@ import java.util.List;
  */
 @Schema(description = "신고 사유 목록 응답")
 public record ReportReasonResponse(
-        @Schema(description = "신고 대상 유형 코드", example = "SHOP")
+        @Schema(description = "신고 대상 유형 코드", example = "REVIEW")
         String targetType,
 
-        @Schema(description = "신고 대상 유형 설명", example = "가게")
+        @Schema(description = "신고 대상 유형 설명", example = "리뷰")
         String targetTypeDescription,
 
         @Schema(description = "해당 유형의 신고 사유 목록")
@@ -24,10 +24,10 @@ public record ReportReasonResponse(
 
     @Schema(description = "신고 사유 항목")
     public record ReasonItem(
-            @Schema(description = "신고 사유 코드", example = "SHOP_INAPPROPRIATE")
+            @Schema(description = "신고 사유 코드", example = "REVIEW_SPAM")
             String code,
 
-            @Schema(description = "신고 사유 설명 (사용자에게 표시)", example = "부적절한 업체(불법/유해 업소)예요")
+            @Schema(description = "신고 사유 설명 (사용자에게 표시)", example = "도배/광고성 글이에요")
             String description
     ) {
         public static ReasonItem from(ReportReason reason) {
