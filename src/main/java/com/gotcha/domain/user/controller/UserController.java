@@ -5,6 +5,7 @@ import com.gotcha._global.common.PageResponse;
 import com.gotcha.domain.auth.util.CookieUtils;
 import com.gotcha.domain.favorite.dto.FavoriteShopResponse;
 import com.gotcha.domain.favorite.service.FavoriteService;
+import com.gotcha.domain.user.dto.MyInfoResponse;
 import com.gotcha.domain.user.dto.MyShopResponse;
 import com.gotcha.domain.user.dto.UpdateNicknameRequest;
 import com.gotcha.domain.user.dto.UpdateProfileImageRequest;
@@ -38,7 +39,7 @@ public class UserController implements UserControllerApi {
 
     @Override
     @GetMapping("/me")
-    public ApiResponse<UserResponse> getMyInfo() {
+    public ApiResponse<MyInfoResponse> getMyInfo() {
         return ApiResponse.success(userService.getMyInfo());
     }
 

@@ -10,6 +10,7 @@ import com.gotcha.domain.chat.repository.ChatRepository;
 import com.gotcha.domain.chat.repository.ChatRoomRepository;
 import com.gotcha.domain.comment.repository.CommentRepository;
 import com.gotcha.domain.favorite.repository.FavoriteRepository;
+import com.gotcha.domain.report.repository.ReportRepository;
 import com.gotcha.domain.file.service.FileStorageService;
 import com.gotcha.domain.inquiry.repository.InquiryRepository;
 import com.gotcha.domain.post.entity.Post;
@@ -26,6 +27,7 @@ import com.gotcha.domain.shop.entity.Shop;
 import com.gotcha.domain.shop.repository.ShopSuggestionRepository;
 import com.gotcha.domain.shop.repository.ShopRepository;
 import com.gotcha.domain.shop.service.ShopService;
+import com.gotcha.domain.user.dto.MyInfoResponse;
 import com.gotcha.domain.user.dto.MyShopResponse;
 import com.gotcha.domain.user.dto.UserNicknameResponse;
 import com.gotcha.domain.user.dto.UserResponse;
@@ -58,6 +60,7 @@ public class UserService {
     private final WithdrawalSurveyRepository withdrawalSurveyRepository;
     private final RedisRefreshTokenStore redisRefreshTokenStore;
     private final FavoriteRepository favoriteRepository;
+    private final ReportRepository reportRepository;
     private final ReviewRepository reviewRepository;
     private final ReviewImageRepository reviewImageRepository;
     private final ReviewLikeRepository reviewLikeRepository;
@@ -82,9 +85,12 @@ public class UserService {
     /**
      * 내 정보 조회
      */
-    public UserResponse getMyInfo() {
+    public MyInfoResponse getMyInfo() {
         User user = securityUtil.getCurrentUser();
-        return UserResponse.from(user, defaultProfileImageUrl);
+        long favoriteCount = favoriteRepository.countByUserId(user.getId());
+        long reportCount = reportRepository.countByReporterId(user.getId());
+        long reviewCount = reviewRepository.countByUserId(user.getId());
+        return MyInfoResponse.from(user, defaultProfileImageUrl, favoriteCount, reportCount, reviewCount);
     }
 
     /**
