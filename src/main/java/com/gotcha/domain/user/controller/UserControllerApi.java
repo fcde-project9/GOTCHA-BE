@@ -3,6 +3,7 @@ package com.gotcha.domain.user.controller;
 import com.gotcha._global.common.ApiResponse;
 import com.gotcha._global.common.PageResponse;
 import com.gotcha.domain.favorite.dto.FavoriteShopResponse;
+import com.gotcha.domain.user.dto.MyInfoResponse;
 import com.gotcha.domain.user.dto.MyShopResponse;
 import com.gotcha.domain.user.dto.UpdateNicknameRequest;
 import com.gotcha.domain.user.dto.UpdateProfileImageRequest;
@@ -45,7 +46,11 @@ public interface UserControllerApi {
                                         "nickname": "빨간캡슐#21",
                                         "email": "user@example.com",
                                         "profileImageUrl": "https://storage.googleapis.com/gotcha-dev-files/profile-default-join.png",
-                                        "socialType": "KAKAO"
+                                        "socialType": "KAKAO",
+                                        "userType": "NORMAL",
+                                        "favoriteCount": 12,
+                                        "reportCount": 3,
+                                        "reviewCount": 7
                                       }
                                     }
                                     """)
@@ -97,7 +102,7 @@ public interface UserControllerApi {
                     )
             )
     })
-    ApiResponse<UserResponse> getMyInfo();
+    ApiResponse<MyInfoResponse> getMyInfo();
 
     @Operation(
             summary = "내 찜 목록 조회",
