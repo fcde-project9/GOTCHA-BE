@@ -41,14 +41,14 @@ public class PostCommentService {
             parent = postCommentRepository.findById(request.parentId())
                     .orElseThrow(PostException::commentNotFound);
 
-            // 대댓글의 대댓글 방지 (depth 1만 허용)
-            if (parent.getParent() != null) {
-                throw PostException.replyDepthExceeded();
-            }
-
             // 다른 게시글의 댓글에 대댓글 방지
             if (!parent.getPost().getId().equals(postId)) {
                 throw PostException.commentNotFound();
+            }
+
+            // 대댓글의 대댓글 방지 (depth 1만 허용)
+            if (parent.getParent() != null) {
+                throw PostException.replyDepthExceeded();
             }
         }
 

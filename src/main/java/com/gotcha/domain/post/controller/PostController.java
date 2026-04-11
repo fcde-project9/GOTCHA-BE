@@ -1,6 +1,7 @@
 package com.gotcha.domain.post.controller;
 
 import com.gotcha._global.common.ApiResponse;
+import com.gotcha._global.util.SecurityUtil;
 import com.gotcha.domain.post.dto.CreatePostCommentRequest;
 import com.gotcha.domain.post.dto.CreatePostRequest;
 import com.gotcha.domain.post.dto.PostCommentResponse;
@@ -13,14 +14,9 @@ import com.gotcha.domain.post.service.PostCommentLikeService;
 import com.gotcha.domain.post.service.PostCommentService;
 import com.gotcha.domain.post.service.PostLikeService;
 import com.gotcha.domain.post.service.PostService;
-import com.gotcha.domain.user.entity.User;
-import com.gotcha.domain.user.repository.UserRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -40,7 +36,7 @@ public class PostController implements PostControllerApi {
     private final PostLikeService postLikeService;
     private final PostCommentService postCommentService;
     private final PostCommentLikeService postCommentLikeService;
-    private final UserRepository userRepository;
+    private final SecurityUtil securityUtil;
 
     @Override
     @GetMapping
@@ -62,8 +58,8 @@ public class PostController implements PostControllerApi {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<PostResponse> createPost(@Valid @RequestBody CreatePostRequest request) {
-        User currentUser = getCurrentUserOrThrow();
-        return ApiResponse.success(postService.createPost(currentUser.getId(), request));
+        Long userId = securityUtil.getCurrentUserId();
+        return ApiResponse.success(postService.createPost(userId, request));
     }
 
     @Override
@@ -125,20 +121,4 @@ public class PostController implements PostControllerApi {
         return ApiResponse.success(postCommentLikeService.removeLike(postId, commentId));
     }
 
-    private User getCurrentUserOrThrow() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication == null || !authentication.isAuthenticated()
-                || authentication.getPrincipal().equals("anonymousUser")) {
-            throw new IllegalStateException("로그인이 필요합니다");
-        }
-
-        Object principal = authentication.getPrincipal();
-        if (principal instanceof Long userId) {
-            return userRepository.findById(userId)
-                    .orElseThrow(() -> new IllegalStateException("로그인이 필요합니다"));
-        }
-
-        throw new IllegalStateException("로그인이 필요합니다");
-    }
 }

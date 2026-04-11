@@ -42,6 +42,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class PostService {
 
+    private static final int MAX_PAGE_SIZE = 500;
+
     private final PostRepository postRepository;
     private final PostImageRepository postImageRepository;
     private final PostTypeRepository postTypeRepository;
@@ -171,8 +173,8 @@ public class PostService {
     }
 
     public PostCursorResponse getPostsByCursor(Long typeId, Long cursor, int size) {
-        // size+1 개 조회해서 hasNext 판단
-        Pageable pageable = org.springframework.data.domain.PageRequest.of(0, size + 1);
+        int effectiveSize = Math.max(1, Math.min(size, MAX_PAGE_SIZE));
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(0, effectiveSize + 1);
 
         List<Post> posts = (typeId != null)
                 ? (cursor != null
@@ -182,8 +184,8 @@ public class PostService {
                         ? postRepository.findAllByIdLessThanOrderByIdDesc(cursor, pageable)
                         : postRepository.findAllByOrderByIdDesc(pageable));
 
-        boolean hasNext = posts.size() > size;
-        List<Post> pageContent = hasNext ? posts.subList(0, size) : posts;
+        boolean hasNext = posts.size() > effectiveSize;
+        List<Post> pageContent = hasNext ? posts.subList(0, effectiveSize) : posts;
 
         if (pageContent.isEmpty()) {
             return PostCursorResponse.of(List.of(), false);

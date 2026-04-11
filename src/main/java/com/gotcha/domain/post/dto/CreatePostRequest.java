@@ -20,6 +20,7 @@ public record CreatePostRequest(
 
         @Schema(description = "본문 내용", example = "오늘 드디어 원하던 캐릭터를 뽑았어요!")
         @NotBlank(message = "본문은 필수입니다")
+        @Size(max = 10000, message = "본문은 10000자 이하여야 합니다")
         String content,
 
         @Schema(description = "이미지 URL 목록 (선택, 최대 5개). null 또는 빈 리스트 = 이미지 없음",
