@@ -32,5 +32,8 @@ SET target_type = 'SHOP_SUGGESTION',
 WHERE target_type = 'SHOP'
   AND reason IN ('SHOP_WRONG_ADDRESS', 'SHOP_WRONG_LOCATION_HINT', 'SHOP_CLOSED', 'SHOP_WRONG_HOURS', 'SHOP_WRONG_PAYMENT', 'SHOP_FALSE_INFO');
 
--- 3. 분류되지 않은 나머지 SHOP 타입은 SHOP_REPORT로 (안전장치)
-UPDATE reports SET target_type = 'SHOP_REPORT' WHERE target_type = 'SHOP';
+-- 3. 분류되지 않은 나머지 SHOP 타입은 SHOP_REPORT_OTHER로 변환 (안전장치)
+UPDATE reports
+SET target_type = 'SHOP_REPORT',
+    reason = 'SHOP_REPORT_OTHER'
+WHERE target_type = 'SHOP';
