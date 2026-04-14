@@ -307,6 +307,24 @@ class ShopServiceTest {
         }
 
         @Test
+        @DisplayName("lat만 있고 lng가 null이면 예외 발생")
+        void searchShops_onlyLatProvided_throwsException() {
+            // when & then
+            assertThatThrownBy(() -> shopService.searchShops("가챠", 37.5172, null, PageRequest.of(0, 20)))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining(ShopErrorCode.INVALID_COORDINATES.getMessage());
+        }
+
+        @Test
+        @DisplayName("lng만 있고 lat가 null이면 예외 발생")
+        void searchShops_onlyLngProvided_throwsException() {
+            // when & then
+            assertThatThrownBy(() -> shopService.searchShops("가챠", null, 127.0473, PageRequest.of(0, 20)))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining(ShopErrorCode.INVALID_COORDINATES.getMessage());
+        }
+
+        @Test
         @DisplayName("keyword가 null이면 예외 발생")
         void searchShops_nullKeyword_throwsException() {
             // when & then

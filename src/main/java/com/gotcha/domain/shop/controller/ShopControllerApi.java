@@ -55,9 +55,12 @@ public interface ShopControllerApi {
     );
 
     @Operation(
-            summary = "가게 이름 검색",
-            description = "가게 이름으로 검색합니다. pg_trgm 기반 부분 일치 및 유사도 정렬을 지원합니다. " +
-                    "keyword는 2자 이상이어야 합니다. lat/lng를 제공하면 거리(m)를 함께 반환합니다."
+            summary = "가게 이름/주소 검색",
+            description = "가게 이름 또는 주소로 부분 일치 검색합니다. " +
+                    "keyword는 1자 이상이어야 하며, 공백만 입력하면 400 오류를 반환합니다. " +
+                    "lat/lng를 모두 제공하면 거리순 정렬 후 결과를 반환하고, " +
+                    "하나만 제공하면 400 오류를 반환합니다. " +
+                    "lat/lng를 제공하지 않으면 이름순으로 정렬됩니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -66,7 +69,7 @@ public interface ShopControllerApi {
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "400",
-                    description = "검색어 길이 부족 (S009)",
+                    description = "검색어 없음 (S009) 또는 좌표 오류 (S004)",
                     content = @Content(schema = @Schema(implementation = ApiResponse.class))
             )
     })

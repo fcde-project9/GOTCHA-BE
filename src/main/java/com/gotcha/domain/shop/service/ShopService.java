@@ -172,10 +172,10 @@ public class ShopService {
     }
 
     /**
-     * 가게 이름 유효성 검증 (최대 100자)
+     * 가게 이름 유효성 검증 (필수, 최대 100자)
      */
     private void validateShopName(String name) {
-        if (name != null && name.length() > 100) {
+        if (name == null || name.isBlank() || name.length() > 100) {
             throw ShopException.invalidName();
         }
     }
@@ -824,6 +824,10 @@ public class ShopService {
         }
 
         String trimmed = keyword.trim();
+
+        if ((lat == null) != (lng == null)) {
+            throw ShopException.invalidCoordinates();
+        }
 
         if (lat != null && lng != null) {
             List<Shop> allShops = shopRepository.searchByNameAll(trimmed);

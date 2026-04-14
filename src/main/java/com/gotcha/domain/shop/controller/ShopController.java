@@ -18,6 +18,8 @@ import com.gotcha.domain.shop.service.ShopService;
 import com.gotcha.domain.user.entity.User;
 import com.gotcha.domain.user.repository.UserRepository;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -54,8 +56,8 @@ public class ShopController implements ShopControllerApi {
             @RequestParam String keyword,
             @RequestParam(required = false) Double lat,
             @RequestParam(required = false) Double lng,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @Min(0) @RequestParam(defaultValue = "0") int page,
+            @Min(1) @Max(100) @RequestParam(defaultValue = "20") int size
     ) {
         return ApiResponse.success(shopService.searchShops(keyword, lat, lng, PageRequest.of(page, size)));
     }
