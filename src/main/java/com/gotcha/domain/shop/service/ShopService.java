@@ -19,6 +19,8 @@ import com.gotcha.domain.shop.dto.NearbyShopResponse;
 import com.gotcha.domain.shop.dto.NearbyShopsResponse;
 import com.gotcha.domain.shop.dto.ShopDetailResponse;
 import com.gotcha.domain.shop.dto.ShopMapResponse;
+import com.gotcha.domain.shop.dto.ShopSearchResponse;
+import com.gotcha.domain.shop.dto.ShopSearchResultResponse;
 import com.gotcha.domain.shop.dto.UpdateShopRequest;
 import com.gotcha.domain.shop.entity.Shop;
 import com.gotcha.domain.shop.exception.ShopException;
@@ -34,6 +36,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -169,10 +172,10 @@ public class ShopService {
     }
 
     /**
-     * 가게 이름 유효성 검증 (2~100자)
+     * 가게 이름 유효성 검증 (최대 100자)
      */
     private void validateShopName(String name) {
-        if (name == null || name.length() < 2 || name.length() > 100) {
+        if (name != null && name.length() > 100) {
             throw ShopException.invalidName();
         }
     }
@@ -808,6 +811,42 @@ public class ShopService {
         // 6. 가게 삭제
         shopRepository.delete(shop);
         log.info("Shop {} deleted successfully", shopId);
+    }
+
+    /**
+     * 가게 이름/주소 검색
+     * - lat/lng 제공 시: 전체 결과를 거리순 정렬 후 페이지네이션
+     * - lat/lng 없을 시: DB 페이지네이션 (이름순)
+     */
+    public ShopSearchResultResponse searchShops(String keyword, Double lat, Double lng, Pageable pageable) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            throw ShopException.invalidSearchKeyword();
+        }
+
+        String trimmed = keyword.trim();
+
+        if (lat != null && lng != null) {
+            List<Shop> allShops = shopRepository.searchByNameAll(trimmed);
+
+            List<ShopSearchResponse> sorted = allShops.stream()
+                    .map(shop -> {
+                        double distanceKm = calculateDistance(lat, lng, shop.getLatitude(), shop.getLongitude());
+                        return ShopSearchResponse.of(shop, (int) Math.round(distanceKm * 1000));
+                    })
+                    .sorted(Comparator.comparingInt(ShopSearchResponse::distance))
+                    .toList();
+
+            int start = (int) pageable.getOffset();
+            int end = Math.min(start + pageable.getPageSize(), sorted.size());
+            List<ShopSearchResponse> pageContent = start >= sorted.size() ? List.of() : sorted.subList(start, end);
+
+            Page<ShopSearchResponse> responsePage = new PageImpl<>(pageContent, pageable, sorted.size());
+            return ShopSearchResultResponse.of(responsePage);
+        }
+
+        Page<Shop> shopPage = shopRepository.searchByName(trimmed, pageable);
+        Page<ShopSearchResponse> responsePage = shopPage.map(shop -> ShopSearchResponse.of(shop, null));
+        return ShopSearchResultResponse.of(responsePage);
     }
 
     /**

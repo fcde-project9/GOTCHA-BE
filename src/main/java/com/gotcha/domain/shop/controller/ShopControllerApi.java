@@ -9,6 +9,7 @@ import com.gotcha.domain.shop.dto.NearbyShopsResponse;
 import com.gotcha.domain.shop.dto.ShopDetailResponse;
 import com.gotcha.domain.shop.dto.ShopMapResponse;
 import com.gotcha.domain.shop.dto.ShopResponse;
+import com.gotcha.domain.shop.dto.ShopSearchResultResponse;
 import com.gotcha.domain.shop.dto.UpdateShopMainImageRequest;
 import com.gotcha.domain.shop.dto.UpdateShopRequest;
 import io.swagger.v3.oas.annotations.Operation;
@@ -51,6 +52,30 @@ public interface ShopControllerApi {
     ApiResponse<ShopResponse> saveShop(
             @Valid @RequestBody CreateShopRequest request,
             @Valid @ModelAttribute CoordinateRequest coordinate
+    );
+
+    @Operation(
+            summary = "가게 이름 검색",
+            description = "가게 이름으로 검색합니다. pg_trgm 기반 부분 일치 및 유사도 정렬을 지원합니다. " +
+                    "keyword는 2자 이상이어야 합니다. lat/lng를 제공하면 거리(m)를 함께 반환합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "검색 성공"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "검색어 길이 부족 (S009)",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))
+            )
+    })
+    ApiResponse<ShopSearchResultResponse> searchShops(
+            @RequestParam String keyword,
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lng,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
     );
 
     @Operation(
