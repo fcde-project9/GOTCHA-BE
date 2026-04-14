@@ -828,6 +828,9 @@ public class ShopService {
         if ((lat == null) != (lng == null)) {
             throw ShopException.invalidCoordinates();
         }
+        if (lat != null) {
+            validateCoordinates(lat, lng);
+        }
 
         if (lat != null && lng != null) {
             List<Shop> allShops = shopRepository.searchByNameAll(trimmed);

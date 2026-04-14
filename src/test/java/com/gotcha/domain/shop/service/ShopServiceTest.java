@@ -325,6 +325,15 @@ class ShopServiceTest {
         }
 
         @Test
+        @DisplayName("좌표 범위를 벗어나면 예외 발생")
+        void searchShops_outOfRangeCoordinates_throwsException() {
+            // when & then
+            assertThatThrownBy(() -> shopService.searchShops("가챠", 999.0, 999.0, PageRequest.of(0, 20)))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining(ShopErrorCode.INVALID_COORDINATES.getMessage());
+        }
+
+        @Test
         @DisplayName("keyword가 null이면 예외 발생")
         void searchShops_nullKeyword_throwsException() {
             // when & then
