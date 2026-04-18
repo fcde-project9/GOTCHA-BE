@@ -27,24 +27,34 @@ jobs:
         run: |
           cd ~/apps/gotcha/dev
 
+          # DB, Redis 먼저 보장
+          docker compose up -d db redis
+
           # 기존 app 컨테이너 중지 및 제거
           docker compose stop app || true
           docker compose rm -f app || true
-          docker compose up -d --force-recreate --no-deps app
+          docker compose up -d --force-recreate app
 
           # 컨테이너 상태 확인 (최대 60초, 2초 간격 폴링)
+          deploy_failed=false
           for i in $(seq 1 30); do
             status=$(docker inspect -f '{{.State.Status}}' gotcha-app-dev 2>/dev/null || echo "missing")
             health=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' gotcha-app-dev 2>/dev/null || echo "missing")
             if [ "$status" = "running" ] && { [ "$health" = "healthy" ] || [ "$health" = "none" ]; }; then
               echo "Container is up (status=$status, health=$health)"
-              exit 0
+              break
+            fi
+            if [ "$i" = "30" ]; then
+              echo "Container failed to become healthy (status=$status, health=$health)"
+              docker logs --tail=200 gotcha-app-dev || true
+              deploy_failed=true
             fi
             sleep 2
           done
-          echo "Container failed to become healthy (status=$status, health=$health)"
-          docker logs --tail=200 gotcha-app-dev || true
-          exit 1
 
           # 이전 이미지 정리
           docker image prune -f
+
+          if [ "$deploy_failed" = "true" ]; then
+            exit 1
+          fi
