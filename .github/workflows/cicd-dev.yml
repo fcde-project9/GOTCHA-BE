@@ -30,7 +30,7 @@ jobs:
           # 기존 app 컨테이너 중지 및 제거
           docker compose stop app || true
           docker compose rm -f app || true
-          docker compose up -d --force-recreate --no-deps app
+          docker compose up -d --force-recreate app
 
           # 컨테이너 상태 확인 (최대 60초, 2초 간격 폴링)
           for i in $(seq 1 30); do
