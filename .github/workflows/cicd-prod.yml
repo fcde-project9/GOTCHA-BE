@@ -32,14 +32,19 @@ jobs:
           docker compose rm -f app || true
           docker compose up -d --force-recreate --no-deps app
 
-          # 컨테이너 상태 확인 (30초 대기 후 확인)
-          sleep 30
-          if ! docker ps | grep -q gotcha-app-prod; then
-            echo "Container failed to start"
-            docker logs gotcha-app-prod
-            exit 1
-          fi
-          echo "Container started successfully"
+          # 컨테이너 상태 확인 (최대 60초, 2초 간격 폴링)
+          for i in $(seq 1 30); do
+            status=$(docker inspect -f '{{.State.Status}}' gotcha-app-prod 2>/dev/null || echo "missing")
+            health=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' gotcha-app-prod 2>/dev/null || echo "missing")
+            if [ "$status" = "running" ] && { [ "$health" = "healthy" ] || [ "$health" = "none" ]; }; then
+              echo "Container is up (status=$status, health=$health)"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Container failed to become healthy (status=$status, health=$health)"
+          docker logs --tail=200 gotcha-app-prod || true
+          exit 1
 
           # 이전 이미지 정리
           docker image prune -f
