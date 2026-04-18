@@ -5,202 +5,46 @@ on:
     branches:
       - main
 
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       # 1. 소스 체크아웃
       - name: Checkout code
         uses: actions/checkout@v5
 
-      # 2. AWS 자격증명 설정
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v6
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      # 3. Amazon ECR 로그인
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      # 4. Docker 이미지 빌드 및 ECR 푸시
-      - name: Build and Push Docker Image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
-          IMAGE_TAG: ${{ github.sha }}
+      # 2. Docker 이미지 빌드
+      - name: Build Docker Image
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker build -t gotcha-be:prod-latest .
 
-      # 5. EC2에 SSH 접속하여 배포
-      - name: Deploy to EC2
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
-          IMAGE_TAG: ${{ github.sha }}
+      # 3. docker-compose로 배포
+      - name: Deploy
         run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" > private_key.pem
-          chmod 600 private_key.pem
+          cd ~/apps/gotcha/prod
 
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-            # AWS CLI로 ECR 로그인
-            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
+          # 기존 app 컨테이너 중지 및 제거
+          docker compose stop app || true
+          docker compose rm -f app || true
+          docker compose up -d --force-recreate --no-deps app
 
-            # AWS SSM Parameter Store 에서 환경변수 가져오기
-            echo "Fetching parameters from AWS SSM Parameter Store..."
-
-            # Database
-            DB_URL=$(aws ssm get-parameter --name "/gotcha/prod/database/url" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
-            DB_USERNAME=$(aws ssm get-parameter --name "/gotcha/prod/database/username" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
-            DB_PASSWORD=$(aws ssm get-parameter --name "/gotcha/prod/database/password" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
-
-            # CORS
-            CORS_ORIGINS=$(aws ssm get-parameter --name "/gotcha/prod/cors/allowed-origins" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
-
-            # JWT
-            JWT_SECRET=$(aws ssm get-parameter --name "/gotcha/prod/jwt/secret" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
-            JWT_ACCESS_VALIDITY=$(aws ssm get-parameter --name "/gotcha/prod/jwt/access-token-validity" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
-            JWT_REFRESH_VALIDITY=$(aws ssm get-parameter --name "/gotcha/prod/jwt/refresh-token-validity" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
-
-            # Kakao API
-            KAKAO_REST_KEY=$(aws ssm get-parameter --name "/gotcha/prod/kakao/rest-api-key" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
-            KAKAO_ADMIN=$(aws ssm get-parameter --name "/gotcha/prod/kakao/admin-key" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
-            KAKAO_BASE_URL=$(aws ssm get-parameter --name "/gotcha/prod/kakao/api-base-url" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
-
-            # OAuth - Common
-            OAUTH_REDIRECT_URI=$(aws ssm get-parameter --name "/gotcha/prod/oauth/redirect-uri" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
-            OAUTH_ALLOWED_URIS=$(aws ssm get-parameter --name "/gotcha/prod/oauth/allowed-redirect-uris" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
-            OAUTH_COOKIE_KEY=$(aws ssm get-parameter --name "/gotcha/prod/oauth/cookie-encryption-key" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
-
-            # OAuth - Kakao
-            KAKAO_CLIENT_ID=$(aws ssm get-parameter --name "/gotcha/prod/oauth/kakao/client-id" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
-            KAKAO_CLIENT_SECRET=$(aws ssm get-parameter --name "/gotcha/prod/oauth/kakao/client-secret" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
-
-            # OAuth - Google
-            GOOGLE_CLIENT_ID=$(aws ssm get-parameter --name "/gotcha/prod/oauth/google/client-id" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
-            GOOGLE_CLIENT_SECRET=$(aws ssm get-parameter --name "/gotcha/prod/oauth/google/client-secret" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
-
-            # OAuth - Naver
-            NAVER_CLIENT_ID=$(aws ssm get-parameter --name "/gotcha/prod/oauth/naver/client-id" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
-            NAVER_CLIENT_SECRET=$(aws ssm get-parameter --name "/gotcha/prod/oauth/naver/client-secret" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
-
-            # OAuth - Apple
-            APPLE_TEAM_ID=$(aws ssm get-parameter --name "/gotcha/prod/oauth/apple/team-id" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
-            APPLE_CLIENT_ID=$(aws ssm get-parameter --name "/gotcha/prod/oauth/apple/client-id" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
-            APPLE_KEY_ID=$(aws ssm get-parameter --name "/gotcha/prod/oauth/apple/key-id" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
-            APPLE_PRIVATE_KEY=$(aws ssm get-parameter --name "/gotcha/prod/oauth/apple/private-key" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
-
-            # AWS S3
-            S3_BUCKET=$(aws ssm get-parameter --name "/gotcha/prod/aws/s3/bucket-name" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
-            S3_PREFIX=$(aws ssm get-parameter --name "/gotcha/prod/aws/s3/prefix" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
-            S3_ACCESS_KEY=$(aws ssm get-parameter --name "/gotcha/prod/aws/s3/access-key-id" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
-            S3_SECRET_KEY=$(aws ssm get-parameter --name "/gotcha/prod/aws/s3/secret-access-key" --with-decryption --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
-
-            # AWS Region
-            AWS_REGION_PARAM=$(aws ssm get-parameter --name "/gotcha/prod/aws/region" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
-
-            # Default Images
-            USER_PROFILE_IMG=$(aws ssm get-parameter --name "/gotcha/prod/user/default-profile-image-url" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
-            SHOP_IMG=$(aws ssm get-parameter --name "/gotcha/prod/shop/default-image-url" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }})
-
-            # CloudFront
-            CLOUDFRONT_DOMAIN=$(aws ssm get-parameter --name "/gotcha/prod/aws/cloudfront/domain" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }} 2>/dev/null || echo "")
-
-            # Loki Logging
-            LOKI_URL=$(aws ssm get-parameter --name "/gotcha/prod/loki/url" --query "Parameter.Value" --output text --region ${{ secrets.AWS_REGION }} 2>/dev/null || echo "")
-
-            echo "Parameters fetched successfully ✅"
-
-            # Docker 네트워크 생성 (이미 존재하면 무시)
-            docker network create gotcha-net || true
-
-            # Redis 컨테이너 보장 (running/exited/미연결 상태 모두 처리)
-            if docker ps --format '{{.Names}}' | grep -qx 'gotcha-redis'; then
-              docker network connect gotcha-net gotcha-redis 2>/dev/null || true
-            elif docker ps -a --format '{{.Names}}' | grep -qx 'gotcha-redis'; then
-              docker start gotcha-redis
-              docker network connect gotcha-net gotcha-redis 2>/dev/null || true
-            else
-              docker run -d \
-                --name gotcha-redis \
-                --network gotcha-net \
-                --restart unless-stopped \
-                redis
+          # 컨테이너 상태 확인 (최대 60초, 2초 간격 폴링)
+          for i in $(seq 1 30); do
+            status=$(docker inspect -f '{{.State.Status}}' gotcha-app-prod 2>/dev/null || echo "missing")
+            health=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' gotcha-app-prod 2>/dev/null || echo "missing")
+            if [ "$status" = "running" ] && { [ "$health" = "healthy" ] || [ "$health" = "none" ]; }; then
+              echo "Container is up (status=$status, health=$health)"
+              exit 0
             fi
+            sleep 2
+          done
+          echo "Container failed to become healthy (status=$status, health=$health)"
+          docker logs --tail=200 gotcha-app-prod || true
+          exit 1
 
-            # 기존 컨테이너 중지 및 제거
-            docker stop gotcha-be-prod || true
-            docker rm gotcha-be-prod || true
-
-            # 새 이미지 풀
-            docker pull ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
-
-            # 새 컨테이너 실행 (t3.small 최적화)
-            docker run -d \
-              --name gotcha-be-prod \
-              --network gotcha-net \
-              -p 8080:8080 \
-              --restart unless-stopped \
-              --memory="1800m" \
-              --memory-swap="1800m" \
-              --cpus="1.8" \
-              -e SPRING_PROFILES_ACTIVE=prod \
-              -e JAVA_TOOL_OPTIONS="-Xms512m -Xmx1280m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:MaxMetaspaceSize=192m -XX:ReservedCodeCacheSize=64m" \
-              -e SPRING_DATASOURCE_URL="$DB_URL" \
-              -e SPRING_DATASOURCE_USERNAME="$DB_USERNAME" \
-              -e SPRING_DATASOURCE_PASSWORD="$DB_PASSWORD" \
-              -e CORS_ALLOWED_ORIGINS="$CORS_ORIGINS" \
-              -e JWT_SECRET="$JWT_SECRET" \
-              -e JWT_ACCESS_TOKEN_VALIDITY="$JWT_ACCESS_VALIDITY" \
-              -e JWT_REFRESH_TOKEN_VALIDITY="$JWT_REFRESH_VALIDITY" \
-              -e KAKAO_REST_API_KEY="$KAKAO_REST_KEY" \
-              -e KAKAO_ADMIN_KEY="$KAKAO_ADMIN" \
-              -e KAKAO_API_BASE_URL="$KAKAO_BASE_URL" \
-              -e OAUTH2_REDIRECT_URI="$OAUTH_REDIRECT_URI" \
-              -e OAUTH2_ALLOWED_REDIRECT_URIS="$OAUTH_ALLOWED_URIS" \
-              -e KAKAO_CLIENT_ID="$KAKAO_CLIENT_ID" \
-              -e KAKAO_CLIENT_SECRET="$KAKAO_CLIENT_SECRET" \
-              -e GOOGLE_CLIENT_ID="$GOOGLE_CLIENT_ID" \
-              -e GOOGLE_CLIENT_SECRET="$GOOGLE_CLIENT_SECRET" \
-              -e NAVER_CLIENT_ID="$NAVER_CLIENT_ID" \
-              -e NAVER_CLIENT_SECRET="$NAVER_CLIENT_SECRET" \
-              -e APPLE_TEAM_ID="$APPLE_TEAM_ID" \
-              -e APPLE_CLIENT_ID="$APPLE_CLIENT_ID" \
-              -e APPLE_KEY_ID="$APPLE_KEY_ID" \
-              -e APPLE_PRIVATE_KEY="$APPLE_PRIVATE_KEY" \
-              -e AWS_S3_BUCKET_NAME="$S3_BUCKET" \
-              -e AWS_S3_PREFIX="$S3_PREFIX" \
-              -e CLOUDFRONT_DOMAIN="$CLOUDFRONT_DOMAIN" \
-              -e AWS_REGION="$AWS_REGION_PARAM" \
-              -e AWS_ACCESS_KEY_ID="$S3_ACCESS_KEY" \
-              -e AWS_SECRET_ACCESS_KEY="$S3_SECRET_KEY" \
-              -e USER_DEFAULT_PROFILE_IMAGE_URL="$USER_PROFILE_IMG" \
-              -e SHOP_DEFAULT_IMAGE_URL="$SHOP_IMG" \
-              -e OAUTH2_COOKIE_ENCRYPTION_KEY="$OAUTH_COOKIE_KEY" \
-              -e LOKI_URL="$LOKI_URL" \
-              -e REDIS_HOST=gotcha-redis \
-              ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
-
-            # 컨테이너 상태 확인 (10초 대기 후 확인)
-            sleep 10
-            if ! docker ps | grep -q gotcha-be-prod; then
-              echo "Container failed to start ❌"
-              docker logs gotcha-be-prod
-              exit 1
-            fi
-            echo "Container started successfully ✅"
-
-            # 이전 이미지 정리
-            docker image prune -f
-          EOF
-
-      # 6. SSH 키 정리 (항상 실행)
-      - name: Cleanup SSH key
-        if: always()
-        run: rm -f private_key.pem
+          # 이전 이미지 정리
+          docker image prune -f
