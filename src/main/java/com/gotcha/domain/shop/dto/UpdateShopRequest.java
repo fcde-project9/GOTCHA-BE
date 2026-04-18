@@ -10,7 +10,7 @@ public record UpdateShopRequest(
 
         @Schema(description = "가게명", example = "가챠샵 신사점")
         @NotBlank(message = "가게명은 필수입니다")
-        @Size(min = 2, max = 100, message = "가게명은 2-100자여야 합니다")
+        @Size(max = 100, message = "가게명은 최대 100자여야 합니다")
         String name,
 
         @Schema(description = "대표 이미지 URL", example = "https://example.com/image.jpg")

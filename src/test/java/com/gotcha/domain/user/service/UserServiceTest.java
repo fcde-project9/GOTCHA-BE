@@ -28,6 +28,7 @@ import com.gotcha.domain.shop.entity.Shop;
 import com.gotcha.domain.shop.repository.ShopSuggestionRepository;
 import com.gotcha.domain.shop.repository.ShopRepository;
 import com.gotcha.domain.shop.service.ShopService;
+import com.gotcha.domain.user.dto.MyInfoResponse;
 import com.gotcha.domain.user.dto.UserResponse;
 import com.gotcha.domain.user.dto.WithdrawalRequest;
 import com.gotcha.domain.user.entity.SocialType;
@@ -162,7 +163,7 @@ class UserServiceTest {
             when(securityUtil.getCurrentUser()).thenReturn(testUser);
 
             // when
-            UserResponse result = userService.getMyInfo();
+            MyInfoResponse result = userService.getMyInfo();
 
             // then
             assertThat(result.id()).isEqualTo(1L);
@@ -185,7 +186,7 @@ class UserServiceTest {
             when(securityUtil.getCurrentUser()).thenReturn(userWithoutProfileImage);
 
             // when
-            UserResponse result = userService.getMyInfo();
+            MyInfoResponse result = userService.getMyInfo();
 
             // then
             assertThat(result.id()).isEqualTo(2L);
@@ -208,7 +209,7 @@ class UserServiceTest {
             when(securityUtil.getCurrentUser()).thenReturn(userWithEmptyProfile);
 
             // when
-            UserResponse result = userService.getMyInfo();
+            MyInfoResponse result = userService.getMyInfo();
 
             // then
             assertThat(result.profileImageUrl()).isEqualTo(DEFAULT_PROFILE_IMAGE_URL);
@@ -228,7 +229,7 @@ class UserServiceTest {
             when(securityUtil.getCurrentUser()).thenReturn(userWithBlankProfile);
 
             // when
-            UserResponse result = userService.getMyInfo();
+            MyInfoResponse result = userService.getMyInfo();
 
             // then
             assertThat(result.profileImageUrl()).isEqualTo(DEFAULT_PROFILE_IMAGE_URL);

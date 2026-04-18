@@ -33,6 +33,7 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 @ExtendWith(MockitoExtension.class)
 class ShopControllerTest {
@@ -59,9 +60,13 @@ class ShopControllerTest {
         MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
         converter.setObjectMapper(objectMapper);
 
+        LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
+        validator.afterPropertiesSet();
+
         mockMvc = MockMvcBuilders.standaloneSetup(shopController)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .setMessageConverters(converter)
+                .setValidator(validator)
                 .build();
     }
 
@@ -110,7 +115,7 @@ class ShopControllerTest {
         void shouldReturn400WhenNameIsBlank() throws Exception {
             // given
             CreateShopRequest request = new CreateShopRequest(
-                    "",  // 빈 가게명
+                    "",  // 빈 가게명 - 프론트에서 "이름 없는 가챠샵" 등 값을 채워서 보내야 함
                     "https://example.com/image.jpg",
                     "테스트 힌트",
                     null
@@ -127,8 +132,8 @@ class ShopControllerTest {
         }
 
         @Test
-        @DisplayName("가게명이 2자 미만이면 400 에러를 반환한다")
-        void shouldReturn400WhenNameIsTooShort() throws Exception {
+        @DisplayName("가게명이 1자여도 정상 등록된다")
+        void shouldRegisterWithOneCharName() throws Exception {
             // given
             CreateShopRequest request = new CreateShopRequest(
                     "가",  // 1자
@@ -136,6 +141,9 @@ class ShopControllerTest {
                     null,
                     null
             );
+            Shop shop = createShop(1L, "가", null);
+            given(shopService.createShop(any(), anyDouble(), anyDouble(), any(), any(), any(), any()))
+                    .willReturn(shop);
 
             // when & then
             mockMvc.perform(post("/api/shops/save")
@@ -144,7 +152,8 @@ class ShopControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.data.name").value("가"));
         }
 
         @Test
