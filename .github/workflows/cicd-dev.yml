@@ -25,7 +25,7 @@ jobs:
 
           # docker-compose로 배포
           docker compose down app || true
-          docker compose up -d
+          docker compose up -d --force-recreate app
 
           # 컨테이너 상태 확인 (30초 대기 후 확인)
           sleep 30

@@ -25,7 +25,7 @@ jobs:
 
           # docker-compose.yml의 이미지를 로컬 빌드 이미지로 변경
           docker compose down app || true
-          docker compose up -d
+          docker compose up -d --force-recreate app
 
           # 컨테이너 상태 확인 (30초 대기 후 확인)
           sleep 30
