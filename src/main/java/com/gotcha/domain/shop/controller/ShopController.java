@@ -10,6 +10,7 @@ import com.gotcha.domain.shop.dto.NearbyShopsResponse;
 import com.gotcha.domain.shop.dto.ShopDetailResponse;
 import com.gotcha.domain.shop.dto.ShopMapResponse;
 import com.gotcha.domain.shop.dto.ShopResponse;
+import com.gotcha.domain.shop.dto.ShopSearchResultResponse;
 import com.gotcha.domain.shop.dto.UpdateShopMainImageRequest;
 import com.gotcha.domain.shop.dto.UpdateShopRequest;
 import com.gotcha.domain.shop.entity.Shop;
@@ -17,8 +18,11 @@ import com.gotcha.domain.shop.service.ShopService;
 import com.gotcha.domain.user.entity.User;
 import com.gotcha.domain.user.repository.UserRepository;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -45,6 +49,18 @@ public class ShopController implements ShopControllerApi {
     private final ShopService shopService;
     private final UserRepository userRepository;
     private final FavoriteService favoriteService;
+
+    @Override
+    @GetMapping("/search")
+    public ApiResponse<ShopSearchResultResponse> searchShops(
+            @RequestParam String keyword,
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lng,
+            @Min(0) @RequestParam(defaultValue = "0") int page,
+            @Min(1) @Max(100) @RequestParam(defaultValue = "20") int size
+    ) {
+        return ApiResponse.success(shopService.searchShops(keyword, lat, lng, PageRequest.of(page, size)));
+    }
 
     @Override
     @PostMapping("/save")

@@ -9,6 +9,7 @@ import com.gotcha.domain.shop.dto.NearbyShopsResponse;
 import com.gotcha.domain.shop.dto.ShopDetailResponse;
 import com.gotcha.domain.shop.dto.ShopMapResponse;
 import com.gotcha.domain.shop.dto.ShopResponse;
+import com.gotcha.domain.shop.dto.ShopSearchResultResponse;
 import com.gotcha.domain.shop.dto.UpdateShopMainImageRequest;
 import com.gotcha.domain.shop.dto.UpdateShopRequest;
 import io.swagger.v3.oas.annotations.Operation;
@@ -51,6 +52,33 @@ public interface ShopControllerApi {
     ApiResponse<ShopResponse> saveShop(
             @Valid @RequestBody CreateShopRequest request,
             @Valid @ModelAttribute CoordinateRequest coordinate
+    );
+
+    @Operation(
+            summary = "가게 이름/주소 검색",
+            description = "가게 이름 또는 주소로 부분 일치 검색합니다. " +
+                    "keyword는 1자 이상이어야 하며, 공백만 입력하면 400 오류를 반환합니다. " +
+                    "lat/lng를 모두 제공하면 거리순 정렬 후 결과를 반환하고, " +
+                    "하나만 제공하면 400 오류를 반환합니다. " +
+                    "lat/lng를 제공하지 않으면 이름순으로 정렬됩니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "검색 성공"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "검색어 없음 (S009) 또는 좌표 오류 (S004)",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))
+            )
+    })
+    ApiResponse<ShopSearchResultResponse> searchShops(
+            @RequestParam String keyword,
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lng,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
     );
 
     @Operation(

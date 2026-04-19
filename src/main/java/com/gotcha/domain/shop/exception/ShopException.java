@@ -57,4 +57,8 @@ public class ShopException extends BusinessException {
     public static ShopException unauthorized() {
         return new ShopException(ShopErrorCode.SHOP_UNAUTHORIZED);
     }
+
+    public static ShopException invalidSearchKeyword() {
+        return new ShopException(ShopErrorCode.INVALID_SEARCH_KEYWORD);
+    }
 }

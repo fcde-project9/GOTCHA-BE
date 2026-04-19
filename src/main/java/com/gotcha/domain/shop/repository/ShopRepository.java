@@ -37,4 +37,15 @@ public interface ShopRepository extends JpaRepository<Shop, Long> {
 
     @Query(value = "SELECT s FROM Shop s JOIN FETCH s.createdBy WHERE s.createdBy.id = :userId ORDER BY s.createdAt DESC",countQuery = "SELECT COUNT(s) FROM Shop s WHERE s.createdBy.id = :userId")
     Page<Shop> findAllByCreatedByIdWithUser(@Param("userId") Long userId, Pageable pageable);
+
+    @Query(
+            value = "SELECT * FROM shops WHERE name ILIKE '%' || :keyword || '%' OR address_name ILIKE '%' || :keyword || '%' ORDER BY name ASC",
+            countQuery = "SELECT COUNT(*) FROM shops WHERE name ILIKE '%' || :keyword || '%' OR address_name ILIKE '%' || :keyword || '%'",
+            nativeQuery = true
+    )
+    Page<Shop> searchByName(@Param("keyword") String keyword, Pageable pageable);
+
+    @Query(value = "SELECT * FROM shops WHERE name ILIKE '%' || :keyword || '%' OR address_name ILIKE '%' || :keyword || '%'",
+            nativeQuery = true)
+    List<Shop> searchByNameAll(@Param("keyword") String keyword);
 }

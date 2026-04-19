@@ -16,7 +16,8 @@ public class TestcontainersConfig {
     @Bean
     @ServiceConnection
     public PostgreSQLContainer<?> postgresContainer() {
-        return new PostgreSQLContainer<>("postgres:15-alpine");
+        return new PostgreSQLContainer<>("postgres:15-alpine")
+                .withInitScript("sql/enable-pg-trgm.sql");
     }
 
     @Bean
