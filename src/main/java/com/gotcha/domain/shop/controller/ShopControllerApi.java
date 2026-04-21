@@ -8,6 +8,7 @@ import com.gotcha.domain.shop.dto.CreateShopRequest;
 import com.gotcha.domain.shop.dto.NearbyShopsResponse;
 import com.gotcha.domain.shop.dto.ShopDetailResponse;
 import com.gotcha.domain.shop.dto.ShopMapResponse;
+import com.gotcha.domain.shop.dto.DistrictClusterResponse;
 import com.gotcha.domain.shop.dto.ShopResponse;
 import com.gotcha.domain.shop.dto.UpdateShopMainImageRequest;
 import com.gotcha.domain.shop.dto.UpdateShopRequest;
@@ -270,4 +271,17 @@ public interface ShopControllerApi {
             )
     })
     ApiResponse<Void> deleteShop(@PathVariable Long shopId);
+
+    @Operation(
+            summary = "구별 가게 클러스터 조회",
+            description = "region2DepthName(구/시/군) 기준으로 가게 수와 평균 좌표를 반환합니다. " +
+                    "지도 축소 시 구별 클러스터 마커 표시에 사용됩니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공"
+            )
+    })
+    ApiResponse<List<DistrictClusterResponse>> getDistrictClusters();
 }
