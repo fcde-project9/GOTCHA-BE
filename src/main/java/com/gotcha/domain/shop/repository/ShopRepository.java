@@ -40,9 +40,9 @@ public interface ShopRepository extends JpaRepository<Shop, Long> {
     Page<Shop> findAllByCreatedByIdWithUser(@Param("userId") Long userId, Pageable pageable);
 
     @Query("SELECT new com.gotcha.domain.shop.dto.DistrictClusterResponse("
-            + "s.region2DepthName, COUNT(s), AVG(s.latitude), AVG(s.longitude)) "
+            + "s.region1DepthName, s.region2DepthName, COUNT(s), AVG(s.latitude), AVG(s.longitude)) "
             + "FROM Shop s "
-            + "WHERE s.region2DepthName IS NOT NULL "
-            + "GROUP BY s.region2DepthName")
+            + "WHERE s.region1DepthName IS NOT NULL AND s.region2DepthName IS NOT NULL "
+            + "GROUP BY s.region1DepthName, s.region2DepthName")
     List<DistrictClusterResponse> findDistrictClusters();
 }

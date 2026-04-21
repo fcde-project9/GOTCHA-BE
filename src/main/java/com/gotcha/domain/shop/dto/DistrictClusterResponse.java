@@ -5,6 +5,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "구별 가게 클러스터 응답")
 public record DistrictClusterResponse(
 
+        @Schema(description = "시/도 이름", example = "서울특별시")
+        String region1DepthName,
+
         @Schema(description = "구 이름", example = "강남구")
         String districtName,
 
