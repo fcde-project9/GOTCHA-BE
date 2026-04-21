@@ -74,11 +74,6 @@
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="FILE"/>
-            <if condition='!property("LOKI_URL").equals("")'>
-                <then>
-                    <appender-ref ref="ASYNC_LOKI"/>
-                </then>
-            </if>
         </root>
         <logger name="com.gotcha" level="DEBUG"/>
         <logger name="org.springframework.web" level="INFO"/>
@@ -89,15 +84,21 @@
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="FILE"/>
-            <if condition='!property("LOKI_URL").equals("")'>
-                <then>
-                    <appender-ref ref="ASYNC_LOKI"/>
-                </then>
-            </if>
         </root>
         <logger name="com.gotcha" level="INFO"/>
         <logger name="org.springframework.web" level="WARN"/>
         <logger name="org.hibernate" level="WARN"/>
+    </springProfile>
+
+    <!-- Loki appender: conditionally added when LOKI_URL is set -->
+    <springProfile name="dev,prod">
+        <if condition='!property("LOKI_URL").equals("")'>
+            <then>
+                <root level="INFO">
+                    <appender-ref ref="ASYNC_LOKI"/>
+                </root>
+            </then>
+        </if>
     </springProfile>
 
 </configuration>

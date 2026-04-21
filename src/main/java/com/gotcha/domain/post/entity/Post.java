@@ -40,20 +40,16 @@ public class Post extends BaseTimeEntity {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    private String postImageUrl;
-
     @Builder
-    public Post(User user, PostType type, String title, String content, String postImageUrl) {
+    public Post(User user, PostType type, String title, String content) {
         this.user = user;
         this.type = type;
         this.title = title;
         this.content = content;
-        this.postImageUrl = postImageUrl;
     }
 
-    public void update(String title, String content, String postImageUrl) {
+    public void update(String title, String content) {
         this.title = title;
         this.content = content;
-        this.postImageUrl = postImageUrl;
     }
 }
