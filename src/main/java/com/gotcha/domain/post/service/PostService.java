@@ -199,9 +199,10 @@ public class PostService {
         Pageable pageable = org.springframework.data.domain.PageRequest.of(effectivePage, effectiveSize);
 
         Long currentUserId = getCurrentUserIdOrNull();
+        boolean isAdmin = isCurrentUserAdmin(currentUserId);
         LocalDateTime since = LocalDateTime.now().minusDays(POPULAR_PERIOD_DAYS);
 
-        Page<Post> postPage = postRepository.findPopularPosts(typeId, currentUserId, since, pageable);
+        Page<Post> postPage = postRepository.findPopularPosts(typeId, currentUserId, isAdmin, since, pageable);
         List<Post> pageContent = postPage.getContent();
 
         if (pageContent.isEmpty()) {
@@ -247,7 +248,8 @@ public class PostService {
         Pageable pageable = org.springframework.data.domain.PageRequest.of(0, effectiveSize + 1);
 
         Long currentUserId = getCurrentUserIdOrNull();
-        List<Post> posts = postRepository.findVisibleByCursor(typeId, cursor, currentUserId, pageable);
+        boolean isAdmin = isCurrentUserAdmin(currentUserId);
+        List<Post> posts = postRepository.findVisibleByCursor(typeId, cursor, currentUserId, isAdmin, pageable);
 
         boolean hasNext = posts.size() > effectiveSize;
         List<Post> pageContent = hasNext ? posts.subList(0, effectiveSize) : posts;
@@ -292,10 +294,11 @@ public class PostService {
 
     public PageResponse<PostListItemResponse> getPosts(Long typeId, Pageable pageable) {
         Long currentUserId = getCurrentUserIdOrNull();
+        boolean isAdmin = isCurrentUserAdmin(currentUserId);
         // 1. 게시글 목록 조회 (카테고리 필터 + 비공개 가시성 필터)
         Page<Post> postPage = (typeId != null)
-                ? postRepository.findVisibleByTypeId(typeId, currentUserId, pageable)
-                : postRepository.findVisibleAll(currentUserId, pageable);
+                ? postRepository.findVisibleByTypeId(typeId, currentUserId, isAdmin, pageable)
+                : postRepository.findVisibleAll(currentUserId, isAdmin, pageable);
 
         List<Long> postIds = postPage.getContent().stream().map(Post::getId).toList();
 
@@ -442,6 +445,13 @@ public class PostService {
         }
         if (post.getUser().getId().equals(currentUserId)) {
             return true;
+        }
+        return isCurrentUserAdmin(currentUserId);
+    }
+
+    private boolean isCurrentUserAdmin(Long currentUserId) {
+        if (currentUserId == null) {
+            return false;
         }
         return userRepository.findById(currentUserId)
                 .map(u -> u.getUserType() == UserType.ADMIN)
