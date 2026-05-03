@@ -16,7 +16,10 @@ public enum ReportTargetType {
     SHOP_SUGGESTION("매장 정보 수정 제안"),
 
     /** 사용자 신고 */
-    USER("유저");
+    USER("유저"),
+
+    /** 커뮤니티 게시글 신고 */
+    POST("게시글");
 
     private final String description;
 

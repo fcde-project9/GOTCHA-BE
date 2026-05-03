@@ -10,6 +10,10 @@ import com.gotcha.domain.post.dto.PostCursorResponse;
 import com.gotcha.domain.post.dto.PostDetailResponse;
 import com.gotcha.domain.post.dto.PostLikeResponse;
 import com.gotcha.domain.post.dto.PostResponse;
+import com.gotcha.domain.post.dto.PostShopInfo;
+import com.gotcha.domain.post.dto.PostSortType;
+import com.gotcha.domain.post.dto.UpdatePostRequest;
+import java.util.List;
 import com.gotcha.domain.post.service.PostCommentLikeService;
 import com.gotcha.domain.post.service.PostCommentService;
 import com.gotcha.domain.post.service.PostLikeService;
@@ -21,6 +25,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -39,12 +44,23 @@ public class PostController implements PostControllerApi {
     private final SecurityUtil securityUtil;
 
     @Override
+    @GetMapping("/shops/search")
+    public ApiResponse<List<PostShopInfo>> searchShops(@RequestParam String keyword) {
+        return ApiResponse.success(postService.searchShopsForPost(keyword));
+    }
+
+    @Override
     @GetMapping
     public ApiResponse<PostCursorResponse> getPosts(
             @RequestParam(required = false) Long typeId,
             @RequestParam(required = false) Long cursor,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "LATEST") PostSortType sort
     ) {
+        if (sort == PostSortType.POPULAR) {
+            return ApiResponse.success(postService.getPopularPosts(typeId, page, size));
+        }
         return ApiResponse.success(postService.getPostsByCursor(typeId, cursor, size));
     }
 
@@ -73,6 +89,15 @@ public class PostController implements PostControllerApi {
     @DeleteMapping("/{postId}/like")
     public ApiResponse<PostLikeResponse> removeLike(@PathVariable Long postId) {
         return ApiResponse.success(postLikeService.removeLike(postId));
+    }
+
+    @Override
+    @PutMapping("/{postId}")
+    public ApiResponse<PostResponse> updatePost(
+            @PathVariable Long postId,
+            @Valid @RequestBody UpdatePostRequest request
+    ) {
+        return ApiResponse.success(postService.updatePost(postId, request));
     }
 
     @Override

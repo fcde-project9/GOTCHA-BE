@@ -24,7 +24,8 @@ public enum PostErrorCode implements ErrorCode {
     COMMENT_UNAUTHORIZED(FORBIDDEN, "PT008", "본인의 댓글만 수정/삭제할 수 있습니다"),
     REPLY_DEPTH_EXCEEDED(BAD_REQUEST, "PT009", "대댓글에는 댓글을 달 수 없습니다"),
     COMMENT_ALREADY_LIKED(CONFLICT, "PT010", "이미 좋아요한 댓글입니다"),
-    COMMENT_LIKE_NOT_FOUND(NOT_FOUND, "PT011", "댓글 좋아요를 찾을 수 없습니다");
+    COMMENT_LIKE_NOT_FOUND(NOT_FOUND, "PT011", "댓글 좋아요를 찾을 수 없습니다"),
+    POST_PRIVATE(FORBIDDEN, "PT012", "비공개 게시글은 작성자와 관리자만 조회할 수 있습니다");
 
     private final HttpStatus status;
     private final String code;

@@ -11,6 +11,10 @@ import com.gotcha.domain.post.dto.PostCursorResponse;
 import com.gotcha.domain.post.dto.PostDetailResponse;
 import com.gotcha.domain.post.dto.PostLikeResponse;
 import com.gotcha.domain.post.dto.PostResponse;
+import com.gotcha.domain.post.dto.PostShopInfo;
+import com.gotcha.domain.post.dto.PostSortType;
+import com.gotcha.domain.post.dto.UpdatePostRequest;
+import java.util.List;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -26,18 +30,31 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Tag(name = "Post", description = "커뮤니티 게시글 API")
 public interface PostControllerApi {
 
-    @Operation(summary = "게시글 목록 조회 (커서 기반 무한 스크롤)",
-            description = "커뮤니티 게시글 목록을 커서 기반으로 조회합니다. " +
-                    "typeId 없으면 전체, 있으면 해당 카테고리만 조회합니다. " +
-                    "cursor 없으면 첫 페이지, 있으면 해당 ID 이후 데이터를 반환합니다. " +
-                    "응답의 nextCursor를 다음 요청의 cursor로 사용하세요.")
+    @Operation(summary = "게시글 작성용 매장 검색",
+            description = "게시글 작성 시 연결할 매장을 검색합니다. 매장 이름으로 부분 검색하며 최대 50개를 반환합니다. " +
+                    "검색어가 2자 미만이면 빈 배열을 반환합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "검색 성공")
+    })
+    ApiResponse<List<PostShopInfo>> searchShops(
+            @Parameter(description = "검색어 (매장 이름, 2자 이상)") @RequestParam String keyword
+    );
+
+    @Operation(summary = "게시글 목록 조회",
+            description = "커뮤니티 게시글 목록을 조회합니다. sort 값에 따라 동작이 달라집니다. " +
+                    "LATEST(기본): 최신순 커서 기반 무한 스크롤 — `cursor`와 `size` 사용. " +
+                    "POPULAR: 최근 7일간 좋아요 많은 순 페이지 기반 — `page`와 `size` 사용. " +
+                    "typeId 지정 시 해당 카테고리만 조회됩니다. " +
+                    "응답의 hasNext로 다음 데이터 존재 여부를 판단합니다 (LATEST는 nextCursor도 함께 사용).")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")
     })
     ApiResponse<PostCursorResponse> getPosts(
             @Parameter(description = "카테고리 ID (없으면 전체 조회)") @RequestParam(required = false) Long typeId,
-            @Parameter(description = "마지막으로 받은 게시글 ID (첫 요청 시 생략)") @RequestParam(required = false) Long cursor,
-            @Parameter(description = "조회 개수 (기본 20)") @RequestParam(defaultValue = "20") int size
+            @Parameter(description = "마지막으로 받은 게시글 ID (LATEST 정렬에서만 사용)") @RequestParam(required = false) Long cursor,
+            @Parameter(description = "페이지 번호 (POPULAR 정렬에서만 사용, 기본 0)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "조회 개수 (기본 20)") @RequestParam(defaultValue = "20") int size,
+            @Parameter(description = "정렬 방식: LATEST(기본, 최신순) 또는 POPULAR(인기순, 최근 7일)") @RequestParam(defaultValue = "LATEST") PostSortType sort
     );
 
     @Operation(summary = "게시글 상세 조회",
@@ -63,6 +80,30 @@ public interface PostControllerApi {
                     content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
     ApiResponse<PostResponse> createPost(@Valid @RequestBody CreatePostRequest request);
+
+    @Operation(summary = "게시글 수정",
+            description = "게시글을 수정합니다. 작성자 본인만 가능합니다. 이미지는 전체 교체됩니다 (기존 이미지는 S3에서 삭제). " +
+                    "공개 여부(isPublic)는 작성 시점에만 설정 가능하며 수정으로는 변경할 수 없습니다.",
+            security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "게시글 수정 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400",
+                    description = "잘못된 요청 (PT002: 카테고리 없음, PT003: 이미지 개수 초과)",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401",
+                    description = "로그인 필요 (A001)",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403",
+                    description = "본인의 게시글만 수정 가능 (PT004)",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404",
+                    description = "게시글을 찾을 수 없음 (PT001)",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+    })
+    ApiResponse<PostResponse> updatePost(
+            @PathVariable Long postId,
+            @Valid @RequestBody UpdatePostRequest request
+    );
 
     @Operation(summary = "게시글 삭제",
             description = "게시글을 삭제합니다. 작성자 본인 또는 ADMIN만 가능합니다. 이미지(S3), 댓글, 좋아요가 함께 삭제됩니다.",

@@ -1,6 +1,7 @@
 package com.gotcha.domain.post.entity;
 
 import com.gotcha._global.entity.BaseTimeEntity;
+import com.gotcha.domain.shop.entity.Shop;
 import com.gotcha.domain.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -15,6 +16,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
 @Table(name = "posts")
@@ -34,22 +36,29 @@ public class Post extends BaseTimeEntity {
     @JoinColumn(name = "type_id", nullable = false)
     private PostType type;
 
-    @Column(nullable = false, length = 200)
-    private String title;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "shop_id")
+    private Shop shop;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
+    @Column(name = "is_public", nullable = false)
+    @ColumnDefault("true")
+    private boolean isPublic;
+
     @Builder
-    public Post(User user, PostType type, String title, String content) {
+    public Post(User user, PostType type, Shop shop, String content, Boolean isPublic) {
         this.user = user;
         this.type = type;
-        this.title = title;
+        this.shop = shop;
         this.content = content;
+        this.isPublic = isPublic == null || isPublic;
     }
 
-    public void update(String title, String content) {
-        this.title = title;
+    public void update(PostType type, Shop shop, String content) {
+        this.type = type;
+        this.shop = shop;
         this.content = content;
     }
 }

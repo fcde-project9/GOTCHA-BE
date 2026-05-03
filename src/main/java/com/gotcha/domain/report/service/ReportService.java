@@ -8,6 +8,8 @@ import com.gotcha.domain.report.entity.ReportReason;
 import com.gotcha.domain.report.entity.ReportStatus;
 import com.gotcha.domain.report.entity.ReportTargetType;
 import com.gotcha.domain.report.exception.ReportException;
+import com.gotcha.domain.post.entity.Post;
+import com.gotcha.domain.post.repository.PostRepository;
 import com.gotcha.domain.report.repository.ReportRepository;
 import com.gotcha.domain.review.entity.Review;
 import com.gotcha.domain.review.repository.ReviewRepository;
@@ -33,6 +35,7 @@ public class ReportService {
     private final ReviewRepository reviewRepository;
     private final ShopRepository shopRepository;
     private final UserRepository userRepository;
+    private final PostRepository postRepository;
     private final SecurityUtil securityUtil;
 
     /**
@@ -118,6 +121,7 @@ public class ReportService {
             case REVIEW -> validateReviewTarget(targetId, reporterId);
             case SHOP_REPORT, SHOP_SUGGESTION -> validateShopTarget(targetId);
             case USER -> validateUserTarget(targetId, reporterId);
+            case POST -> validatePostTarget(targetId, reporterId);
             default -> throw new IllegalArgumentException("Unsupported target type: " + targetType);
         }
     }
@@ -153,6 +157,18 @@ public class ReportService {
 
         if (!userRepository.existsById(userId)) {
             throw ReportException.targetNotFound("USER", userId);
+        }
+    }
+
+    /**
+     * 게시글 신고 대상 검증 (게시글 존재 여부, 본인 게시글 여부)
+     */
+    private void validatePostTarget(Long postId, Long reporterId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> ReportException.targetNotFound("POST", postId));
+
+        if (post.getUser().getId().equals(reporterId)) {
+            throw ReportException.cannotReportSelf();
         }
     }
 
