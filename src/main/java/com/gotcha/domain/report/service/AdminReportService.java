@@ -7,6 +7,7 @@ import com.gotcha.domain.report.entity.Report;
 import com.gotcha.domain.report.entity.ReportStatus;
 import com.gotcha.domain.report.entity.ReportTargetType;
 import com.gotcha.domain.report.exception.ReportException;
+import com.gotcha.domain.post.repository.PostRepository;
 import com.gotcha.domain.report.repository.ReportRepository;
 import com.gotcha.domain.review.repository.ReviewRepository;
 import com.gotcha.domain.user.dto.UpdateUserStatusRequest;
@@ -28,6 +29,7 @@ public class AdminReportService {
 
     private final ReportRepository reportRepository;
     private final ReviewRepository reviewRepository;
+    private final PostRepository postRepository;
     private final AdminUserService adminUserService;
 
     /**
@@ -93,6 +95,7 @@ public class AdminReportService {
      * 신고 대상의 사용자 ID를 추출
      * - USER: targetId가 곧 userId
      * - REVIEW: 리뷰 작성자의 userId
+     * - POST: 게시글 작성자의 userId
      * - SHOP_REPORT, SHOP_SUGGESTION: 사용자 제재 대상 아님 (null 반환)
      */
     private Long resolveTargetUserId(Report report) {
@@ -100,6 +103,9 @@ public class AdminReportService {
             case USER -> report.getTargetId();
             case REVIEW -> reviewRepository.findById(report.getTargetId())
                     .map(review -> review.getUser().getId())
+                    .orElse(null);
+            case POST -> postRepository.findById(report.getTargetId())
+                    .map(post -> post.getUser().getId())
                     .orElse(null);
             case SHOP_REPORT, SHOP_SUGGESTION -> null;
         };

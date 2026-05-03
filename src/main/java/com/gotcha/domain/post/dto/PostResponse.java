@@ -21,14 +21,17 @@ public record PostResponse(
         @Schema(description = "작성자 닉네임", example = "빨간캡슐#21")
         String authorNickname,
 
-        @Schema(description = "제목", example = "오늘 갓챠샵 다녀왔어요!")
-        String title,
-
         @Schema(description = "본문 내용", example = "오늘 드디어 원하던 캐릭터를 뽑았어요!")
         String content,
 
         @Schema(description = "이미지 URL 목록")
         List<String> imageUrls,
+
+        @Schema(description = "연결된 매장 정보 (선택)")
+        PostShopInfo shopInfo,
+
+        @Schema(description = "공개 여부", example = "true")
+        boolean isPublic,
 
         @Schema(description = "작성 시간")
         LocalDateTime createdAt
@@ -39,9 +42,10 @@ public record PostResponse(
                 post.getType().getId(),
                 post.getType().getTypeName(),
                 post.getUser().getNickname(),
-                post.getTitle(),
                 post.getContent(),
                 images.stream().map(PostImage::getImageUrl).toList(),
+                post.getShop() != null ? PostShopInfo.from(post.getShop()) : null,
+                post.isPublic(),
                 post.getCreatedAt()
         );
     }

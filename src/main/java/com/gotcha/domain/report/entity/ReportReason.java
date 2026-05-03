@@ -68,7 +68,29 @@ public enum ReportReason {
     /** 혐오 표현 */
     USER_HATE_SPEECH(ReportTargetType.USER, "혐오 표현이 포함돼있어요"),
     /** 기타 */
-    USER_OTHER(ReportTargetType.USER, "기타");
+    USER_OTHER(ReportTargetType.USER, "기타"),
+
+    // ========== 게시글 신고 (POST) ==========
+    /** 도배/광고성 글 */
+    POST_SPAM(ReportTargetType.POST, "도배/광고성 글이에요"),
+    /** 저작권 침해 */
+    POST_COPYRIGHT(ReportTargetType.POST, "저작권을 침해해요"),
+    /** 명예 훼손 */
+    POST_DEFAMATION(ReportTargetType.POST, "명예를 훼손하는 내용이에요"),
+    /** 욕설/비방 */
+    POST_ABUSE(ReportTargetType.POST, "욕설이나 비방이 심해요"),
+    /** 폭력/위협적 내용 */
+    POST_VIOLENCE(ReportTargetType.POST, "폭력적이거나 위협적인 내용이에요"),
+    /** 외설적 내용 */
+    POST_OBSCENE(ReportTargetType.POST, "외설적인 내용이 포함돼있어요"),
+    /** 개인정보 노출 */
+    POST_PRIVACY(ReportTargetType.POST, "개인정보가 노출되어 있어요"),
+    /** 혐오 표현 */
+    POST_HATE_SPEECH(ReportTargetType.POST, "혐오 표현이 포함돼있어요"),
+    /** 허위/거짓 정보 */
+    POST_FALSE_INFO(ReportTargetType.POST, "허위/거짓 정보예요"),
+    /** 기타 */
+    POST_OTHER(ReportTargetType.POST, "기타");
 
     private final ReportTargetType targetType;
     private final String description;

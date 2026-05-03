@@ -9,10 +9,16 @@ import com.gotcha.domain.post.dto.PostCursorResponse;
 import com.gotcha.domain.post.dto.PostDetailResponse;
 import com.gotcha.domain.post.dto.PostListItemResponse;
 import com.gotcha.domain.post.dto.PostResponse;
+import com.gotcha.domain.post.dto.PostShopInfo;
+import com.gotcha.domain.post.dto.UpdatePostRequest;
+import java.time.LocalDateTime;
 import com.gotcha.domain.post.entity.Post;
 import com.gotcha.domain.post.entity.PostImage;
 import com.gotcha.domain.post.entity.PostType;
 import com.gotcha.domain.post.exception.PostException;
+import com.gotcha.domain.shop.entity.Shop;
+import com.gotcha.domain.shop.exception.ShopException;
+import com.gotcha.domain.shop.repository.ShopRepository;
 import com.gotcha.domain.post.repository.PostCommentLikeRepository;
 import com.gotcha.domain.post.repository.PostCommentRepository;
 import com.gotcha.domain.post.repository.PostImageRepository;
@@ -43,6 +49,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PostService {
 
     private static final int MAX_PAGE_SIZE = 500;
+    private static final int POPULAR_PERIOD_DAYS = 7;
 
     private final PostRepository postRepository;
     private final PostImageRepository postImageRepository;
@@ -53,6 +60,7 @@ public class PostService {
     private final FileStorageService fileStorageService;
     private final SecurityUtil securityUtil;
     private final UserRepository userRepository;
+    private final ShopRepository shopRepository;
 
     private static final int MAX_IMAGES = 5;
 
@@ -73,24 +81,32 @@ public class PostService {
         PostType postType = postTypeRepository.findById(request.typeId())
                 .orElseThrow(PostException::typeNotFound);
 
-        // 4. Post 생성 및 저장
+        // 4. Shop 조회 (선택)
+        Shop shop = null;
+        if (request.shopId() != null) {
+            shop = shopRepository.findById(request.shopId())
+                    .orElseThrow(() -> ShopException.notFound(request.shopId()));
+        }
+
+        // 5. Post 생성 및 저장
         Post post = Post.builder()
                 .user(user)
                 .type(postType)
-                .title(request.title())
+                .shop(shop)
                 .content(request.content())
+                .isPublic(request.isPublic())
                 .build();
         postRepository.save(post);
 
         log.info("Post created with ID: {}", post.getId());
 
-        // 5. 이미지 저장
+        // 6. 이미지 저장
         if (request.imageUrls() != null && !request.imageUrls().isEmpty()) {
             savePostImages(post, request.imageUrls());
             log.info("Saved {} images for post {}", request.imageUrls().size(), post.getId());
         }
 
-        // 6. Response 생성
+        // 7. Response 생성
         List<PostImage> images = postImageRepository.findAllByPostIdOrderByDisplayOrder(post.getId());
         return PostResponse.from(post, images);
     }
@@ -100,6 +116,11 @@ public class PostService {
                 .orElseThrow(PostException::notFound);
 
         Long currentUserId = getCurrentUserIdOrNull();
+
+        // 비공개 게시글: 작성자 본인 또는 ADMIN만 조회 가능
+        if (!post.isPublic() && !canAccessPrivate(post, currentUserId)) {
+            throw PostException.privatePost();
+        }
 
         // 1. 이미지
         List<PostImage> images = postImageRepository.findAllByPostIdOrderByDisplayOrder(postId);
@@ -172,17 +193,61 @@ public class PostService {
         return PostDetailResponse.of(post, images, postLikeCount, isPostLiked, isOwner, commentResponses);
     }
 
+    public PostCursorResponse getPopularPosts(Long typeId, int page, int size) {
+        int effectiveSize = Math.max(1, Math.min(size, MAX_PAGE_SIZE));
+        int effectivePage = Math.max(0, page);
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(effectivePage, effectiveSize);
+
+        Long currentUserId = getCurrentUserIdOrNull();
+        LocalDateTime since = LocalDateTime.now().minusDays(POPULAR_PERIOD_DAYS);
+
+        Page<Post> postPage = postRepository.findPopularPosts(typeId, currentUserId, since, pageable);
+        List<Post> pageContent = postPage.getContent();
+
+        if (pageContent.isEmpty()) {
+            return PostCursorResponse.of(List.of(), false);
+        }
+
+        List<Long> postIds = pageContent.stream().map(Post::getId).toList();
+
+        Map<Long, List<PostImage>> imageMap = postImageRepository
+                .findAllByPostIdInOrderByDisplayOrder(postIds)
+                .stream()
+                .collect(Collectors.groupingBy(img -> img.getPost().getId()));
+
+        Map<Long, Long> likeCountMap = postLikeRepository.countByPostIdIn(postIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        PostLikeRepository.PostLikeCount::getPostId,
+                        PostLikeRepository.PostLikeCount::getLikeCount
+                ));
+
+        Map<Long, Long> commentCountMap = postCommentRepository.countByPostIdIn(postIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        PostCommentRepository.PostCommentCount::getPostId,
+                        PostCommentRepository.PostCommentCount::getCommentCount
+                ));
+
+        List<PostListItemResponse> content = pageContent.stream()
+                .map(post -> PostListItemResponse.of(
+                        post,
+                        imageMap.getOrDefault(post.getId(), List.of()),
+                        likeCountMap.getOrDefault(post.getId(), 0L),
+                        commentCountMap.getOrDefault(post.getId(), 0L),
+                        currentUserId
+                ))
+                .toList();
+
+        return PostCursorResponse.of(content, postPage.hasNext());
+    }
+
     public PostCursorResponse getPostsByCursor(Long typeId, Long cursor, int size) {
         int effectiveSize = Math.max(1, Math.min(size, MAX_PAGE_SIZE));
         Pageable pageable = org.springframework.data.domain.PageRequest.of(0, effectiveSize + 1);
 
-        List<Post> posts = (typeId != null)
-                ? (cursor != null
-                        ? postRepository.findAllByTypeIdAndIdLessThanOrderByIdDesc(typeId, cursor, pageable)
-                        : postRepository.findAllByTypeIdOrderByIdDesc(typeId, pageable))
-                : (cursor != null
-                        ? postRepository.findAllByIdLessThanOrderByIdDesc(cursor, pageable)
-                        : postRepository.findAllByOrderByIdDesc(pageable));
+        Long currentUserId = getCurrentUserIdOrNull();
+        List<Post> posts = postRepository.findVisibleByCursor(typeId, cursor, currentUserId, pageable);
 
         boolean hasNext = posts.size() > effectiveSize;
         List<Post> pageContent = hasNext ? posts.subList(0, effectiveSize) : posts;
@@ -217,7 +282,8 @@ public class PostService {
                         post,
                         imageMap.getOrDefault(post.getId(), List.of()),
                         likeCountMap.getOrDefault(post.getId(), 0L),
-                        commentCountMap.getOrDefault(post.getId(), 0L)
+                        commentCountMap.getOrDefault(post.getId(), 0L),
+                        currentUserId
                 ))
                 .toList();
 
@@ -225,10 +291,11 @@ public class PostService {
     }
 
     public PageResponse<PostListItemResponse> getPosts(Long typeId, Pageable pageable) {
-        // 1. 게시글 목록 조회 (카테고리 필터)
+        Long currentUserId = getCurrentUserIdOrNull();
+        // 1. 게시글 목록 조회 (카테고리 필터 + 비공개 가시성 필터)
         Page<Post> postPage = (typeId != null)
-                ? postRepository.findAllByTypeIdOrderByCreatedAtDesc(typeId, pageable)
-                : postRepository.findAllByOrderByCreatedAtDesc(pageable);
+                ? postRepository.findVisibleByTypeId(typeId, currentUserId, pageable)
+                : postRepository.findVisibleAll(currentUserId, pageable);
 
         List<Long> postIds = postPage.getContent().stream().map(Post::getId).toList();
 
@@ -263,11 +330,64 @@ public class PostService {
                         post,
                         imageMap.getOrDefault(post.getId(), List.of()),
                         likeCountMap.getOrDefault(post.getId(), 0L),
-                        commentCountMap.getOrDefault(post.getId(), 0L)
+                        commentCountMap.getOrDefault(post.getId(), 0L),
+                        currentUserId
                 ))
                 .toList();
 
         return PageResponse.from(postPage, content);
+    }
+
+    @Transactional
+    public PostResponse updatePost(Long postId, UpdatePostRequest request) {
+        // 1. 이미지 개수 검증
+        if (request.imageUrls() != null && request.imageUrls().size() > MAX_IMAGES) {
+            throw PostException.tooManyImages();
+        }
+
+        // 2. 게시글 조회
+        Post post = postRepository.findById(postId)
+                .orElseThrow(PostException::notFound);
+
+        // 3. 본인 확인 (ADMIN은 수정 불가, 작성자 본인만 가능)
+        User currentUser = securityUtil.getCurrentUser();
+        if (!post.getUser().getId().equals(currentUser.getId())) {
+            throw PostException.unauthorized();
+        }
+
+        // 4. PostType 조회
+        PostType postType = postTypeRepository.findById(request.typeId())
+                .orElseThrow(PostException::typeNotFound);
+
+        // 5. Shop 조회 (선택, null이면 매장 연결 해제)
+        Shop shop = null;
+        if (request.shopId() != null) {
+            shop = shopRepository.findById(request.shopId())
+                    .orElseThrow(() -> ShopException.notFound(request.shopId()));
+        }
+
+        // 6. 게시글 본문/카테고리/매장 갱신
+        post.update(postType, shop, request.content());
+
+        // 7. 이미지 교체: 기존 이미지 S3 + DB 삭제 후 신규 저장
+        List<PostImage> oldImages = postImageRepository.findAllByPostIdOrderByDisplayOrder(postId);
+        for (PostImage image : oldImages) {
+            try {
+                fileStorageService.deleteFile(image.getImageUrl());
+            } catch (Exception e) {
+                log.warn("Failed to delete post image from S3: {}", image.getImageUrl());
+            }
+        }
+        postImageRepository.deleteAllByPostId(postId);
+
+        if (request.imageUrls() != null && !request.imageUrls().isEmpty()) {
+            savePostImages(post, request.imageUrls());
+        }
+
+        log.info("Post updated - postId: {}, userId: {}", postId, currentUser.getId());
+
+        List<PostImage> newImages = postImageRepository.findAllByPostIdOrderByDisplayOrder(postId);
+        return PostResponse.from(post, newImages);
     }
 
     @Transactional
@@ -314,6 +434,29 @@ public class PostService {
             return null;
         }
         return (Long) auth.getPrincipal();
+    }
+
+    private boolean canAccessPrivate(Post post, Long currentUserId) {
+        if (currentUserId == null) {
+            return false;
+        }
+        if (post.getUser().getId().equals(currentUserId)) {
+            return true;
+        }
+        return userRepository.findById(currentUserId)
+                .map(u -> u.getUserType() == UserType.ADMIN)
+                .orElse(false);
+    }
+
+    public List<PostShopInfo> searchShopsForPost(String keyword) {
+        if (keyword == null || keyword.trim().length() < 2) {
+            return List.of();
+        }
+        List<Shop> shops = shopRepository.searchByName(
+                keyword.trim(),
+                org.springframework.data.domain.PageRequest.of(0, 50)
+        );
+        return shops.stream().map(PostShopInfo::from).toList();
     }
 
     private void savePostImages(Post post, List<String> imageUrls) {

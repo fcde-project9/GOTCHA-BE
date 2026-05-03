@@ -52,4 +52,8 @@ public class PostException extends BusinessException {
     public static PostException commentLikeNotFound() {
         return new PostException(PostErrorCode.COMMENT_LIKE_NOT_FOUND);
     }
+
+    public static PostException privatePost() {
+        return new PostException(PostErrorCode.POST_PRIVATE);
+    }
 }
