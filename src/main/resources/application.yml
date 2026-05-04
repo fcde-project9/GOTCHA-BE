@@ -119,27 +119,12 @@ aws:
   cloudfront:
     domain: ${CLOUDFRONT_DOMAIN:}
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health, info, metrics, prometheus
-  metrics:
-     tags:
-       application: ${spring.application.name}
-
 # Rate Limiting Configuration
 rate-limit:
   enabled: ${RATE_LIMIT_ENABLED:true}
   capacity: ${RATE_LIMIT_CAPACITY:100}
   refill-tokens: ${RATE_LIMIT_REFILL_TOKENS:100}
   refill-duration-seconds: ${RATE_LIMIT_REFILL_DURATION_SECONDS:60}
-
-# Logging Configuration
-logging:
-  loki:
-    url: ${LOKI_URL:}
-    enabled: ${LOKI_ENABLED:false}
 
 # Push Configuration
 push:
