@@ -119,6 +119,22 @@ aws:
   cloudfront:
     domain: ${CLOUDFRONT_DOMAIN:}
 
+# monitoring
+management:
+  server:
+    port: ${MANAGEMENT_PORT:9090}
+  endpoints:
+    web:
+      exposure:
+        include: prometheus, health, info, metrics
+  metrics:
+    tags:
+      application: gotcha-server
+      environment: ${SPRING_PROFILES_ACTIVE:local}
+  endpoint:
+    health:
+      show-details: always
+
 # Rate Limiting Configuration
 rate-limit:
   enabled: ${RATE_LIMIT_ENABLED:true}

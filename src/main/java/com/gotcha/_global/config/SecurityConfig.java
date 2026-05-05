@@ -58,6 +58,8 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // Actuator (management port only, not exposed externally)
+                        .requestMatchers("/actuator/**").permitAll()
                         // CORS preflight (OPTIONS) must always be allowed
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Public - 인증
