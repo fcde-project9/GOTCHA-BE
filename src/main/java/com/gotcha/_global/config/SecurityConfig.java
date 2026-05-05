@@ -58,7 +58,7 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // prometheus - 설정
+                        // Actuator (management port only, not exposed externally)
                         .requestMatchers("/actuator/**").permitAll()
                         // CORS preflight (OPTIONS) must always be allowed
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
