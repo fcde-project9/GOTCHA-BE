@@ -201,6 +201,25 @@ public interface UserControllerApi {
                     )
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "잘못된 요청 - sortBy 파라미터 값이 MyShopSortType(LATEST, FAVORITE_COUNT) enum과 일치하지 않음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "VAL_003 - sortBy enum 변환 실패",
+                                    value = """
+                                            {
+                                              "success": false,
+                                              "error": {
+                                                "code": "VAL_003",
+                                                "message": "sortBy: 허용된 값은 [LATEST, FAVORITE_COUNT] 입니다"
+                                              }
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "401",
                     description = "인증 실패",
                     content = @Content(
