@@ -29,6 +29,7 @@ import com.gotcha.domain.shop.repository.ShopRepository;
 import com.gotcha.domain.shop.service.ShopService;
 import com.gotcha.domain.user.dto.MyInfoResponse;
 import com.gotcha.domain.user.dto.MyShopResponse;
+import com.gotcha.domain.user.dto.MyShopSortType;
 import com.gotcha.domain.user.dto.UserNicknameResponse;
 import com.gotcha.domain.user.dto.UserResponse;
 import com.gotcha.domain.user.dto.WithdrawalRequest;
@@ -104,13 +105,16 @@ public class UserService {
 
     /**
      * 내가 제보한 가게 목록 조회
+     * @param sortBy 정렬 기준 (LATEST: 최신순, FAVORITE_COUNT: 좋아요순)
      * @param pageable 페이징 정보
      * @return 내가 제보한 가게 목록
      */
-    public PageResponse<MyShopResponse> getMyShops(Pageable pageable) {
+    public PageResponse<MyShopResponse> getMyShops(MyShopSortType sortBy, Pageable pageable) {
         Long userId = securityUtil.getCurrentUserId();
 
-        Page<Shop> shopPage = shopRepository.findAllByCreatedByIdWithUser(userId, pageable);
+        Page<Shop> shopPage = sortBy == MyShopSortType.FAVORITE_COUNT
+                ? shopRepository.findAllByCreatedByIdWithUserOrderByFavoriteCount(userId, pageable)
+                : shopRepository.findAllByCreatedByIdWithUser(userId, pageable);
 
         List<MyShopResponse> content = shopPage.getContent().stream()
                 .map(shop -> {

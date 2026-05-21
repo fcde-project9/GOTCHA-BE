@@ -39,6 +39,13 @@ public interface ShopRepository extends JpaRepository<Shop, Long> {
     @Query(value = "SELECT s FROM Shop s JOIN FETCH s.createdBy WHERE s.createdBy.id = :userId ORDER BY s.createdAt DESC",countQuery = "SELECT COUNT(s) FROM Shop s WHERE s.createdBy.id = :userId")
     Page<Shop> findAllByCreatedByIdWithUser(@Param("userId") Long userId, Pageable pageable);
 
+    @Query(
+            value = "SELECT s FROM Shop s JOIN FETCH s.createdBy WHERE s.createdBy.id = :userId "
+                    + "ORDER BY (SELECT COUNT(f.id) FROM Favorite f WHERE f.shop = s) DESC, s.createdAt DESC",
+            countQuery = "SELECT COUNT(s) FROM Shop s WHERE s.createdBy.id = :userId"
+    )
+    Page<Shop> findAllByCreatedByIdWithUserOrderByFavoriteCount(@Param("userId") Long userId, Pageable pageable);
+
     @Query("SELECT s FROM Shop s WHERE LOWER(s.name) LIKE LOWER(CONCAT('%', :keyword, '%')) ORDER BY s.name")
     List<Shop> searchByName(@Param("keyword") String keyword, Pageable pageable);
 
