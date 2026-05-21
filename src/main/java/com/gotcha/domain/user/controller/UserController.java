@@ -7,6 +7,7 @@ import com.gotcha.domain.favorite.dto.FavoriteShopResponse;
 import com.gotcha.domain.favorite.service.FavoriteService;
 import com.gotcha.domain.user.dto.MyInfoResponse;
 import com.gotcha.domain.user.dto.MyShopResponse;
+import com.gotcha.domain.user.dto.MyShopSortType;
 import com.gotcha.domain.user.dto.UpdateNicknameRequest;
 import com.gotcha.domain.user.dto.UpdateProfileImageRequest;
 import com.gotcha.domain.user.dto.UserNicknameResponse;
@@ -57,10 +58,11 @@ public class UserController implements UserControllerApi {
     @GetMapping("/me/shops")
     public ApiResponse<PageResponse<MyShopResponse>> getMyShops(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "LATEST") MyShopSortType sortBy
     ) {
         Pageable pageable = PageRequest.of(page, size);
-        return ApiResponse.success(userService.getMyShops(pageable));
+        return ApiResponse.success(userService.getMyShops(sortBy, pageable));
     }
 
     @Override
