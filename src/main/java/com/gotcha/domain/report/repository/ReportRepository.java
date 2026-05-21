@@ -13,6 +13,8 @@ import org.springframework.data.repository.query.Param;
 
 public interface ReportRepository extends JpaRepository<Report, Long> {
 
+    Long countByReporterId(Long reporterId);
+
     boolean existsByReporterIdAndTargetTypeAndTargetIdAndStatusNot(
             Long reporterId, ReportTargetType targetType, Long targetId, ReportStatus status);
 

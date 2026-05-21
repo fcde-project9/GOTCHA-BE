@@ -9,6 +9,7 @@ import com.gotcha.domain.shop.dto.CreateShopRequest;
 import com.gotcha.domain.shop.dto.NearbyShopsResponse;
 import com.gotcha.domain.shop.dto.ShopDetailResponse;
 import com.gotcha.domain.shop.dto.ShopMapResponse;
+import com.gotcha.domain.shop.dto.DistrictClusterResponse;
 import com.gotcha.domain.shop.dto.ShopResponse;
 import com.gotcha.domain.shop.dto.UpdateShopMainImageRequest;
 import com.gotcha.domain.shop.dto.UpdateShopRequest;
@@ -152,6 +153,13 @@ public class ShopController implements ShopControllerApi {
         User currentUser = getCurrentUserOrThrow();
         shopService.updateShopMainImage(shopId, request.mainImageUrl(), currentUser);
         return ApiResponse.success(null);
+    }
+
+    @Override
+    @GetMapping("/districts")
+    public ApiResponse<List<DistrictClusterResponse>> getDistrictClusters() {
+        List<DistrictClusterResponse> clusters = shopService.getDistrictClusters();
+        return ApiResponse.success(clusters);
     }
 
     @Override

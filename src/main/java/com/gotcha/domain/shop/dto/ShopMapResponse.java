@@ -30,7 +30,10 @@ public record ShopMapResponse(
         String distance,
 
         @Schema(description = "찜 여부 (로그인 사용자만)", example = "false")
-        Boolean isFavorite
+        Boolean isFavorite,
+
+        @Schema(description = "시/군/구", example = "강남구")
+        String region2DepthName
 ) {
     /**
      * Shop 엔티티를 ShopMapResponse로 변환
@@ -50,7 +53,8 @@ public record ShopMapResponse(
                 shop.getOpenTime(),
                 openStatus,
                 distance,
-                isFavorite
+                isFavorite,
+                shop.getRegion2DepthName()
         );
     }
 }

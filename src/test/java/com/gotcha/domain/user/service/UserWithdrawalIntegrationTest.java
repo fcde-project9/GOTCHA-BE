@@ -362,7 +362,6 @@ class UserWithdrawalIntegrationTest {
                     .type(postType)
                     .title("테스트 게시글")
                     .content("게시글 내용")
-                    .postImageUrl("https://example.com/post-image.jpg")
                     .build());
 
             postCommentRepository.save(PostComment.builder()

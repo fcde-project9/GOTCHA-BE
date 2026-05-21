@@ -19,7 +19,7 @@ POST /api/files/upload
 Content-Type: multipart/form-data
 
 file: [이미지 파일]
-folder: "reviews"  // "shops", "profiles" 중 선택
+folder: "reviews"  // "shops", "profiles", "posts" 중 선택
 ```
 
 **Response (201)**:
@@ -43,6 +43,7 @@ folder: "reviews"  // "shops", "profiles" 중 선택
 | `reviews` | 리뷰 이미지 | 리뷰 작성/수정 시 |
 | `shops` | 가게 이미지 | 가게 제보 시 |
 | `profiles` | 프로필 이미지 | 프로필 사진 변경 시 |
+| `posts` | 커뮤니티 게시글 이미지 | 게시글 작성/수정 시 |
 
 ### 3. 제약사항
 
@@ -50,7 +51,7 @@ folder: "reviews"  // "shops", "profiles" 중 선택
 |------|------|
 | 파일 크기 | 최대 50MB |
 | 파일 형식 | jpg, jpeg, png, webp, heic, heif |
-| 폴더명 | reviews, shops, profiles만 허용 |
+| 폴더명 | reviews, shops, profiles, posts만 허용 |
 
 ### 4. 사용 예시
 
@@ -345,6 +346,9 @@ your-bucket/
 │   ├── profiles/
 │   │   ├── efg123-hij456.jpg
 │   │   └── klm789-nop012.heic
+│   ├── posts/
+│   │   ├── abc111-def222.jpg
+│   │   └── ghi333-jkl444.png
 │   └── defaults/
 │       ├── profile-default-join.png
 │       └── shop-default-v2.png
@@ -362,7 +366,7 @@ your-bucket/
 ## 보안 주의사항
 
 ### 1. 폴더명 검증
-- ✅ 화이트리스트: `reviews`, `shops`, `profiles`만 허용
+- ✅ 화이트리스트: `reviews`, `shops`, `profiles`, `posts`만 허용
 - ❌ Path Traversal 공격 차단: `..`, `/`, `\` 포함 시 거부
 
 ### 2. 파일 타입 검증

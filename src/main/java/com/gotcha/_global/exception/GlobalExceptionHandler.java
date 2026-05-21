@@ -9,6 +9,7 @@ import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @Slf4j
@@ -59,6 +60,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .badRequest()
                 .body(ApiResponse.error(CommonErrorCode.INVALID_INPUT, message));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    protected ResponseEntity<ApiResponse<Void>> handleMethodArgumentTypeMismatchException(
+            MethodArgumentTypeMismatchException e) {
+        log.warn("Type mismatch: {}", e.getMessage());
+        Class<?> requiredType = e.getRequiredType();
+        String message = requiredType != null && requiredType.isEnum()
+                ? e.getName() + ": 허용된 값은 " + java.util.Arrays.toString(requiredType.getEnumConstants()) + " 입니다"
+                : e.getName() + ": 유효하지 않은 값입니다";
+        return ResponseEntity
+                .badRequest()
+                .body(ApiResponse.error(CommonErrorCode.INVALID_VALUE, message));
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)

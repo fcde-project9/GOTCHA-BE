@@ -101,6 +101,8 @@ OAUTH2_REDIRECT_URI=http://localhost:3000/oauth/callback
 | GET | /shops/{id} | 가게 상세 |
 | GET | /shops/{id}/comments | 댓글 목록 |
 | GET | /shops/{id}/reviews | 리뷰 목록 |
+| GET | /api/posts | 커뮤니티 게시글 목록 |
+| GET | /api/posts/{id} | 커뮤니티 게시글 상세 |
 
 ### Authenticated (로그인 필요)
 
@@ -123,6 +125,14 @@ OAUTH2_REDIRECT_URI=http://localhost:3000/oauth/callback
 | DELETE | /shops/{id}/reviews/{rid} | 리뷰 삭제 | 작성자 본인 또는 ADMIN |
 | POST | /shops/reviews/{rid}/like | 리뷰 좋아요 | 로그인 사용자 |
 | DELETE | /shops/reviews/{rid}/like | 리뷰 좋아요 취소 | 본인 좋아요만 |
+| POST | /api/posts | 커뮤니티 게시글 작성 | 로그인 사용자 |
+| DELETE | /api/posts/{id} | 커뮤니티 게시글 삭제 | 작성자 본인 또는 ADMIN |
+| POST | /api/posts/{id}/like | 게시글 좋아요 | 로그인 사용자 |
+| DELETE | /api/posts/{id}/like | 게시글 좋아요 취소 | 본인 좋아요만 |
+| POST | /api/posts/{id}/comments | 게시글 댓글 작성 | 로그인 사용자 |
+| DELETE | /api/posts/{id}/comments/{cid} | 게시글 댓글 삭제 | 작성자 본인 또는 ADMIN |
+| POST | /api/posts/{id}/comments/{cid}/like | 댓글 좋아요 | 로그인 사용자 |
+| DELETE | /api/posts/{id}/comments/{cid}/like | 댓글 좋아요 취소 | 본인 좋아요만 |
 
 ### Admin (관리자 전용)
 

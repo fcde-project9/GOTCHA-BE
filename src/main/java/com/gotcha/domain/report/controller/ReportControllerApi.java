@@ -10,12 +10,25 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import com.gotcha.domain.report.dto.ReportReasonResponse;
 import java.util.List;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @Tag(name = "Report", description = "신고 API")
 public interface ReportControllerApi {
+
+    @Operation(
+            summary = "신고 사유 목록 조회",
+            description = "신고 대상 유형별 신고 사유 목록을 조회합니다. 프론트엔드에서 신고 사유 선택지를 동적으로 구성할 때 사용합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공"
+            )
+    })
+    ApiResponse<List<ReportReasonResponse>> getReportReasons();
 
     @Operation(
             summary = "신고 생성",

@@ -2,6 +2,7 @@ package com.gotcha.domain.report.controller;
 
 import com.gotcha._global.common.ApiResponse;
 import com.gotcha.domain.report.dto.CreateReportRequest;
+import com.gotcha.domain.report.dto.ReportReasonResponse;
 import com.gotcha.domain.report.dto.ReportResponse;
 import com.gotcha.domain.report.service.ReportService;
 import jakarta.validation.Valid;
@@ -25,6 +26,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class ReportController implements ReportControllerApi {
 
     private final ReportService reportService;
+
+    @Override
+    @GetMapping("/reports/reasons")
+    public ApiResponse<List<ReportReasonResponse>> getReportReasons() {
+        return ApiResponse.success(ReportReasonResponse.getAllReasons());
+    }
 
     @Override
     @PostMapping("/reports")

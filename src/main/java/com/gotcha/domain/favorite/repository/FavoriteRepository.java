@@ -20,6 +20,8 @@ public interface FavoriteRepository extends JpaRepository<Favorite, Long> {
 
     Long countByShopId(Long shopId);
 
+    Long countByUserId(Long userId);
+
     @Modifying(clearAutomatically = true)
     @Query("DELETE FROM Favorite f WHERE f.user.id = :userId AND f.shop.id = :shopId")
     void deleteByUserIdAndShopId(@Param("userId") Long userId, @Param("shopId") Long shopId);

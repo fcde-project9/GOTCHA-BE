@@ -3,7 +3,9 @@ package com.gotcha.domain.user.controller;
 import com.gotcha._global.common.ApiResponse;
 import com.gotcha._global.common.PageResponse;
 import com.gotcha.domain.favorite.dto.FavoriteShopResponse;
+import com.gotcha.domain.user.dto.MyInfoResponse;
 import com.gotcha.domain.user.dto.MyShopResponse;
+import com.gotcha.domain.user.dto.MyShopSortType;
 import com.gotcha.domain.user.dto.UpdateNicknameRequest;
 import com.gotcha.domain.user.dto.UpdateProfileImageRequest;
 import com.gotcha.domain.user.dto.UserNicknameResponse;
@@ -45,7 +47,11 @@ public interface UserControllerApi {
                                         "nickname": "빨간캡슐#21",
                                         "email": "user@example.com",
                                         "profileImageUrl": "https://storage.googleapis.com/gotcha-dev-files/profile-default-join.png",
-                                        "socialType": "KAKAO"
+                                        "socialType": "KAKAO",
+                                        "userType": "NORMAL",
+                                        "favoriteCount": 12,
+                                        "reportCount": 3,
+                                        "reviewCount": 7
                                       }
                                     }
                                     """)
@@ -97,7 +103,7 @@ public interface UserControllerApi {
                     )
             )
     })
-    ApiResponse<UserResponse> getMyInfo();
+    ApiResponse<MyInfoResponse> getMyInfo();
 
     @Operation(
             summary = "내 찜 목록 조회",
@@ -162,7 +168,7 @@ public interface UserControllerApi {
 
     @Operation(
             summary = "내가 제보한 가게 목록 조회",
-            description = "현재 로그인한 사용자가 제보한 가게 목록을 최신순으로 조회합니다.",
+            description = "현재 로그인한 사용자가 제보한 가게 목록을 조회합니다. sortBy=LATEST(최신순, 기본값) 또는 sortBy=FAVORITE_COUNT(좋아요순).",
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses({
@@ -195,6 +201,25 @@ public interface UserControllerApi {
                     )
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "잘못된 요청 - sortBy 파라미터 값이 MyShopSortType(LATEST, FAVORITE_COUNT) enum과 일치하지 않음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "VAL_003 - sortBy enum 변환 실패",
+                                    value = """
+                                            {
+                                              "success": false,
+                                              "error": {
+                                                "code": "VAL_003",
+                                                "message": "sortBy: 허용된 값은 [LATEST, FAVORITE_COUNT] 입니다"
+                                              }
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "401",
                     description = "인증 실패",
                     content = @Content(
@@ -216,7 +241,8 @@ public interface UserControllerApi {
     })
     ApiResponse<PageResponse<MyShopResponse>> getMyShops(
             @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
+            @RequestParam(defaultValue = "LATEST") MyShopSortType sortBy
     );
 
     @Operation(

@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-04-11
+
+### 수정
+- `docs/api-spec.md` - 파일 업로드 허용 폴더에 `posts` 추가
+  - 변경: `POST /files/upload` 섹션의 folder 파라미터 설명 및 Validation 허용 폴더 목록에 `posts` 추가 (reviews, shops, profiles, posts)
+  - 참고: 허용 형식 jpg/jpeg/png/webp/heic/heif, 최대 크기 50MB (docs/api-spec.md POST /files/upload 섹션)
+
+---
+
 ## 2026-03-17
 
 ### 수정

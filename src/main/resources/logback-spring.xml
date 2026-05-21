@@ -2,9 +2,6 @@
 <configuration scan="true" scanPeriod="30 seconds">
 
     <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="gotcha-server"/>
-    <springProperty scope="context" name="LOKI_URL" source="logging.loki.url" defaultValue=""/>
-    <springProperty scope="context" name="LOKI_ENABLED" source="logging.loki.enabled" defaultValue="false"/>
-
     <!-- Console Appender -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
@@ -12,37 +9,6 @@
             <charset>UTF-8</charset>
         </encoder>
     </appender>
-
-    <!-- Loki Appender (only created when LOKI_URL is set) -->
-    <if condition='!property("LOKI_URL").equals("")'>
-        <then>
-            <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
-                <http>
-                    <url>${LOKI_URL}</url>
-                </http>
-                <format>
-                    <label>
-                        <pattern>app=${APP_NAME},host=${HOSTNAME},level=%level</pattern>
-                    </label>
-                    <message class="com.github.loki4j.logback.JsonLayout">
-                        <timestamp>
-                            <pattern>yyyy-MM-dd'T'HH:mm:ss.SSS'Z'</pattern>
-                            <timeZone>UTC</timeZone>
-                        </timestamp>
-                    </message>
-                    <sortByTime>true</sortByTime>
-                </format>
-            </appender>
-
-            <!-- Async Loki Appender for better performance -->
-            <appender name="ASYNC_LOKI" class="ch.qos.logback.classic.AsyncAppender">
-                <appender-ref ref="LOKI"/>
-                <queueSize>512</queueSize>
-                <discardingThreshold>0</discardingThreshold>
-                <neverBlock>true</neverBlock>
-            </appender>
-        </then>
-    </if>
 
     <!-- File Appender -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -90,15 +56,5 @@
         <logger name="org.hibernate" level="WARN"/>
     </springProfile>
 
-    <!-- Loki appender: conditionally added when LOKI_URL is set -->
-    <springProfile name="dev,prod">
-        <if condition='!property("LOKI_URL").equals("")'>
-            <then>
-                <root level="INFO">
-                    <appender-ref ref="ASYNC_LOKI"/>
-                </root>
-            </then>
-        </if>
-    </springProfile>
 
 </configuration>

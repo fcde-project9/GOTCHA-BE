@@ -43,7 +43,7 @@ public class Report extends BaseTimeEntity {
     private Long targetId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
+    @Column(nullable = false, length = 40)
     private ReportReason reason;
 
     @Column(columnDefinition = "TEXT")

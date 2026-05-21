@@ -119,14 +119,21 @@ aws:
   cloudfront:
     domain: ${CLOUDFRONT_DOMAIN:}
 
+# monitoring
 management:
+  server:
+    port: ${MANAGEMENT_PORT}
   endpoints:
     web:
       exposure:
-        include: health, info, metrics, prometheus
+        include: prometheus, health, info, metrics
   metrics:
-     tags:
-       application: ${spring.application.name}
+    tags:
+      application: gotcha-server
+      environment: ${SPRING_PROFILES_ACTIVE:local}
+  endpoint:
+    health:
+      show-details: always
 
 # Rate Limiting Configuration
 rate-limit:
@@ -134,12 +141,6 @@ rate-limit:
   capacity: ${RATE_LIMIT_CAPACITY:100}
   refill-tokens: ${RATE_LIMIT_REFILL_TOKENS:100}
   refill-duration-seconds: ${RATE_LIMIT_REFILL_DURATION_SECONDS:60}
-
-# Logging Configuration
-logging:
-  loki:
-    url: ${LOKI_URL:}
-    enabled: ${LOKI_ENABLED:false}
 
 # Push Configuration
 push:

@@ -300,18 +300,18 @@ class ReportServiceTest {
         void createShopReport_Success() {
             // given
             CreateReportRequest request = new CreateReportRequest(
-                    ReportTargetType.SHOP,
+                    ReportTargetType.SHOP_REPORT,
                     shop.getId(),
-                    ReportReason.SHOP_WRONG_ADDRESS,
+                    ReportReason.SHOP_REPORT_INAPPROPRIATE,
                     null
             );
 
             when(securityUtil.getCurrentUser()).thenReturn(reporter);
             when(shopRepository.existsById(shop.getId())).thenReturn(true);
             when(reportRepository.existsByReporterIdAndTargetTypeAndTargetIdAndStatusNot(
-                    reporter.getId(), ReportTargetType.SHOP, shop.getId(), ReportStatus.CANCELLED)).thenReturn(false);
+                    reporter.getId(), ReportTargetType.SHOP_REPORT, shop.getId(), ReportStatus.CANCELLED)).thenReturn(false);
             when(reportRepository.findByReporterIdAndTargetTypeAndTargetIdAndStatus(
-                    reporter.getId(), ReportTargetType.SHOP, shop.getId(), ReportStatus.CANCELLED))
+                    reporter.getId(), ReportTargetType.SHOP_REPORT, shop.getId(), ReportStatus.CANCELLED))
                     .thenReturn(Optional.empty());
             when(reportRepository.save(any(Report.class))).thenAnswer(invocation -> {
                 Report saved = invocation.getArgument(0);
@@ -323,9 +323,9 @@ class ReportServiceTest {
             ReportResponse response = reportService.createReport(request);
 
             // then
-            assertThat(response.targetType()).isEqualTo(ReportTargetType.SHOP);
+            assertThat(response.targetType()).isEqualTo(ReportTargetType.SHOP_REPORT);
             assertThat(response.targetId()).isEqualTo(shop.getId());
-            assertThat(response.reason()).isEqualTo(ReportReason.SHOP_WRONG_ADDRESS);
+            assertThat(response.reason()).isEqualTo(ReportReason.SHOP_REPORT_INAPPROPRIATE);
             assertThat(response.status()).isEqualTo(ReportStatus.PENDING);
         }
 
@@ -334,9 +334,9 @@ class ReportServiceTest {
         void createReport_ShopNotFound_Fail() {
             // given
             CreateReportRequest request = new CreateReportRequest(
-                    ReportTargetType.SHOP,
+                    ReportTargetType.SHOP_REPORT,
                     999L,
-                    ReportReason.SHOP_CLOSED,
+                    ReportReason.SHOP_REPORT_DUPLICATE,
                     null
             );
 

@@ -45,6 +45,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     Long countByShopId(Long shopId);
 
+    Long countByUserId(Long userId);
+
     @Query("SELECT COUNT(r) FROM Review r WHERE r.shop.id = :shopId " +
             "AND r.user.id NOT IN :blockedUserIds")
     Long countByShopIdExcludingBlockedUsers(

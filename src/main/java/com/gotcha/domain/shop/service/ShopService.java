@@ -15,6 +15,7 @@ import com.gotcha.domain.review.repository.ReviewImageRepository;
 import com.gotcha.domain.review.repository.ReviewLikeRepository;
 import com.gotcha.domain.review.repository.ReviewRepository;
 import com.gotcha.domain.file.service.FileStorageService;
+import com.gotcha.domain.shop.dto.DistrictClusterResponse;
 import com.gotcha.domain.shop.dto.NearbyShopResponse;
 import com.gotcha.domain.shop.dto.NearbyShopsResponse;
 import com.gotcha.domain.shop.dto.ShopDetailResponse;
@@ -175,6 +176,14 @@ public class ShopService {
         if (name == null || name.length() < 2 || name.length() > 100) {
             throw ShopException.invalidName();
         }
+    }
+
+    /**
+     * 구별 가게 클러스터 조회
+     */
+    @Transactional(readOnly = true)
+    public List<DistrictClusterResponse> getDistrictClusters() {
+        return shopRepository.findDistrictClusters();
     }
 
     /**

@@ -1,9 +1,9 @@
 package com.gotcha.domain.shop.entity;
 
 public enum SuggestionReason {
-    WRONG_ADDRESS("잘못된 주소예요"),
-    WRONG_PHOTO("매장 사진이 달라요"),
+    WRONG_ADDRESS("주소 정보가 잘못됐어요"),
     WRONG_LOCATION_HINT("매장 위치힌트가 달라요"),
+    BUSINESS_CLOSED("영업 종료/폐업된 매장이에요"),
     WRONG_BUSINESS_HOURS("영업시간 정보가 달라요"),
     WRONG_PAYMENT_INFO("카드 결제/ATM 등 결제 정보가 달라요"),
     OTHER("기타");

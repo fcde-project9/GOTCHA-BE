@@ -1,10 +1,25 @@
 package com.gotcha.domain.report.entity;
 
+/**
+ * 신고 대상 유형
+ * - 어떤 종류의 대상을 신고하는지 구분
+ */
 public enum ReportTargetType {
 
+    /** 리뷰 신고 */
     REVIEW("리뷰"),
-    SHOP("가게"),
-    USER("유저");
+
+    /** 매장 문제 신고 */
+    SHOP_REPORT("매장 문제 신고"),
+
+    /** 매장 정보 수정 제안 */
+    SHOP_SUGGESTION("매장 정보 수정 제안"),
+
+    /** 사용자 신고 */
+    USER("유저"),
+
+    /** 커뮤니티 게시글 신고 */
+    POST("게시글");
 
     private final String description;
 
