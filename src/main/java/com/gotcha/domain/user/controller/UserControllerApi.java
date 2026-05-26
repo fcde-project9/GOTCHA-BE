@@ -4,6 +4,8 @@ import com.gotcha._global.common.ApiResponse;
 import com.gotcha._global.common.PageResponse;
 import com.gotcha.domain.favorite.dto.FavoriteShopResponse;
 import com.gotcha.domain.user.dto.MyInfoResponse;
+import com.gotcha.domain.user.dto.MyReviewResponse;
+import com.gotcha.domain.user.dto.MyReviewSortType;
 import com.gotcha.domain.user.dto.MyShopResponse;
 import com.gotcha.domain.user.dto.MyShopSortType;
 import com.gotcha.domain.user.dto.UpdateNicknameRequest;
@@ -243,6 +245,87 @@ public interface UserControllerApi {
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
             @RequestParam(defaultValue = "LATEST") MyShopSortType sortBy
+    );
+
+    @Operation(
+            summary = "내가 작성한 리뷰 목록 조회",
+            description = "현재 로그인한 사용자가 작성한 리뷰 목록을 조회합니다. sortBy=LATEST(최신순, 기본값) 또는 sortBy=LIKE_COUNT(좋아요순).",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "success": true,
+                                      "data": {
+                                        "content": [
+                                          {
+                                            "id": 1,
+                                            "shopId": 5,
+                                            "shopName": "가챠샵 신사점",
+                                            "content": "리뷰 내용입니다",
+                                            "imageUrls": ["https://..."],
+                                            "likeCount": 2,
+                                            "isLiked": false,
+                                            "createdAt": "2026-01-01T10:30:00"
+                                          }
+                                        ],
+                                        "totalCount": 1,
+                                        "page": 0,
+                                        "size": 20,
+                                        "hasNext": false
+                                      }
+                                    }
+                                    """)
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "잘못된 요청 - sortBy 파라미터 값이 MyReviewSortType(LATEST, LIKE_COUNT) enum과 일치하지 않음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "VAL_003 - sortBy enum 변환 실패",
+                                    value = """
+                                            {
+                                              "success": false,
+                                              "error": {
+                                                "code": "VAL_003",
+                                                "message": "sortBy: 허용된 값은 [LATEST, LIKE_COUNT] 입니다"
+                                              }
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description = "인증 실패",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "A001 - 토큰 없음",
+                                    value = """
+                                            {
+                                              "success": false,
+                                              "error": {
+                                                "code": "A001",
+                                                "message": "로그인이 필요합니다"
+                                              }
+                                            }
+                                            """
+                            )
+                    )
+            )
+    })
+    ApiResponse<PageResponse<MyReviewResponse>> getMyReviews(
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
+            @RequestParam(defaultValue = "LATEST") MyReviewSortType sortBy
     );
 
     @Operation(
