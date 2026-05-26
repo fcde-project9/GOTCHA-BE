@@ -6,6 +6,8 @@ import com.gotcha.domain.auth.util.CookieUtils;
 import com.gotcha.domain.favorite.dto.FavoriteShopResponse;
 import com.gotcha.domain.favorite.service.FavoriteService;
 import com.gotcha.domain.user.dto.MyInfoResponse;
+import com.gotcha.domain.user.dto.MyReviewResponse;
+import com.gotcha.domain.user.dto.MyReviewSortType;
 import com.gotcha.domain.user.dto.MyShopResponse;
 import com.gotcha.domain.user.dto.MyShopSortType;
 import com.gotcha.domain.user.dto.UpdateNicknameRequest;
@@ -63,6 +65,17 @@ public class UserController implements UserControllerApi {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         return ApiResponse.success(userService.getMyShops(sortBy, pageable));
+    }
+
+    @Override
+    @GetMapping("/me/reviews")
+    public ApiResponse<PageResponse<MyReviewResponse>> getMyReviews(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "LATEST") MyReviewSortType sortBy
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ApiResponse.success(userService.getMyReviews(sortBy, pageable));
     }
 
     @Override

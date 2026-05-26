@@ -39,6 +39,23 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     boolean existsByUserIdAndShopId(Long userId, Long shopId);
 
+    @Query(
+            value = "SELECT r FROM Review r JOIN FETCH r.shop WHERE r.user.id = :userId "
+                    + "ORDER BY r.createdAt DESC",
+            countQuery = "SELECT COUNT(r) FROM Review r WHERE r.user.id = :userId"
+    )
+    Page<Review> findAllByUserIdWithShopOrderByCreatedAtDesc(
+            @Param("userId") Long userId, Pageable pageable);
+
+    @Query(
+            value = "SELECT r FROM Review r JOIN FETCH r.shop WHERE r.user.id = :userId "
+                    + "ORDER BY (SELECT COUNT(rl.id) FROM ReviewLike rl WHERE rl.review.id = r.id) DESC, "
+                    + "r.createdAt DESC",
+            countQuery = "SELECT COUNT(r) FROM Review r WHERE r.user.id = :userId"
+    )
+    Page<Review> findAllByUserIdWithShopOrderByLikeCountDesc(
+            @Param("userId") Long userId, Pageable pageable);
+
     List<Review> findAllByUserId(Long userId);
 
     List<Review> findAllByShopId(Long shopId);

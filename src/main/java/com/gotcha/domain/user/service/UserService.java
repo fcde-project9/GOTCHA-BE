@@ -28,6 +28,8 @@ import com.gotcha.domain.shop.repository.ShopSuggestionRepository;
 import com.gotcha.domain.shop.repository.ShopRepository;
 import com.gotcha.domain.shop.service.ShopService;
 import com.gotcha.domain.user.dto.MyInfoResponse;
+import com.gotcha.domain.user.dto.MyReviewResponse;
+import com.gotcha.domain.user.dto.MyReviewSortType;
 import com.gotcha.domain.user.dto.MyShopResponse;
 import com.gotcha.domain.user.dto.MyShopSortType;
 import com.gotcha.domain.user.dto.UserNicknameResponse;
@@ -39,7 +41,10 @@ import com.gotcha.domain.user.exception.UserException;
 import com.gotcha.domain.user.repository.UserPermissionRepository;
 import com.gotcha.domain.user.repository.UserRepository;
 import com.gotcha.domain.user.repository.WithdrawalSurveyRepository;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -126,6 +131,61 @@ public class UserService {
                 .collect(Collectors.toList());
 
         return PageResponse.from(shopPage, content);
+    }
+
+    /**
+     * 내가 작성한 리뷰 목록 조회
+     * @param sortBy 정렬 기준 (LATEST: 최신순, LIKE_COUNT: 좋아요순)
+     * @param pageable 페이징 정보
+     * @return 내가 작성한 리뷰 목록
+     */
+    public PageResponse<MyReviewResponse> getMyReviews(MyReviewSortType sortBy, Pageable pageable) {
+        Long userId = securityUtil.getCurrentUserId();
+
+        Page<Review> reviewPage = sortBy == MyReviewSortType.LIKE_COUNT
+                ? reviewRepository.findAllByUserIdWithShopOrderByLikeCountDesc(userId, pageable)
+                : reviewRepository.findAllByUserIdWithShopOrderByCreatedAtDesc(userId, pageable);
+
+        List<Review> reviews = reviewPage.getContent();
+        if (reviews.isEmpty()) {
+            return PageResponse.from(reviewPage, List.of());
+        }
+
+        List<Long> reviewIds = reviews.stream().map(Review::getId).toList();
+
+        // 이미지 일괄 조회 (N+1 방지)
+        Map<Long, List<String>> imageUrlsByReviewId = reviewImageRepository
+                .findAllByReviewIdInOrderByReviewIdAscDisplayOrderAsc(reviewIds)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        ri -> ri.getReview().getId(),
+                        Collectors.mapping(ReviewImage::getImageUrl, Collectors.toList())
+                ));
+
+        // 좋아요 수 일괄 조회 (N+1 방지)
+        Map<Long, Long> likeCountByReviewId = reviewLikeRepository
+                .countByReviewIdInGroupByReviewId(reviewIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        ReviewLikeRepository.ReviewLikeCount::getReviewId,
+                        ReviewLikeRepository.ReviewLikeCount::getLikeCount
+                ));
+
+        // 내가 좋아요 한 리뷰 ID 일괄 조회 (N+1 방지)
+        Set<Long> likedReviewIds = Set.copyOf(
+                reviewLikeRepository.findLikedReviewIds(userId, reviewIds)
+        );
+
+        List<MyReviewResponse> content = reviews.stream()
+                .map(review -> MyReviewResponse.from(
+                        review,
+                        imageUrlsByReviewId.getOrDefault(review.getId(), Collections.emptyList()),
+                        likeCountByReviewId.getOrDefault(review.getId(), 0L),
+                        likedReviewIds.contains(review.getId())
+                ))
+                .collect(Collectors.toList());
+
+        return PageResponse.from(reviewPage, content);
     }
 
     /**
