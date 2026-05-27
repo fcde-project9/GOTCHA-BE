@@ -67,20 +67,18 @@ class UpdateProfileImageRequestTest {
     }
 
     @Test
-    @DisplayName("잘못된 URL 형식은 거부된다")
-    void invalidUrlIsRejected() {
+    @DisplayName("CloudFront URL도 유효하다")
+    void cloudfrontUrlIsValid() {
         // given
         UpdateProfileImageRequest request = new UpdateProfileImageRequest(
-                "https://example.com/image.jpg"
+                "https://d1234abcd.cloudfront.net/profiles/uuid.webp"
         );
 
         // when
         Set<ConstraintViolation<UpdateProfileImageRequest>> violations = validator.validate(request);
 
         // then
-        assertThat(violations).hasSize(1);
-        assertThat(violations.iterator().next().getMessage())
-                .isEqualTo("올바른 클라우드 스토리지 URL 형식이 아닙니다");
+        assertThat(violations).isEmpty();
     }
 
     @Test
@@ -93,23 +91,8 @@ class UpdateProfileImageRequestTest {
         Set<ConstraintViolation<UpdateProfileImageRequest>> violations = validator.validate(request);
 
         // then
-        assertThat(violations).hasSize(2); // @NotBlank + @Pattern
-    }
-
-    @Test
-    @DisplayName("http URL은 거부된다 (https만 허용)")
-    void httpUrlIsRejected() {
-        // given
-        UpdateProfileImageRequest request = new UpdateProfileImageRequest(
-                "http://storage.googleapis.com/bucket/file.jpg"
-        );
-
-        // when
-        Set<ConstraintViolation<UpdateProfileImageRequest>> violations = validator.validate(request);
-
-        // then
         assertThat(violations).hasSize(1);
         assertThat(violations.iterator().next().getMessage())
-                .isEqualTo("올바른 클라우드 스토리지 URL 형식이 아닙니다");
+                .isEqualTo("프로필 이미지 URL은 필수입니다");
     }
 }
