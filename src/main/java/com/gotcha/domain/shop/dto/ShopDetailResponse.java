@@ -65,12 +65,15 @@ public record ShopDetailResponse(
      * @param reviewCount            전체 리뷰 개수
      * @param totalReviewImageCount  전체 리뷰 사진 개수
      * @param recentReviewImages     최신 리뷰 이미지 4개
+     * @param defaultImageUrl        기본 매장 이미지 URL (이 값과 일치하면 mainImageUrl은 null로 응답)
      * @return ShopDetailResponse
      */
     public static ShopDetailResponse of(Shop shop, String todayOpenTime, String openStatus, Boolean isFavorite,
                                         List<ReviewResponse> reviews, Long reviewCount, Long totalReviewImageCount,
-                                        List<String> recentReviewImages) {
+                                        List<String> recentReviewImages, String defaultImageUrl) {
         Objects.requireNonNull(shop, "Shop must not be null");
+
+        String mainImageUrl = Objects.equals(shop.getMainImageUrl(), defaultImageUrl) ? null : shop.getMainImageUrl();
 
         return new ShopDetailResponse(
                 shop.getId(),
@@ -82,7 +85,7 @@ public record ShopDetailResponse(
                 openStatus,
                 shop.getLatitude(),
                 shop.getLongitude(),
-                shop.getMainImageUrl(),
+                mainImageUrl,
                 isFavorite,
                 reviews != null ? reviews : Collections.emptyList(),
                 reviewCount,

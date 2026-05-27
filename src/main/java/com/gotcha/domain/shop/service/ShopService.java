@@ -533,7 +533,7 @@ public class ShopService {
 
         log.info("shop-detail cache miss - shopId: {}, sortBy: {}", shopId, sortBy);
         return ShopDetailResponse.of(shop, todayOpenTime, openStatus, false,
-                reviews, reviewCount, totalReviewImageCount, recentReviewImages);
+                reviews, reviewCount, totalReviewImageCount, recentReviewImages, defaultShopImageUrl);
     }
 
     /**
