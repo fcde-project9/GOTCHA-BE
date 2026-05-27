@@ -22,6 +22,9 @@ public record PostDetailResponse(
         @Schema(description = "작성자 닉네임", example = "빨간캡슐#21")
         String authorNickname,
 
+        @Schema(description = "작성자 프로필 이미지 URL (없을 경우 null)", example = "https://cdn.example.com/profile/1.png")
+        String authorProfileImageUrl,
+
         @Schema(description = "본문 내용", example = "오늘 드디어 원하던 캐릭터를 뽑았어요!")
         String content,
 
@@ -63,6 +66,7 @@ public record PostDetailResponse(
                 post.getType().getId(),
                 post.getType().getTypeName(),
                 post.getUser().getNickname(),
+                post.getUser().getProfileImageUrl(),
                 post.getContent(),
                 images.stream().map(PostImage::getImageUrl).toList(),
                 post.getShop() != null ? PostShopInfo.from(post.getShop()) : null,
