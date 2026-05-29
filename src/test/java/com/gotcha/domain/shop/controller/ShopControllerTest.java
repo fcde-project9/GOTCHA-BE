@@ -86,7 +86,7 @@ class ShopControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
-                    .andExpect(status().isInternalServerError());
+                    .andExpect(status().isUnauthorized());
         }
 
         @Test

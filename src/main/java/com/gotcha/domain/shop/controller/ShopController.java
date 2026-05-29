@@ -1,6 +1,7 @@
 package com.gotcha.domain.shop.controller;
 
 import com.gotcha._global.common.ApiResponse;
+import com.gotcha.domain.auth.exception.AuthException;
 import com.gotcha.domain.favorite.dto.FavoriteResponse;
 import com.gotcha.domain.favorite.service.FavoriteService;
 import com.gotcha.domain.review.dto.ReviewSortType;
@@ -200,7 +201,7 @@ public class ShopController implements ShopControllerApi {
     private User getCurrentUserOrThrow() {
         User user = getCurrentUser();
         if (user == null) {
-            throw new IllegalStateException("로그인이 필요합니다");
+            throw AuthException.unauthorized();
         }
         return user;
     }
