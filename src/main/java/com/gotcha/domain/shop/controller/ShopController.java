@@ -54,7 +54,7 @@ public class ShopController implements ShopControllerApi {
             @Valid @RequestBody CreateShopRequest request,
             @Valid @ModelAttribute CoordinateRequest coordinate
     ) {
-        User currentUser = getCurrentUser();
+        User currentUser = getCurrentUserOrThrow();
 
         Shop shop = shopService.createShop(
                 request.name(),

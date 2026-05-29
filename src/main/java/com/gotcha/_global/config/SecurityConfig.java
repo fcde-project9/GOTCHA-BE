@@ -90,9 +90,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/dev/**").permitAll()
                         // Authenticated - 사용자
                         .requestMatchers("/api/users/**").authenticated()
-                        // Public - 가게 생성/제보 (비회원도 가능)
-                        .requestMatchers(HttpMethod.POST, "/api/shops/save").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/shops/report").permitAll()
+                        // Authenticated - 가게 생성/제보 (로그인 필수)
+                        .requestMatchers(HttpMethod.POST, "/api/shops/save").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/shops/report").authenticated()
                         // Public - file upload (used by reviews, reports, etc.)
                         .requestMatchers(HttpMethod.POST, "/api/files/**").permitAll()
                         // Public - Push VAPID key
