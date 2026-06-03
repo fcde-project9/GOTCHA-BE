@@ -33,12 +33,14 @@ public class AdminShopWebController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             Model model) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        String searchKeyword = (keyword != null && keyword.trim().isEmpty()) ? null : keyword;
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 100);
+        Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "createdAt"));
+        String searchKeyword = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
         Page<Shop> shopPage = shopRepository.findAllWithKeywordFilter(searchKeyword, pageable);
         model.addAttribute("shops", shopPage);
-        model.addAttribute("keyword", keyword);
-        model.addAttribute("currentPage", page);
+        model.addAttribute("keyword", searchKeyword);
+        model.addAttribute("currentPage", safePage);
         model.addAttribute("currentMenu", "shops");
         model.addAttribute("pageTitle", "매장 관리");
         return "admin/shops/list";

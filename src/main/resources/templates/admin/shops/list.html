@@ -34,7 +34,10 @@
                 </thead>
                 <tbody>
                 <tr th:each="shop : ${shops.content}" class="cursor-pointer"
-                    th:onclick="|location.href='/admin/shops/' + ${shop.id}|">
+                    tabindex="0" role="link"
+                    th:data-href="@{/admin/shops/{id}(id=${shop.id})}"
+                    onclick="window.location.href=this.dataset.href"
+                    onkeydown="if(event.key==='Enter') window.location.href=this.dataset.href">
                     <td th:text="${shop.id}"></td>
                     <td th:text="${shop.name}"></td>
                     <td th:text="${shop.addressName ?: '-'}"></td>

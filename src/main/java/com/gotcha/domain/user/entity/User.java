@@ -113,6 +113,7 @@ public class User extends BaseTimeEntity {
         this.email = null;
         this.profileImageUrl = null;
         this.socialRevokeToken = null;
+        this.adminPassword = null;
         this.status = UserStatus.DELETED;
         this.isDeleted = true;
     }

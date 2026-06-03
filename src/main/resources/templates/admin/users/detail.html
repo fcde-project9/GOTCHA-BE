@@ -103,5 +103,19 @@
         <a th:href="@{/admin/users}" class="btn btn-outline-secondary btn-sm">목록으로</a>
     </div>
 </div>
+<div layout:fragment="scripts">
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var statusSelect = document.getElementById('statusSelect');
+    var suspensionGroup = document.getElementById('suspensionGroup');
+    if (statusSelect && suspensionGroup) {
+        suspensionGroup.style.display = statusSelect.value === 'SUSPENDED' ? 'block' : 'none';
+        statusSelect.addEventListener('change', function() {
+            suspensionGroup.style.display = this.value === 'SUSPENDED' ? 'block' : 'none';
+        });
+    }
+});
+</script>
+</div>
 </body>
 </html>

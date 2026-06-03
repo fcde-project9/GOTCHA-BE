@@ -32,7 +32,10 @@
                 </thead>
                 <tbody>
                 <tr th:each="user : ${result.users()}" class="cursor-pointer"
-                    th:onclick="|location.href='/admin/users/' + ${user.id()}|">
+                    tabindex="0" role="link"
+                    th:data-href="@{/admin/users/{id}(id=${user.id()})}"
+                    onclick="window.location.href=this.dataset.href"
+                    onkeydown="if(event.key==='Enter') window.location.href=this.dataset.href">
                     <td th:text="${user.id()}"></td>
                     <td th:text="${user.nickname()}"></td>
                     <td th:text="${user.email() ?: '-'}"></td>

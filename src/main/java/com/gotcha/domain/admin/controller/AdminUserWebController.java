@@ -32,11 +32,13 @@ public class AdminUserWebController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             Model model) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 100);
+        Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "createdAt"));
         model.addAttribute("result", adminUserService.getUsers(status, pageable));
         model.addAttribute("statuses", UserStatus.values());
         model.addAttribute("currentStatus", status);
-        model.addAttribute("currentPage", page);
+        model.addAttribute("currentPage", safePage);
         model.addAttribute("currentMenu", "users");
         model.addAttribute("pageTitle", "사용자 관리");
         return "admin/users/list";

@@ -35,13 +35,15 @@ public class AdminReportWebController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             Model model) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 100);
+        Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "createdAt"));
         model.addAttribute("result", adminReportService.getReports(targetType, status, pageable));
         model.addAttribute("targetTypes", ReportTargetType.values());
         model.addAttribute("statuses", ReportStatus.values());
         model.addAttribute("currentTargetType", targetType);
         model.addAttribute("currentStatus", status);
-        model.addAttribute("currentPage", page);
+        model.addAttribute("currentPage", safePage);
         model.addAttribute("currentMenu", "reports");
         model.addAttribute("pageTitle", "신고 관리");
         return "admin/reports/list";

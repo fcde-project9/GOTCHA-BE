@@ -1,6 +1,6 @@
 package com.gotcha.domain.admin.dto;
 
-public record DashboardStats(
+public record DashboardStatsResponse(
         long totalUsers,
         long totalShops,
         long totalReviews,

@@ -17,7 +17,7 @@ public class AdminUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmailAndIsDeletedFalse(email)
-                .filter(User::isAdmin)
+                .filter(u -> u.isAdmin() && u.isActive())
                 .orElseThrow(() -> new UsernameNotFoundException("관리자 계정을 찾을 수 없습니다: " + email));
 
         if (user.getAdminPassword() == null) {

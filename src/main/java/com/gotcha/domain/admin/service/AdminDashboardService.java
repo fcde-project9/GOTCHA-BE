@@ -1,6 +1,6 @@
 package com.gotcha.domain.admin.service;
 
-import com.gotcha.domain.admin.dto.DashboardStats;
+import com.gotcha.domain.admin.dto.DashboardStatsResponse;
 import com.gotcha.domain.post.repository.PostRepository;
 import com.gotcha.domain.report.entity.ReportStatus;
 import com.gotcha.domain.report.repository.ReportRepository;
@@ -24,7 +24,7 @@ public class AdminDashboardService {
     private final PostRepository postRepository;
     private final ReportRepository reportRepository;
 
-    public DashboardStats getStats() {
+    public DashboardStatsResponse getStats() {
         long totalUsers = userRepository.findAllWithStatusFilter(null, PageRequest.of(0, 1)).getTotalElements();
         long activeUsers = userRepository.findAllWithStatusFilter(UserStatus.ACTIVE, PageRequest.of(0, 1)).getTotalElements();
         long suspendedUsers = userRepository.findAllWithStatusFilter(UserStatus.SUSPENDED, PageRequest.of(0, 1)).getTotalElements();
@@ -34,7 +34,7 @@ public class AdminDashboardService {
         long totalPosts = postRepository.count();
         long pendingReports = reportRepository.countWithFilters(null, ReportStatus.PENDING);
 
-        return new DashboardStats(
+        return new DashboardStatsResponse(
                 totalUsers, totalShops, totalReviews, totalPosts,
                 pendingReports, activeUsers, suspendedUsers, bannedUsers
         );

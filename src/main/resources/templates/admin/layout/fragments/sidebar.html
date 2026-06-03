@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 <nav th:fragment="sidebar" class="sidebar d-flex flex-column p-3">
-    <a href="/admin/dashboard" class="d-flex align-items-center mb-4 text-decoration-none">
+    <a th:href="@{/admin/dashboard}" class="d-flex align-items-center mb-4 text-decoration-none">
         <span class="fs-5 fw-bold text-white">GOTCHA Admin</span>
     </a>
     <ul class="nav nav-pills flex-column mb-auto">

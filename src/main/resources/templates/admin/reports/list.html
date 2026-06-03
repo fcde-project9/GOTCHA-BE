@@ -36,7 +36,10 @@
                 </thead>
                 <tbody>
                 <tr th:each="report : ${result.reports()}" class="cursor-pointer"
-                    th:onclick="|location.href='/admin/reports/' + ${report.id()}|">
+                    tabindex="0" role="link"
+                    th:data-href="@{/admin/reports/{id}(id=${report.id()})}"
+                    onclick="window.location.href=this.dataset.href"
+                    onkeydown="if(event.key==='Enter') window.location.href=this.dataset.href">
                     <td th:text="${report.id()}"></td>
                     <td th:text="${report.targetType()}"></td>
                     <td th:text="${report.targetId()}"></td>
