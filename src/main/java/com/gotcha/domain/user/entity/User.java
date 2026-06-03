@@ -65,6 +65,9 @@ public class User extends BaseTimeEntity {
     @Column(name = "social_revoke_token", columnDefinition = "TEXT")
     private String socialRevokeToken;
 
+    @Column(name = "admin_password")
+    private String adminPassword;
+
     @Builder
     public User(SocialType socialType, String socialId, String nickname,
                 String email, String profileImageUrl, UserType userType) {
