@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout/default}">
+<head>
+    <title>신고 관리</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+            <h6 class="mb-0">신고 목록</h6>
+            <form class="d-flex gap-2" method="get" th:action="@{/admin/reports}">
+                <select name="targetType" class="form-select form-select-sm" style="width: auto;" onchange="this.form.submit()">
+                    <option value="" th:selected="${currentTargetType == null}">전체 유형</option>
+                    <option th:each="t : ${targetTypes}" th:value="${t}" th:text="${t}" th:selected="${t == currentTargetType}"></option>
+                </select>
+                <select name="status" class="form-select form-select-sm" style="width: auto;" onchange="this.form.submit()">
+                    <option value="" th:selected="${currentStatus == null}">전체 상태</option>
+                    <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}" th:selected="${s == currentStatus}"></option>
+                </select>
+            </form>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>대상 유형</th>
+                    <th>대상 ID</th>
+                    <th>신고 사유</th>
+                    <th>신고자</th>
+                    <th>상태</th>
+                    <th>신고일</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="report : ${result.reports()}" class="cursor-pointer"
+                    tabindex="0" role="link"
+                    th:data-href="@{/admin/reports/{id}(id=${report.id()})}"
+                    onclick="window.location.href=this.dataset.href"
+                    onkeydown="if(event.key==='Enter') window.location.href=this.dataset.href">
+                    <td th:text="${report.id()}"></td>
+                    <td th:text="${report.targetType()}"></td>
+                    <td th:text="${report.targetId()}"></td>
+                    <td th:text="${report.reasonDescription()}"></td>
+                    <td th:text="${report.reporterNickname()}"></td>
+                    <td>
+                        <span class="badge"
+                              th:classappend="'badge-status-' + ${#strings.toLowerCase(report.status().name())}"
+                              th:text="${report.statusDescription()}"></span>
+                    </td>
+                    <td th:text="${#temporals.format(report.createdAt(), 'yyyy-MM-dd HH:mm')}"></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(result.reports())}">
+                    <td colspan="7" class="text-center text-muted py-4">신고 내역이 없습니다.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer bg-white" th:if="${result.totalPages() > 1}">
+            <nav>
+                <ul class="pagination pagination-sm justify-content-center mb-0">
+                    <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                        <a class="page-link" th:href="@{/admin/reports(targetType=${currentTargetType}, status=${currentStatus}, page=${currentPage - 1})}">이전</a>
+                    </li>
+                    <li th:each="i : ${#numbers.sequence(0, result.totalPages() - 1)}"
+                        class="page-item" th:classappend="${i == currentPage} ? 'active'">
+                        <a class="page-link" th:href="@{/admin/reports(targetType=${currentTargetType}, status=${currentStatus}, page=${i})}" th:text="${i + 1}"></a>
+                    </li>
+                    <li class="page-item" th:classappend="${currentPage >= result.totalPages() - 1} ? 'disabled'">
+                        <a class="page-link" th:href="@{/admin/reports(targetType=${currentTargetType}, status=${currentStatus}, page=${currentPage + 1})}">다음</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+</body>
+</html>

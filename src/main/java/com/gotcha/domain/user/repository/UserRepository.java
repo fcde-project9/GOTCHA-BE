@@ -20,6 +20,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByNickname(String nickname);
 
+    Optional<User> findByEmailAndIsDeletedFalse(String email);
+
     @Query("SELECT u FROM User u WHERE (:status IS NULL OR u.status = :status) AND u.isDeleted = false")
     Page<User> findAllWithStatusFilter(@Param("status") UserStatus status, Pageable pageable);
 }

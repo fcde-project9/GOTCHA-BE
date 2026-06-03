@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout/default}">
+<head>
+    <title>사용자 관리</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+            <h6 class="mb-0">사용자 목록</h6>
+            <form class="d-flex gap-2" method="get" th:action="@{/admin/users}">
+                <select name="status" class="form-select form-select-sm" style="width: auto;" onchange="this.form.submit()">
+                    <option value="" th:selected="${currentStatus == null}">전체 상태</option>
+                    <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}" th:selected="${s == currentStatus}"></option>
+                </select>
+            </form>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>닉네임</th>
+                    <th>이메일</th>
+                    <th>소셜</th>
+                    <th>상태</th>
+                    <th>마지막 로그인</th>
+                    <th>가입일</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="user : ${result.users()}" class="cursor-pointer"
+                    tabindex="0" role="link"
+                    th:data-href="@{/admin/users/{id}(id=${user.id()})}"
+                    onclick="window.location.href=this.dataset.href"
+                    onkeydown="if(event.key==='Enter') window.location.href=this.dataset.href">
+                    <td th:text="${user.id()}"></td>
+                    <td th:text="${user.nickname()}"></td>
+                    <td th:text="${user.email() ?: '-'}"></td>
+                    <td th:text="${user.socialType() ?: '-'}"></td>
+                    <td>
+                        <span class="badge"
+                              th:classappend="'badge-status-' + ${#strings.toLowerCase(user.status().name())}"
+                              th:text="${user.status()}"></span>
+                    </td>
+                    <td th:text="${user.lastLoginAt() != null} ? ${#temporals.format(user.lastLoginAt(), 'yyyy-MM-dd HH:mm')} : '-'"></td>
+                    <td th:text="${#temporals.format(user.createdAt(), 'yyyy-MM-dd')}"></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(result.users())}">
+                    <td colspan="7" class="text-center text-muted py-4">사용자가 없습니다.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer bg-white" th:if="${result.totalPages() > 1}">
+            <nav>
+                <ul class="pagination pagination-sm justify-content-center mb-0">
+                    <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                        <a class="page-link" th:href="@{/admin/users(status=${currentStatus}, page=${currentPage - 1})}">이전</a>
+                    </li>
+                    <li th:each="i : ${#numbers.sequence(0, result.totalPages() - 1)}"
+                        class="page-item" th:classappend="${i == currentPage} ? 'active'">
+                        <a class="page-link" th:href="@{/admin/users(status=${currentStatus}, page=${i})}" th:text="${i + 1}"></a>
+                    </li>
+                    <li class="page-item" th:classappend="${currentPage >= result.totalPages() - 1} ? 'disabled'">
+                        <a class="page-link" th:href="@{/admin/users(status=${currentStatus}, page=${currentPage + 1})}">다음</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+</body>
+</html>
