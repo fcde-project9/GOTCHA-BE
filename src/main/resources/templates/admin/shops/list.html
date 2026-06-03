@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout/default}">
+<head>
+    <title>매장 관리</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div th:if="${message}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${message}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+            <h6 class="mb-0">매장 목록</h6>
+            <form class="d-flex gap-2" method="get" th:action="@{/admin/shops}">
+                <input type="text" name="keyword" class="form-control form-control-sm" style="width: 200px;"
+                       placeholder="매장명 검색" th:value="${keyword}">
+                <button type="submit" class="btn btn-sm btn-outline-primary">검색</button>
+            </form>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>매장명</th>
+                    <th>주소</th>
+                    <th>등록자</th>
+                    <th>등록일</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="shop : ${shops.content}" class="cursor-pointer"
+                    th:onclick="|location.href='/admin/shops/' + ${shop.id}|">
+                    <td th:text="${shop.id}"></td>
+                    <td th:text="${shop.name}"></td>
+                    <td th:text="${shop.addressName ?: '-'}"></td>
+                    <td th:text="${shop.createdBy != null} ? ${shop.createdBy.nickname} : '비회원'"></td>
+                    <td th:text="${#temporals.format(shop.createdAt, 'yyyy-MM-dd')}"></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(shops.content)}">
+                    <td colspan="5" class="text-center text-muted py-4">매장이 없습니다.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer bg-white" th:if="${shops.totalPages > 1}">
+            <nav>
+                <ul class="pagination pagination-sm justify-content-center mb-0">
+                    <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                        <a class="page-link" th:href="@{/admin/shops(keyword=${keyword}, page=${currentPage - 1})}">이전</a>
+                    </li>
+                    <li th:each="i : ${#numbers.sequence(0, shops.totalPages - 1)}"
+                        class="page-item" th:classappend="${i == currentPage} ? 'active'">
+                        <a class="page-link" th:href="@{/admin/shops(keyword=${keyword}, page=${i})}" th:text="${i + 1}"></a>
+                    </li>
+                    <li class="page-item" th:classappend="${currentPage >= shops.totalPages - 1} ? 'disabled'">
+                        <a class="page-link" th:href="@{/admin/shops(keyword=${keyword}, page=${currentPage + 1})}">다음</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+</body>
+</html>

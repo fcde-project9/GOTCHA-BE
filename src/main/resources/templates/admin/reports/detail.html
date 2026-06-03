@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout/default}">
+<head>
+    <title>신고 상세</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div th:if="${message}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${message}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0">신고 정보</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-3 text-muted">신고 ID</div>
+                        <div class="col-md-9" th:text="${report.id()}"></div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 text-muted">상태</div>
+                        <div class="col-md-9">
+                            <span class="badge"
+                                  th:classappend="'badge-status-' + ${#strings.toLowerCase(report.status().name())}"
+                                  th:text="${report.statusDescription()}"></span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 text-muted">대상 유형</div>
+                        <div class="col-md-9" th:text="${report.targetType()}"></div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 text-muted">대상 ID</div>
+                        <div class="col-md-9" th:text="${report.targetId()}"></div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 text-muted">신고 사유</div>
+                        <div class="col-md-9" th:text="${report.reasonDescription()}"></div>
+                    </div>
+                    <div class="row mb-3" th:if="${report.detail()}">
+                        <div class="col-md-3 text-muted">상세 내용</div>
+                        <div class="col-md-9" th:text="${report.detail()}"></div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 text-muted">신고자</div>
+                        <div class="col-md-9">
+                            <a th:href="@{/admin/users/{id}(id=${report.reporterId()})}" th:text="${report.reporterNickname()}"></a>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 text-muted">신고일</div>
+                        <div class="col-md-9" th:text="${#temporals.format(report.createdAt(), 'yyyy-MM-dd HH:mm')}"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4" th:if="${report.status().name() == 'PENDING'}">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0">처리</h6>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/admin/reports/{id}/status(id=${report.id()})}" method="post" id="reportForm">
+                        <div class="mb-3">
+                            <label class="form-label">처리 결과</label>
+                            <select name="status" id="reportStatusSelect" class="form-select">
+                                <option value="ACCEPTED">승인 (제재 가능)</option>
+                                <option value="REJECTED">반려</option>
+                            </select>
+                        </div>
+
+                        <div id="sanctionGroup">
+                            <div class="mb-3">
+                                <label class="form-label">제재 (선택)</label>
+                                <select name="userStatus" id="sanctionSelect" class="form-select">
+                                    <option value="">제재 없음</option>
+                                    <option value="SUSPENDED">정지</option>
+                                    <option value="BANNED">영구 차단</option>
+                                </select>
+                            </div>
+                            <div class="mb-3" id="reportSuspensionGroup" style="display: none;">
+                                <label class="form-label">정지 기간</label>
+                                <select name="suspensionHours" class="form-select">
+                                    <option th:each="h : ${suspensionHours}" th:value="${h}"
+                                            th:text="${h < 24} ? ${h + '시간'} : ${(h / 24) + '일 (' + h + '시간)'}"></option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100"
+                                data-confirm="신고를 처리하시겠습니까?">처리</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a th:href="@{/admin/reports}" class="btn btn-outline-secondary btn-sm">목록으로</a>
+    </div>
+</div>
+<div layout:fragment="scripts">
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var reportStatus = document.getElementById('reportStatusSelect');
+    var sanctionGroup = document.getElementById('sanctionGroup');
+    var sanctionSelect = document.getElementById('sanctionSelect');
+    var suspensionGroup = document.getElementById('reportSuspensionGroup');
+    if (reportStatus && sanctionGroup) {
+        reportStatus.addEventListener('change', function() {
+            sanctionGroup.style.display = this.value === 'ACCEPTED' ? 'block' : 'none';
+        });
+    }
+    if (sanctionSelect && suspensionGroup) {
+        sanctionSelect.addEventListener('change', function() {
+            suspensionGroup.style.display = this.value === 'SUSPENDED' ? 'block' : 'none';
+        });
+    }
+});
+</script>
+</div>
+</body>
+</html>
