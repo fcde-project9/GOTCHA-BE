@@ -5,9 +5,13 @@ import com.sksamuel.scrimage.webp.WebpWriter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -18,6 +22,7 @@ public class ImageProcessingService {
     private static final int THUMB_DIMENSION = 400;
     private static final int MAIN_QUALITY = 80;
     private static final int THUMB_QUALITY = 75;
+    private static final long MAX_PIXELS = (long) MAX_DIMENSION * MAX_DIMENSION * 4;
 
     public record ProcessedImageResult(
             byte[] mainImageBytes,
@@ -35,6 +40,10 @@ public class ImageProcessingService {
                 if (readableBytes == null) {
                     return null;
                 }
+            }
+
+            if (isImageTooLarge(readableBytes)) {
+                return null;
             }
 
             ImmutableImage image = ImmutableImage.loader().fromBytes(readableBytes);
@@ -95,6 +104,30 @@ public class ImageProcessingService {
         } finally {
             deleteTempFile(heicFile);
             deleteTempFile(jpegFile);
+        }
+    }
+
+    private boolean isImageTooLarge(byte[] imageBytes) {
+        try (var iis = ImageIO.createImageInputStream(new ByteArrayInputStream(imageBytes))) {
+            Iterator<ImageReader> readers = ImageIO.getImageReaders(iis);
+            if (!readers.hasNext()) return false;
+            ImageReader reader = readers.next();
+            try {
+                reader.setInput(iis, true, true);
+                int width = reader.getWidth(0);
+                int height = reader.getHeight(0);
+                long pixels = (long) width * height;
+                if (pixels > MAX_PIXELS) {
+                    log.warn("Image too large: {}x{} ({} pixels), rejecting", width, height, pixels);
+                    return true;
+                }
+                return false;
+            } finally {
+                reader.dispose();
+            }
+        } catch (IOException e) {
+            log.debug("Failed to read image header, proceeding with decode", e);
+            return false;
         }
     }
 
