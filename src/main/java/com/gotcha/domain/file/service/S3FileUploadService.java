@@ -79,6 +79,7 @@ public class S3FileUploadService implements FileStorageService {
                     .bucket(bucketName)
                     .key(key)
                     .contentType(file.getContentType())
+                    .cacheControl("public, max-age=31536000, immutable")
                     .build();
 
             s3Client.putObject(putObjectRequest, RequestBody.fromBytes(file.getBytes()));
