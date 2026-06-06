@@ -94,10 +94,14 @@ public class S3FileUploadService implements FileStorageService {
 
             String thumbnailUrl = null;
             if (thumbBytes != null) {
-                String thumbKey = normalizedPrefix + folder + "/" + uuid + "_thumb" + extension;
-                uploadToS3(thumbKey, thumbBytes, contentType);
-                thumbnailUrl = buildPublicUrl(thumbKey);
-                log.info("Thumbnail uploaded to S3. URL: {}", thumbnailUrl);
+                try {
+                    String thumbKey = normalizedPrefix + folder + "/" + uuid + "_thumb" + extension;
+                    uploadToS3(thumbKey, thumbBytes, contentType);
+                    thumbnailUrl = buildPublicUrl(thumbKey);
+                    log.info("Thumbnail uploaded to S3. URL: {}", thumbnailUrl);
+                } catch (Exception e) {
+                    log.warn("Thumbnail upload failed, proceeding without thumbnail: {}", e.getMessage());
+                }
             }
 
             return FileUploadResponse.of(
@@ -131,14 +135,10 @@ public class S3FileUploadService implements FileStorageService {
             deleteFromS3(key);
             log.info("File deleted from S3. Bucket: {}, Key: {}", bucketName, key);
 
-            try {
-                String thumbKey = deriveThumbKey(key);
-                if (thumbKey != null) {
-                    deleteFromS3(thumbKey);
-                    log.debug("Thumbnail deleted from S3. Key: {}", thumbKey);
-                }
-            } catch (Exception e) {
-                log.warn("Thumbnail deletion failed (non-critical). URL: {}", fileUrl);
+            String thumbKey = deriveThumbKey(key);
+            if (thumbKey != null) {
+                deleteFromS3(thumbKey);
+                log.debug("Thumbnail deleted from S3. Key: {}", thumbKey);
             }
 
         } catch (S3Exception e) {

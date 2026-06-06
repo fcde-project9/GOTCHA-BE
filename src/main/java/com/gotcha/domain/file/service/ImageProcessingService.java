@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -71,10 +72,17 @@ public class ImageProcessingService {
             Files.write(heicFile, heicBytes);
 
             Process process = new ProcessBuilder("heif-convert", heicFile.toString(), jpegFile.toString())
-                    .redirectErrorStream(true)
+                    .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+                    .redirectError(ProcessBuilder.Redirect.DISCARD)
                     .start();
 
-            int exitCode = process.waitFor();
+            if (!process.waitFor(30, TimeUnit.SECONDS)) {
+                process.destroyForcibly();
+                log.warn("heif-convert timed out");
+                return null;
+            }
+
+            int exitCode = process.exitValue();
             if (exitCode != 0) {
                 log.warn("heif-convert failed with exit code {}", exitCode);
                 return null;
