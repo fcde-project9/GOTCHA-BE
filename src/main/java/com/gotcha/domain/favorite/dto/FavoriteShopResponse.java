@@ -1,6 +1,7 @@
 package com.gotcha.domain.favorite.dto;
 
 import com.gotcha.domain.favorite.entity.Favorite;
+import com.gotcha.domain.file.util.ImageUrlUtils;
 import com.gotcha.domain.shop.entity.Shop;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -32,7 +33,7 @@ public record FavoriteShopResponse(
             shop.getId(),
             shop.getName(),
             shop.getAddressName(),
-            shop.getMainImageUrl(),
+            ImageUrlUtils.toThumbnailUrl(shop.getMainImageUrl()),
             openStatus,
             favorite.getCreatedAt()
         );

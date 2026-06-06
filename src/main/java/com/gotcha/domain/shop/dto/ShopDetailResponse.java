@@ -1,5 +1,6 @@
 package com.gotcha.domain.shop.dto;
 
+import com.gotcha.domain.file.util.ImageUrlUtils;
 import com.gotcha.domain.review.dto.ReviewResponse;
 import com.gotcha.domain.shop.entity.Shop;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -90,7 +91,9 @@ public record ShopDetailResponse(
                 reviews != null ? reviews : Collections.emptyList(),
                 reviewCount,
                 totalReviewImageCount,
-                recentReviewImages != null ? recentReviewImages : Collections.emptyList()
+                recentReviewImages != null
+                        ? recentReviewImages.stream().map(ImageUrlUtils::toThumbnailUrl).toList()
+                        : Collections.emptyList()
         );
     }
 
