@@ -2,6 +2,7 @@ package com.gotcha.domain.file.service;
 
 import com.gotcha.domain.file.dto.FileUploadResponse;
 import com.gotcha.domain.file.exception.FileException;
+import com.gotcha.domain.file.service.ImageProcessingService.ProcessedImageResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,9 +19,6 @@ import java.io.IOException;
 import java.util.Set;
 import java.util.UUID;
 
-/**
- * AWS S3 파일 업로드 서비스 (local, dev, prod 환경)
- */
 @Slf4j
 @Service
 @Profile({"local", "dev", "prod"})
@@ -44,6 +42,7 @@ public class S3FileUploadService implements FileStorageService {
     );
 
     private final S3Client s3Client;
+    private final ImageProcessingService imageProcessingService;
 
     @Value("${aws.s3.bucket-name}")
     private String bucketName;
@@ -57,44 +56,60 @@ public class S3FileUploadService implements FileStorageService {
     @Value("${aws.cloudfront.domain:}")
     private String cloudfrontDomain;
 
-    /**
-     * 이미지 파일을 S3에 업로드
-     */
     @Override
     public FileUploadResponse uploadImage(MultipartFile file, String folder) {
         validateFile(file);
         validateFolder(folder);
 
-        String filename = generateFilename(file.getOriginalFilename());
-        // Ensure prefix ends with "/" for proper path construction, handle null/empty prefix
+        String uuid = UUID.randomUUID().toString();
         String normalizedPrefix = (prefix == null || prefix.isBlank())
                 ? ""
                 : (prefix.endsWith("/") ? prefix : prefix + "/");
-        String key = normalizedPrefix + folder + "/" + filename;
-
-        log.info("Uploading file to S3. Bucket: {}, Key: {}, ContentType: {}", bucketName, key, file.getContentType());
 
         try {
-            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                    .bucket(bucketName)
-                    .key(key)
-                    .contentType(file.getContentType())
-                    .cacheControl("public, max-age=31536000, immutable")
-                    .build();
+            byte[] originalBytes = file.getBytes();
+            ProcessedImageResult processed = imageProcessingService.process(originalBytes, file.getContentType());
 
-            s3Client.putObject(putObjectRequest, RequestBody.fromBytes(file.getBytes()));
+            byte[] mainBytes;
+            String contentType;
+            String extension;
+            byte[] thumbBytes = null;
 
-            String publicUrl = (cloudfrontDomain != null && !cloudfrontDomain.isBlank())
-                    ? String.format("https://%s/%s", cloudfrontDomain, key)
-                    : String.format("https://%s.s3.%s.amazonaws.com/%s", bucketName, region, key);
+            if (processed != null) {
+                mainBytes = processed.mainImageBytes();
+                contentType = processed.contentType();
+                extension = processed.extension();
+                thumbBytes = processed.thumbnailBytes();
+            } else {
+                mainBytes = originalBytes;
+                contentType = file.getContentType();
+                extension = extractExtension(file.getOriginalFilename());
+            }
 
-            log.info("File uploaded successfully to S3. URL: {}, Key: {}", publicUrl, key);
+            String mainKey = normalizedPrefix + folder + "/" + uuid + extension;
+            uploadToS3(mainKey, mainBytes, contentType);
+            String mainUrl = buildPublicUrl(mainKey);
+
+            log.info("File uploaded to S3. URL: {}, Key: {}", mainUrl, mainKey);
+
+            String thumbnailUrl = null;
+            if (thumbBytes != null) {
+                try {
+                    String thumbKey = normalizedPrefix + folder + "/" + uuid + "_thumb" + extension;
+                    uploadToS3(thumbKey, thumbBytes, contentType);
+                    thumbnailUrl = buildPublicUrl(thumbKey);
+                    log.info("Thumbnail uploaded to S3. URL: {}", thumbnailUrl);
+                } catch (Exception e) {
+                    log.warn("Thumbnail upload failed, proceeding without thumbnail: {}", e.getMessage());
+                }
+            }
 
             return FileUploadResponse.of(
-                    publicUrl,
+                    mainUrl,
                     file.getOriginalFilename(),
-                    file.getSize(),
-                    file.getContentType()
+                    (long) mainBytes.length,
+                    contentType,
+                    thumbnailUrl
             );
 
         } catch (IOException e) {
@@ -109,27 +124,22 @@ public class S3FileUploadService implements FileStorageService {
         }
     }
 
-    /**
-     * S3에서 파일 삭제
-     */
     @Override
     public void deleteFile(String fileUrl) {
         try {
             log.info("Attempting to delete file from S3. URL: {}", fileUrl);
-            log.debug("S3 Config - Bucket: {}, Region: {}, Prefix: {}", bucketName, region, prefix);
 
             String key = extractKey(fileUrl);
             log.info("Extracted key for deletion: {}", key);
 
-            DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
-                    .bucket(bucketName)
-                    .key(key)
-                    .build();
+            deleteFromS3(key);
+            log.info("File deleted from S3. Bucket: {}, Key: {}", bucketName, key);
 
-            s3Client.deleteObject(deleteObjectRequest);
-
-            // S3 deleteObject는 멱등성(idempotent) 연산: 객체가 없어도 성공 처리됨
-            log.info("File deleted successfully from S3. Bucket: {}, Key: {}", bucketName, key);
+            String thumbKey = deriveThumbKey(key);
+            if (thumbKey != null) {
+                deleteFromS3(thumbKey);
+                log.debug("Thumbnail deleted from S3. Key: {}", thumbKey);
+            }
 
         } catch (S3Exception e) {
             log.error("S3 delete failed for URL: {}. Error: {}", fileUrl, e.awsErrorDetails().errorMessage(), e);
@@ -140,28 +150,59 @@ public class S3FileUploadService implements FileStorageService {
         }
     }
 
-    /**
-     * 폴더명 화이트리스트 검증 (Path Traversal 공격 방지)
-     */
+    private void uploadToS3(String key, byte[] bytes, String contentType) {
+        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                .bucket(bucketName)
+                .key(key)
+                .contentType(contentType)
+                .cacheControl("public, max-age=31536000, immutable")
+                .build();
+        s3Client.putObject(putObjectRequest, RequestBody.fromBytes(bytes));
+    }
+
+    private void deleteFromS3(String key) {
+        DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
+                .bucket(bucketName)
+                .key(key)
+                .build();
+        s3Client.deleteObject(deleteObjectRequest);
+    }
+
+    private String buildPublicUrl(String key) {
+        return (cloudfrontDomain != null && !cloudfrontDomain.isBlank())
+                ? String.format("https://%s/%s", cloudfrontDomain, key)
+                : String.format("https://%s.s3.%s.amazonaws.com/%s", bucketName, region, key);
+    }
+
+    private String deriveThumbKey(String key) {
+        int dotIndex = key.lastIndexOf('.');
+        if (dotIndex > 0) {
+            return key.substring(0, dotIndex) + "_thumb" + key.substring(dotIndex);
+        }
+        return null;
+    }
+
+    private String extractExtension(String filename) {
+        if (filename != null && filename.contains(".")) {
+            return filename.substring(filename.lastIndexOf("."));
+        }
+        return "";
+    }
+
     private void validateFolder(String folder) {
         if (folder == null || folder.isBlank()) {
             throw FileException.uploadFailed("Folder name is required");
         }
 
-        // 경로 조작 문자 차단
         if (folder.contains("..") || folder.contains("/") || folder.contains("\\")) {
             throw FileException.uploadFailed("Invalid folder name: path traversal attempt detected");
         }
 
-        // 화이트리스트 검증
         if (!ALLOWED_FOLDERS.contains(folder.toLowerCase())) {
             throw FileException.uploadFailed("Invalid folder name. Allowed folders: " + ALLOWED_FOLDERS);
         }
     }
 
-    /**
-     * 파일 유효성 검증 (크기, 타입)
-     */
     private void validateFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw FileException.empty();
@@ -177,22 +218,6 @@ public class S3FileUploadService implements FileStorageService {
         }
     }
 
-    /**
-     * UUID 기반 고유 파일명 생성
-     */
-    private String generateFilename(String originalFilename) {
-        String extension = "";
-        if (originalFilename != null && originalFilename.contains(".")) {
-            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-        }
-        return UUID.randomUUID() + extension;
-    }
-
-    /**
-     * URL에서 S3 key 추출 (CloudFront URL과 S3 URL 모두 지원)
-     * CloudFront: https://{cloudfrontDomain}/{key}
-     * S3 (legacy): https://{bucket}.s3.{region}.amazonaws.com/{key}
-     */
     private String extractKey(String fileUrl) {
         if (cloudfrontDomain != null && !cloudfrontDomain.isBlank()) {
             String cfPrefix = String.format("https://%s/", cloudfrontDomain);

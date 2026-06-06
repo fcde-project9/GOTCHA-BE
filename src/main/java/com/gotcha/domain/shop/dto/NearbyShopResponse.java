@@ -1,5 +1,6 @@
 package com.gotcha.domain.shop.dto;
 
+import com.gotcha.domain.file.util.ImageUrlUtils;
 import com.gotcha.domain.shop.entity.Shop;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -14,7 +15,7 @@ public record NearbyShopResponse(
     public static NearbyShopResponse from(Shop shop) {
         return new NearbyShopResponse(
                 shop.getName(),
-                shop.getMainImageUrl()
+                ImageUrlUtils.toThumbnailUrl(shop.getMainImageUrl())
         );
     }
 }

@@ -1,5 +1,6 @@
 package com.gotcha.domain.shop.dto;
 
+import com.gotcha.domain.file.util.ImageUrlUtils;
 import com.gotcha.domain.shop.entity.Shop;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -58,7 +59,7 @@ public record ShopResponse(
                 shop.getAddressName(),
                 shop.getLatitude(),
                 shop.getLongitude(),
-                shop.getMainImageUrl(),
+                ImageUrlUtils.toThumbnailUrl(shop.getMainImageUrl()),
                 shop.getLocationHint(),
                 shop.getOpenTime(),
                 shop.getRegion1DepthName(),
