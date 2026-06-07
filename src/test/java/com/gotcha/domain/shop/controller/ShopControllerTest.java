@@ -3,7 +3,6 @@ package com.gotcha.domain.shop.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -70,8 +69,8 @@ class ShopControllerTest {
     class SaveShop {
 
         @Test
-        @DisplayName("비회원도 가게를 생성할 수 있다 (createdBy = null)")
-        void shouldAllowNonMemberToCreateShop() throws Exception {
+        @DisplayName("비로그인 시 가게 생성이 거부된다")
+        void shouldRejectNonMemberShopCreation() throws Exception {
             // given
             CreateShopRequest request = new CreateShopRequest(
                     "테스트 가게",
@@ -80,18 +79,6 @@ class ShopControllerTest {
                     Map.of("Mon", "10:00-22:00")
             );
 
-            Shop shop = createShop(1L, "테스트 가게", null);
-
-            given(shopService.createShop(
-                    anyString(),
-                    anyDouble(),
-                    anyDouble(),
-                    anyString(),
-                    anyString(),
-                    any(),
-                    isNull()
-            )).willReturn(shop);
-
             // when & then
             mockMvc.perform(post("/api/shops/save")
                             .param("latitude", "37.5172")
@@ -99,10 +86,7 @@ class ShopControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
-                    .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.success").value(true))
-                    .andExpect(jsonPath("$.data.id").value(1))
-                    .andExpect(jsonPath("$.data.name").value("테스트 가게"));
+                    .andExpect(status().isUnauthorized());
         }
 
         @Test

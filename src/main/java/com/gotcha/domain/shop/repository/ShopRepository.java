@@ -49,6 +49,12 @@ public interface ShopRepository extends JpaRepository<Shop, Long> {
     @Query("SELECT s FROM Shop s WHERE LOWER(s.name) LIKE LOWER(CONCAT('%', :keyword, '%')) ORDER BY s.name")
     List<Shop> searchByName(@Param("keyword") String keyword, Pageable pageable);
 
+    @Query(value = "SELECT s FROM Shop s LEFT JOIN FETCH s.createdBy " +
+           "WHERE (:keyword IS NULL OR LOWER(s.name) LIKE LOWER(CONCAT('%', :keyword, '%')))",
+           countQuery = "SELECT COUNT(s) FROM Shop s " +
+           "WHERE (:keyword IS NULL OR LOWER(s.name) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<Shop> findAllWithKeywordFilter(@Param("keyword") String keyword, Pageable pageable);
+
     @Query("SELECT new com.gotcha.domain.shop.dto.DistrictClusterResponse("
             + "s.region1DepthName, s.region2DepthName, COUNT(s), AVG(s.latitude), AVG(s.longitude)) "
             + "FROM Shop s "

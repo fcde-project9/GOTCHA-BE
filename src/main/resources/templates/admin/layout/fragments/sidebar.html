@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<nav th:fragment="sidebar" class="sidebar d-flex flex-column p-3">
+    <a th:href="@{/admin/dashboard}" class="d-flex align-items-center mb-4 text-decoration-none">
+        <span class="fs-5 fw-bold text-white">GOTCHA Admin</span>
+    </a>
+    <ul class="nav nav-pills flex-column mb-auto">
+        <li class="nav-item">
+            <a th:href="@{/admin/dashboard}" class="nav-link" th:classappend="${#strings.equals(currentMenu, 'dashboard')} ? 'active' : ''">
+                <i class="bi bi-speedometer2 me-2"></i>대시보드
+            </a>
+        </li>
+        <li class="nav-item">
+            <a th:href="@{/admin/users}" class="nav-link" th:classappend="${#strings.equals(currentMenu, 'users')} ? 'active' : ''">
+                <i class="bi bi-people me-2"></i>사용자 관리
+            </a>
+        </li>
+        <li class="nav-item">
+            <a th:href="@{/admin/reports}" class="nav-link" th:classappend="${#strings.equals(currentMenu, 'reports')} ? 'active' : ''">
+                <i class="bi bi-flag me-2"></i>신고 관리
+            </a>
+        </li>
+        <li class="nav-item">
+            <a th:href="@{/admin/shops}" class="nav-link" th:classappend="${#strings.equals(currentMenu, 'shops')} ? 'active' : ''">
+                <i class="bi bi-shop me-2"></i>매장 관리
+            </a>
+        </li>
+    </ul>
+</nav>
+</body>
+</html>

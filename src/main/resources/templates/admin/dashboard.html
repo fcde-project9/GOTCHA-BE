@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout/default}">
+<head>
+    <title>대시보드</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card stat-card shadow-sm">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">전체 사용자</div>
+                        <div class="fs-4 fw-bold" th:text="${stats.totalUsers}">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card shadow-sm">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="stat-icon bg-success bg-opacity-10 text-success">
+                        <i class="bi bi-shop"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">전체 매장</div>
+                        <div class="fs-4 fw-bold" th:text="${stats.totalShops}">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card shadow-sm">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="stat-icon bg-info bg-opacity-10 text-info">
+                        <i class="bi bi-chat-square-text"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">전체 리뷰</div>
+                        <div class="fs-4 fw-bold" th:text="${stats.totalReviews}">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card shadow-sm">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="stat-icon bg-secondary bg-opacity-10 text-secondary">
+                        <i class="bi bi-file-earmark-text"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">전체 게시글</div>
+                        <div class="fs-4 fw-bold" th:text="${stats.totalPosts}">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-3">
+            <div class="card stat-card shadow-sm border-warning">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                        <i class="bi bi-flag-fill"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">대기 중 신고</div>
+                        <div class="fs-4 fw-bold" th:text="${stats.pendingReports}">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card shadow-sm">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="stat-icon bg-success bg-opacity-10 text-success">
+                        <i class="bi bi-person-check"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">활성 사용자</div>
+                        <div class="fs-4 fw-bold" th:text="${stats.activeUsers}">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card shadow-sm">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                        <i class="bi bi-person-dash"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">정지 사용자</div>
+                        <div class="fs-4 fw-bold" th:text="${stats.suspendedUsers}">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card shadow-sm">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="stat-icon bg-danger bg-opacity-10 text-danger">
+                        <i class="bi bi-person-x"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">차단 사용자</div>
+                        <div class="fs-4 fw-bold" th:text="${stats.bannedUsers}">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

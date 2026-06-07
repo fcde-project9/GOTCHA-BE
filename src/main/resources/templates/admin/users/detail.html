@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout/default}">
+<head>
+    <title>사용자 상세</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div th:if="${message}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${message}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0">사용자 정보</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-3 text-muted">ID</div>
+                        <div class="col-md-9" th:text="${user.id()}"></div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 text-muted">닉네임</div>
+                        <div class="col-md-9" th:text="${user.nickname()}"></div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 text-muted">이메일</div>
+                        <div class="col-md-9" th:text="${user.email() ?: '-'}"></div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 text-muted">프로필 이미지</div>
+                        <div class="col-md-9">
+                            <img th:if="${user.profileImageUrl()}" th:src="${user.profileImageUrl()}"
+                                 class="rounded-circle" style="width: 48px; height: 48px; object-fit: cover;">
+                            <span th:unless="${user.profileImageUrl()}" class="text-muted">없음</span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 text-muted">소셜 타입</div>
+                        <div class="col-md-9" th:text="${user.socialType() ?: '-'}"></div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 text-muted">사용자 타입</div>
+                        <div class="col-md-9" th:text="${user.userType()}"></div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 text-muted">상태</div>
+                        <div class="col-md-9">
+                            <span class="badge"
+                                  th:classappend="'badge-status-' + ${#strings.toLowerCase(user.status().name())}"
+                                  th:text="${user.status()}"></span>
+                            <small th:if="${user.suspendedUntil()}" class="text-muted ms-2"
+                                   th:text="'해제: ' + ${#temporals.format(user.suspendedUntil(), 'yyyy-MM-dd HH:mm')}"></small>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 text-muted">마지막 로그인</div>
+                        <div class="col-md-9" th:text="${user.lastLoginAt() != null} ? ${#temporals.format(user.lastLoginAt(), 'yyyy-MM-dd HH:mm')} : '-'"></div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 text-muted">가입일</div>
+                        <div class="col-md-9" th:text="${#temporals.format(user.createdAt(), 'yyyy-MM-dd HH:mm')}"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4" th:if="${user.userType().name() != 'ADMIN'}">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0">상태 변경</h6>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/admin/users/{id}/status(id=${user.id()})}" method="post">
+                        <div class="mb-3">
+                            <label for="statusSelect" class="form-label">상태</label>
+                            <select id="statusSelect" name="status" class="form-select">
+                                <option value="ACTIVE" th:selected="${user.status().name() == 'ACTIVE'}">ACTIVE (활성)</option>
+                                <option value="SUSPENDED" th:selected="${user.status().name() == 'SUSPENDED'}">SUSPENDED (정지)</option>
+                                <option value="BANNED" th:selected="${user.status().name() == 'BANNED'}">BANNED (차단)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3" id="suspensionGroup" style="display: none;">
+                            <label for="suspensionHours" class="form-label">정지 기간</label>
+                            <select id="suspensionHours" name="suspensionHours" class="form-select">
+                                <option th:each="h : ${suspensionHours}" th:value="${h}"
+                                        th:text="${h < 24} ? ${h + '시간'} : ${(h / 24) + '일 (' + h + '시간)'}"></option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100"
+                                data-confirm="사용자 상태를 변경하시겠습니까?">변경</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a th:href="@{/admin/users}" class="btn btn-outline-secondary btn-sm">목록으로</a>
+    </div>
+</div>
+<div layout:fragment="scripts">
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var statusSelect = document.getElementById('statusSelect');
+    var suspensionGroup = document.getElementById('suspensionGroup');
+    if (statusSelect && suspensionGroup) {
+        suspensionGroup.style.display = statusSelect.value === 'SUSPENDED' ? 'block' : 'none';
+        statusSelect.addEventListener('change', function() {
+            suspensionGroup.style.display = this.value === 'SUSPENDED' ? 'block' : 'none';
+        });
+    }
+});
+</script>
+</div>
+</body>
+</html>
