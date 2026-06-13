@@ -13,6 +13,9 @@ public enum CommonErrorCode implements ErrorCode {
     INVALID_FORMAT(HttpStatus.BAD_REQUEST, "VAL_002", "유효하지 않은 형식입니다"),
     INVALID_VALUE(HttpStatus.BAD_REQUEST, "VAL_003", "값이 허용 범위를 벗어났습니다"),
 
+    // 리소스 에러 (RES_XXX)
+    RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "RES_001", "요청한 리소스를 찾을 수 없습니다"),
+
     // 서버 에러 (SERVER_XXX)
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "SERVER_001", "서버 내부 오류가 발생했습니다");
 

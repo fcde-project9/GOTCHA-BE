@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @Slf4j
 @RestControllerAdvice
@@ -82,6 +83,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(FileErrorCode.FILE_TOO_LARGE.getStatus())
                 .body(ApiResponse.error(FileErrorCode.FILE_TOO_LARGE));
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    protected ResponseEntity<ApiResponse<Void>> handleNoResourceFoundException(NoResourceFoundException e) {
+        log.warn("Resource not found: {}", e.getResourcePath());
+        return ResponseEntity
+                .status(404)
+                .body(ApiResponse.error(CommonErrorCode.RESOURCE_NOT_FOUND));
     }
 
     @ExceptionHandler(Exception.class)
